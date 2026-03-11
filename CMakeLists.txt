@@ -61,7 +61,7 @@ if (USE_INSTALLED_WX)
 else()
 	FetchContent_Declare(wxWidgets-custom
 		GIT_REPOSITORY https://github.com/wxWidgets/wxWidgets.git
-		GIT_TAG f3da561f78ff54befeb98e7a10c3e583aef51882
+		GIT_TAG 5d63efc902e8b29c05ee492ff0c732a929f7b096
 		#GIT_SHALLOW true # it works only with branch names and tags
 		GIT_PROGRESS true
 		SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/wxWidgets-download"
