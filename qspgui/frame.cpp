@@ -366,28 +366,28 @@ void QSPFrame::ShowPane(wxWindowID id, bool toShow)
 
 void QSPFrame::ApplyParams()
 {
-    QSP_BIGINT numVal;
-    QSPString strVal;
+    int numVal;
+    QSP_CHAR *strVal;
     wxColour setBackColor, setFontColor, setLinkColor;
     wxString setFontName;
     int setFontSize;
     bool toRefreshUI = false;
     // --------------
-    setBackColor = ((QSPGetNumVarValue(QSP_STATIC_STR(QSP_FMT("BCOLOR")), 0, &numVal) && numVal)
+    setBackColor = ((QSPGetNumVarValue(QSP_FMT("BCOLOR"), 0, &numVal) && numVal)
         ? wxColour(numVal) : m_backColor);
     if (setBackColor != m_desc->GetBackgroundColour())
     {
         if (ApplyBackColor(setBackColor)) toRefreshUI = true;
     }
     // --------------
-    setFontColor = ((QSPGetNumVarValue(QSP_STATIC_STR(QSP_FMT("FCOLOR")), 0, &numVal) && numVal)
+    setFontColor = ((QSPGetNumVarValue(QSP_FMT("FCOLOR"), 0, &numVal) && numVal)
         ? wxColour(numVal) : m_fontColor);
     if (setFontColor != m_desc->GetForegroundColour())
     {
         if (ApplyFontColor(setFontColor)) toRefreshUI = true;
     }
     // --------------
-    setLinkColor = ((QSPGetNumVarValue(QSP_STATIC_STR(QSP_FMT("LCOLOR")), 0, &numVal) && numVal)
+    setLinkColor = ((QSPGetNumVarValue(QSP_FMT("LCOLOR"), 0, &numVal) && numVal)
         ? wxColour(numVal) : m_linkColor);
     if (setLinkColor != m_desc->GetLinkColor())
     {
@@ -398,7 +398,7 @@ void QSPFrame::ApplyParams()
         setFontSize = m_fontSize;
     else
     {
-        setFontSize = ((QSPGetNumVarValue(QSP_STATIC_STR(QSP_FMT("FSIZE")), 0, &numVal) && numVal)
+        setFontSize = ((QSPGetNumVarValue(QSP_FMT("FSIZE"), 0, &numVal) && numVal)
             ? numVal : m_fontSize);
     }
     if (setFontSize != m_desc->GetTextFont().GetPointSize())
@@ -406,7 +406,7 @@ void QSPFrame::ApplyParams()
         if (ApplyFontSize(setFontSize)) toRefreshUI = true;
     }
     // --------------
-    setFontName = ((QSPGetStrVarValue(QSP_STATIC_STR(QSP_FMT("FNAME")), 0, &strVal) && !qspIsEmpty(strVal))
+    setFontName = ((QSPGetStrVarValue(QSP_FMT("FNAME"), 0, &strVal) && !qspIsEmpty(strVal))
         ? qspToWxString(strVal) : m_fontName);
     if (!setFontName.IsSameAs(m_desc->GetTextFont().GetFaceName(), false))
     {
@@ -490,48 +490,48 @@ bool QSPFrame::IsValidFullPath(const wxString &path) const
 void QSPFrame::ShowError()
 {
     if (m_toQuit) return;
-    QSPErrorInfo errorInfo = QSPGetLastErrorData();
-    if (!errorInfo.ErrorNum) return; // error is undefined
-    wxString locName(qspToWxString(errorInfo.LocName));
-    wxString errorDesc(qspToWxString(errorInfo.ErrorDesc));
-    wxString line(qspToWxString(errorInfo.IntLine));
-    if (line.IsEmpty())
-        line = _("Unknown");
-
-    wxString wxMessage;
-    if (!locName.IsEmpty())
-        wxMessage = wxString::Format(
-            _("Location: %s\nArea: %s\nLine %d: %s\nCode: %d\nDesc: %s"),
-            locName.wx_str(),
-            (errorInfo.ActIndex < 0 ? _("on visit").wx_str() : _("on action").wx_str()),
-            errorInfo.TopLineNum,
-            line.wx_str(),
-            errorInfo.ErrorNum,
-            wxGetTranslation(errorDesc).wx_str()
-        );
-    else
-        wxMessage = wxString::Format(
-            _("Line %d: %s\nCode: %d\nDesc: %s"),
-            errorInfo.IntLineNum,
-            line.wx_str(),
-            errorInfo.ErrorNum,
-            wxGetTranslation(errorDesc).wx_str()
-        );
-    QSPMsgDlg dialog(this,
-                     wxID_ANY,
-                     m_desc->GetBackgroundColour(),
-                     m_desc->GetForegroundColour(),
-                     m_desc->GetTextFont(),
-                     _("Error"),
-                     wxMessage,
-                     false,
-                     this
-    );
-    bool oldToProcessEvents = m_toProcessEvents;
-    m_toProcessEvents = false;
-    dialog.ShowModal();
-    m_toProcessEvents = oldToProcessEvents;
-    if (m_isGameOpened) QSPCallbacks::RefreshInt(QSP_FALSE, QSP_FALSE);
+    // QSPErrorInfo errorInfo = QSPGetLastErrorData();
+    // if (!errorInfo.ErrorNum) return; // error is undefined
+    // wxString locName(qspToWxString(errorInfo.LocName));
+    // wxString errorDesc(qspToWxString(errorInfo.ErrorDesc));
+    // wxString line(qspToWxString(errorInfo.IntLine));
+    // if (line.IsEmpty())
+    //     line = _("Unknown");
+    //
+    // wxString wxMessage;
+    // if (!locName.IsEmpty())
+    //     wxMessage = wxString::Format(
+    //         _("Location: %s\nArea: %s\nLine %d: %s\nCode: %d\nDesc: %s"),
+    //         locName.wx_str(),
+    //         (errorInfo.ActIndex < 0 ? _("on visit").wx_str() : _("on action").wx_str()),
+    //         errorInfo.TopLineNum,
+    //         line.wx_str(),
+    //         errorInfo.ErrorNum,
+    //         wxGetTranslation(errorDesc).wx_str()
+    //     );
+    // else
+    //     wxMessage = wxString::Format(
+    //         _("Line %d: %s\nCode: %d\nDesc: %s"),
+    //         errorInfo.IntLineNum,
+    //         line.wx_str(),
+    //         errorInfo.ErrorNum,
+    //         wxGetTranslation(errorDesc).wx_str()
+    //     );
+    // QSPMsgDlg dialog(this,
+    //                  wxID_ANY,
+    //                  m_desc->GetBackgroundColour(),
+    //                  m_desc->GetForegroundColour(),
+    //                  m_desc->GetTextFont(),
+    //                  _("Error"),
+    //                  wxMessage,
+    //                  false,
+    //                  this
+    // );
+    // bool oldToProcessEvents = m_toProcessEvents;
+    // m_toProcessEvents = false;
+    // dialog.ShowModal();
+    // m_toProcessEvents = oldToProcessEvents;
+    // if (m_isGameOpened) QSPCallbacks::RefreshInt(QSP_FALSE, QSP_FALSE);
 }
 
 void QSPFrame::UpdateTitle()
@@ -682,9 +682,9 @@ void QSPFrame::CallPaneFunc(wxWindowID id, QSP_BOOL toShow) const
     case ID_INPUT:
         QSPShowWindow(QSP_WIN_INPUT, toShow);
         break;
-    case ID_VIEWPIC:
-        QSPShowWindow(QSP_WIN_VIEW, toShow);
-        break;
+    // case ID_VIEWPIC:
+    //     QSPShowWindow(QSP_WIN_VIEW, toShow);
+    //     break;
     }
 }
 
@@ -721,7 +721,7 @@ void QSPFrame::OpenGameFile(const wxString& fullPath)
         void *fileData = (void *)malloc(fileSize);
         if (fileToLoad.Read(fileData, fileSize) == fileSize)
         {
-            if (QSPLoadGameWorldFromData(fileData, fileSize, QSP_TRUE))
+            if (QSPLoadGameWorldFromData((const char *)fileData, fileSize, fullPath))
             {
                 UpdateGamePath(fullPath);
                 m_isGameOpened = true;
@@ -759,7 +759,7 @@ void QSPFrame::OpenGameState(const wxString& fullPath)
         void *fileData = (void *)malloc(fileSize);
         if (fileToLoad.Read(fileData, fileSize) == fileSize)
         {
-            if (!QSPOpenSavedGameFromData(fileData, fileSize, QSP_TRUE))
+            if (!QSPOpenSavedGameFromData((QSP_CHAR *)fileData, QSP_TRUE))
                 ShowError();
         }
         free(fileData);
@@ -770,12 +770,12 @@ void QSPFrame::SaveGameState(const wxString &fullPath)
 {
     int fileSize = 64 * 1024;
     void *fileData = (void *)malloc(fileSize);
-    if (!QSPSaveGameAsData(fileData, &fileSize, QSP_TRUE))
+    if (!QSPSaveGameAsData((QSP_CHAR *)fileData, fileSize, &fileSize, QSP_TRUE))
     {
         while (fileSize)
         {
             fileData = (void *)realloc(fileData, fileSize);
-            if (QSPSaveGameAsData(fileData, &fileSize, QSP_TRUE))
+            if (QSPSaveGameAsData((QSP_CHAR *)fileData, fileSize, &fileSize, QSP_TRUE))
                 break;
         }
         if (!fileSize)
@@ -1110,8 +1110,8 @@ void QSPFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
     info.SetIcon(wxIcon(logo_big_xpm));
     info.SetName(QSP_LOGO);
     info.SetCopyright(wxT("QSP Foundation, 2001-2025"));
-    QSPString version = QSPGetVersion();
-    QSPString libCompiledDate = QSPGetCompiledDateTime();
+    QSP_CHAR *version = (QSP_CHAR *)QSPGetVersion();
+    QSP_CHAR *libCompiledDate = (QSP_CHAR *)QSPGetCompiledDateTime();
     wxString guiCompiledDate(wxT(__DATE__) wxT(", ") wxT(__TIME__));
     info.SetDescription(wxString::Format(
         _("Engine version: %s\nEngine compiled: %s\nGUI compiled: %s"),
@@ -1141,7 +1141,7 @@ void QSPFrame::OnLinkClicked(wxHtmlLinkEvent& event)
         else if (href.Upper().StartsWith(wxT("EXEC:")))
         {
             wxString string = href.Mid(5);
-            if (m_toProcessEvents && !QSPExecString(qspStringFromLen(string.c_str(), string.Length()), QSP_TRUE))
+            if (m_toProcessEvents && !QSPExecString(string.c_str(), QSP_TRUE))
                 ShowError();
         }
         else
@@ -1181,7 +1181,7 @@ void QSPFrame::OnInputTextChange(wxCommandEvent& event)
 {
     wxString text(event.GetString());
     m_input->SetText(text, false);
-    QSPSetInputStrText(qspStringFromLen(text.c_str(), text.Length()));
+    QSPSetInputStrText(text.c_str());
 }
 
 void QSPFrame::OnInputTextEnter(wxCommandEvent& WXUNUSED(event))

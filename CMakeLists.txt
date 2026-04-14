@@ -45,13 +45,13 @@ else()
 endif()
 
 FetchContent_Declare(qsp-custom
-	GIT_REPOSITORY https://github.com/QSPFoundation/qsp.git
+	GIT_REPOSITORY https://github.com/QSPFoundation/qsp-legacy.git
 	GIT_TAG master
 	#GIT_SHALLOW true # it works only with branch names and tags
 	GIT_PROGRESS true
-	SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-download"
-	SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-src"
-	BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-build"
+	SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-legacy-download"
+	SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-legacy-src"
+	BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-legacy-build"
 )
 FetchContent_MakeAvailable(qsp-custom)
 
@@ -153,7 +153,7 @@ else()
 endif()
 
 target_compile_definitions(qspgui PRIVATE _UNICODE)
-target_link_libraries(qspgui PRIVATE qsp wxbase wxcore wxadv wxaui wxnet wxhtml)
+target_link_libraries(qspgui PRIVATE qsp-legacy wxbase wxcore wxadv wxaui wxnet wxhtml)
 
 # Installation
 
@@ -185,8 +185,8 @@ else()
 	message(FATAL_ERROR "Platform is not supported")
 endif()
 
-set_target_properties(qspgui qsp PROPERTIES INSTALL_RPATH "${INSTALL_RPATH}")
-install(TARGETS qspgui qsp
+set_target_properties(qspgui qsp-legacy PROPERTIES INSTALL_RPATH "${INSTALL_RPATH}")
+install(TARGETS qspgui qsp-legacy
 		COMPONENT Main
 		RUNTIME DESTINATION ${BINDIR}
 		LIBRARY DESTINATION ${RLIBDIR}
