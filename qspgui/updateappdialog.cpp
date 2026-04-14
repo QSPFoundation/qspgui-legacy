@@ -16,6 +16,7 @@
 */
 
 #include "updateappdialog.h"
+#include "comtools.h"
 
 IMPLEMENT_CLASS(UpdateAppDialog, wxDialog)
 
@@ -73,6 +74,6 @@ void UpdateAppDialog::OnTextUrl(wxTextUrlEvent &event)
         wxString link = fullText.Mid(event.GetURLStart(), event.GetURLEnd() - event.GetURLStart());
 
         if (!link.IsEmpty())
-            wxLaunchDefaultBrowser(link);
+            QSPTools::LaunchDefaultBrowser(link);
     }
 }

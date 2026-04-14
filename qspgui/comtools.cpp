@@ -20,21 +20,22 @@
 void QSPTools::LaunchDefaultBrowser(const wxString& url)
 {
     /* Validate URLs, don't allow opening files & directories */
+    bool canOpen;
     const wxURI uri(url);
-    bool hasValidScheme = uri.HasScheme() && uri.GetScheme().length() > 1;
 
-    if (hasValidScheme)
+    if (uri.HasScheme())
     {
-        if (uri.GetScheme() == wxT("file"))
-            return;
+        canOpen = uri.GetScheme() == wxT("http")
+            || uri.GetScheme() == wxT("https")
+            || uri.GetScheme() == wxT("mailto");
     }
     else
     {
-        if (wxFileExists(url) || wxDirExists(url))
-            return;
+        canOpen = !wxFileExists(url) && !wxDirExists(url);
     }
 
-    wxLaunchDefaultBrowser(url);
+    if (canOpen)
+        wxLaunchDefaultBrowser(url);
 }
 
 wxString QSPTools::GetHexColor(const wxColour& color)

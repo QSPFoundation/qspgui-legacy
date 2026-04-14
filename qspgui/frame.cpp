@@ -829,7 +829,7 @@ void QSPFrame::ProcessVersionResult(const wxString& versionInfo, int type)
                     latestVersion, releaseNotes, releaseUrl);
                 dialog.CenterOnParent();
                 if (dialog.ShowModal() == wxID_OK)
-                    wxLaunchDefaultBrowser(releaseUrl);
+                    QSPTools::LaunchDefaultBrowser(releaseUrl);
             }
             else if (type == UPDATE_SHOW_ALL_RESULTS)
             {
