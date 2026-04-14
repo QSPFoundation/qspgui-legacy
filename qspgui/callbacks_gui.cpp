@@ -17,9 +17,6 @@
 
 #include "callbacks_gui.h"
 #include "comtools.h"
-#include "build-x86-release/qsp-legacy-src/src/actions.h"
-#include "build-x86-release/qsp-legacy-src/src/common.h"
-#include "build-x86-release/qsp-legacy-src/src/objects.h"
 
 QSPFrame *QSPCallbacks::m_frame;
 bool QSPCallbacks::m_isHtml;
