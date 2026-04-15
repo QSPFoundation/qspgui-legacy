@@ -118,7 +118,6 @@
         static int OpenGame(QSP_CHAR *file, QSP_BOOL isAddLocs);
         static int OpenGameStatus(QSP_CHAR *file);
         static int SaveGameStatus(QSP_CHAR *file);
-        static int Version(QSP_CHAR *param, QSP_CHAR *buffer, int maxLen);
     private:
         // Internal methods
         static bool SetVolume(QSP_CHAR *file, int volume);

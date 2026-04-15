@@ -59,7 +59,6 @@ void QSPCallbacks::Init(QSPFrame *frame)
     QSPSetCallBack(QSP_CALL_OPENGAME, (QSP_CALLBACK)&OpenGame);
     QSPSetCallBack(QSP_CALL_OPENGAMESTATUS, (QSP_CALLBACK)&OpenGameStatus);
     QSPSetCallBack(QSP_CALL_SAVEGAMESTATUS, (QSP_CALLBACK)&SaveGameStatus);
-    // QSPSetCallback(QSP_CALL_VERSION, (QSP_CALLBACK)&Version);
 
     /* Prepare version values */
     m_versionInfo["player"] = "Classic";
@@ -335,15 +334,8 @@ int QSPCallbacks::OpenGame(QSP_CHAR *file, QSP_BOOL isAddLocs)
     wxString fullPath(m_frame->ComposeGamePath(qspToWxString(file)));
     if (wxFileExists(fullPath))
     {
-        wxFile fileToLoad(fullPath);
-        int fileSize = fileToLoad.Length();
-        void *fileData = (void *)malloc(fileSize);
-        if (fileToLoad.Read(fileData, fileSize) == fileSize)
-        {
-            if (QSPLoadGameWorldFromData((const char *)fileData, fileSize, fullPath) && isAddLocs)
-                m_frame->UpdateGamePath(fullPath);
-        }
-        free(fileData);
+        if (QSPLoadGameWorldFromFile(fullPath, isAddLocs) && !isAddLocs)
+            m_frame->UpdateGamePath(fullPath);
     }
     return 0;
 }
@@ -368,12 +360,7 @@ int QSPCallbacks::OpenGameStatus(QSP_CHAR *file)
     }
     if (wxFileExists(fullPath))
     {
-        wxFile fileToLoad(fullPath);
-        int fileSize = fileToLoad.Length();
-        void *fileData = (void *)malloc(fileSize);
-        if (fileToLoad.Read(fileData, fileSize) == fileSize)
-            QSPOpenSavedGameFromData((QSP_CHAR *)fileData, QSP_FALSE);
-        free(fileData);
+        QSPOpenSavedGameFromFile(fullPath, QSP_FALSE);
     }
     return 0;
 }
@@ -396,50 +383,7 @@ int QSPCallbacks::SaveGameStatus(QSP_CHAR *file)
             return 0;
         fullPath = dialog.GetPath();
     }
-    int fileSize = 64 * 1024;
-    void *fileData = (void *)malloc(fileSize);
-    if (!QSPSaveGameAsData((QSP_CHAR *)fileData, fileSize, &fileSize, QSP_FALSE))
-    {
-        while (fileSize)
-        {
-            fileData = (void *)realloc(fileData, fileSize);
-            if (QSPSaveGameAsData((QSP_CHAR *)fileData, fileSize, &fileSize, QSP_FALSE))
-                break;
-        }
-        if (!fileSize)
-        {
-            free(fileData);
-            return 0;
-        }
-    }
-    wxFile fileToSave(fullPath, wxFile::write);
-    fileToSave.Write(fileData, fileSize);
-    free(fileData);
-    return 0;
-}
-
-int QSPCallbacks::Version(QSP_CHAR *param, QSP_CHAR *buffer, int maxLen)
-{
-    wxString result;
-    wxString request(qspToWxString(param));
-
-    if (request.IsEmpty())
-    {
-        QSP_CHAR *libVersion = (QSP_CHAR *)QSPGetVersion();
-        result = QSPTools::GetVersion(qspToWxString(libVersion));
-    }
-    else
-    {
-        QSPVersionInfoValues::iterator value = m_versionInfo.find(request.Lower());
-        if (value != m_versionInfo.end())
-            result = value->second;
-    }
-
-#ifdef _UNICODE
-    wcsncpy(buffer, result.c_str(), maxLen);
-#else
-    strncpy(buffer, result.c_str(), maxLen);
-#endif
+    QSPSaveGameAsFile(fullPath, QSP_FALSE);
     return 0;
 }
 

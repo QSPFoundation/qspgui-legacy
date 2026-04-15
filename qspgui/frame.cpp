@@ -490,48 +490,48 @@ bool QSPFrame::IsValidFullPath(const wxString &path) const
 void QSPFrame::ShowError()
 {
     if (m_toQuit) return;
-    // QSPErrorInfo errorInfo = QSPGetLastErrorData();
-    // if (!errorInfo.ErrorNum) return; // error is undefined
-    // wxString locName(qspToWxString(errorInfo.LocName));
-    // wxString errorDesc(qspToWxString(errorInfo.ErrorDesc));
-    // wxString line(qspToWxString(errorInfo.IntLine));
-    // if (line.IsEmpty())
-    //     line = _("Unknown");
-    //
-    // wxString wxMessage;
-    // if (!locName.IsEmpty())
-    //     wxMessage = wxString::Format(
-    //         _("Location: %s\nArea: %s\nLine %d: %s\nCode: %d\nDesc: %s"),
-    //         locName.wx_str(),
-    //         (errorInfo.ActIndex < 0 ? _("on visit").wx_str() : _("on action").wx_str()),
-    //         errorInfo.TopLineNum,
-    //         line.wx_str(),
-    //         errorInfo.ErrorNum,
-    //         wxGetTranslation(errorDesc).wx_str()
-    //     );
-    // else
-    //     wxMessage = wxString::Format(
-    //         _("Line %d: %s\nCode: %d\nDesc: %s"),
-    //         errorInfo.IntLineNum,
-    //         line.wx_str(),
-    //         errorInfo.ErrorNum,
-    //         wxGetTranslation(errorDesc).wx_str()
-    //     );
-    // QSPMsgDlg dialog(this,
-    //                  wxID_ANY,
-    //                  m_desc->GetBackgroundColour(),
-    //                  m_desc->GetForegroundColour(),
-    //                  m_desc->GetTextFont(),
-    //                  _("Error"),
-    //                  wxMessage,
-    //                  false,
-    //                  this
-    // );
-    // bool oldToProcessEvents = m_toProcessEvents;
-    // m_toProcessEvents = false;
-    // dialog.ShowModal();
-    // m_toProcessEvents = oldToProcessEvents;
-    // if (m_isGameOpened) QSPCallbacks::RefreshInt(QSP_FALSE, QSP_FALSE);
+    QSPErrorInfo errorInfo = QSPGetLastErrorData();
+    if (!errorInfo.ErrorNum) return; // error is undefined
+    wxString locName(qspToWxString(errorInfo.LocName));
+    wxString errorDesc(qspToWxString(errorInfo.ErrorDesc));
+    wxString line(qspToWxString(errorInfo.IntLine));
+    if (line.IsEmpty())
+        line = _("Unknown");
+
+    wxString wxMessage;
+    if (!locName.IsEmpty())
+        wxMessage = wxString::Format(
+            _("Location: %s\nArea: %s\nLine %d: %s\nCode: %d\nDesc: %s"),
+            locName.wx_str(),
+            (errorInfo.ActIndex < 0 ? _("on visit").wx_str() : _("on action").wx_str()),
+            errorInfo.TopLineNum,
+            line.wx_str(),
+            errorInfo.ErrorNum,
+            wxGetTranslation(errorDesc).wx_str()
+        );
+    else
+        wxMessage = wxString::Format(
+            _("Line %d: %s\nCode: %d\nDesc: %s"),
+            errorInfo.IntLineNum,
+            line.wx_str(),
+            errorInfo.ErrorNum,
+            wxGetTranslation(errorDesc).wx_str()
+        );
+    QSPMsgDlg dialog(this,
+                     wxID_ANY,
+                     m_desc->GetBackgroundColour(),
+                     m_desc->GetForegroundColour(),
+                     m_desc->GetTextFont(),
+                     _("Error"),
+                     wxMessage,
+                     false,
+                     this
+    );
+    bool oldToProcessEvents = m_toProcessEvents;
+    m_toProcessEvents = false;
+    dialog.ShowModal();
+    m_toProcessEvents = oldToProcessEvents;
+    if (m_isGameOpened) QSPCallbacks::RefreshInt(QSP_FALSE, QSP_FALSE);
 }
 
 void QSPFrame::UpdateTitle()
@@ -716,37 +716,30 @@ void QSPFrame::OpenGameFile(const wxString& fullPath)
 {
     if (wxFileExists(fullPath))
     {
-        wxFile fileToLoad(fullPath);
-        int fileSize = fileToLoad.Length();
-        void *fileData = (void *)malloc(fileSize);
-        if (fileToLoad.Read(fileData, fileSize) == fileSize)
+        if (QSPLoadGameWorldFromFile(fullPath, QSP_FALSE))
         {
-            if (QSPLoadGameWorldFromData((const char *)fileData, fileSize, fullPath))
+            UpdateGamePath(fullPath);
+            m_isGameOpened = true;
+
+            wxString configString(m_worldPath + QSP_CONFIG);
+            wxString newPath(wxFileExists(configString) ? configString : m_configDefPath);
+            if (newPath != m_configPath)
             {
-                UpdateGamePath(fullPath);
-                m_isGameOpened = true;
-
-                wxString configString(m_worldPath + QSP_CONFIG);
-                wxString newPath(wxFileExists(configString) ? configString : m_configDefPath);
-                if (newPath != m_configPath)
-                {
-                    SaveSettings();
-                    m_configPath = newPath;
-                    LoadSettings();
-                }
-
-                wxCommandEvent dummy;
-                OnNewGame(dummy);
-
-                if (m_toQuit) return;
-                UpdateTitle();
-                EnableControls(true);
-                m_savedGamePath.Clear();
+                SaveSettings();
+                m_configPath = newPath;
+                LoadSettings();
             }
-            else
-                ShowError();
+
+            wxCommandEvent dummy;
+            OnNewGame(dummy);
+
+            if (m_toQuit) return;
+            UpdateTitle();
+            EnableControls(true);
+            m_savedGamePath.Clear();
         }
-        free(fileData);
+        else
+            ShowError();
     }
 }
 
@@ -754,41 +747,14 @@ void QSPFrame::OpenGameState(const wxString& fullPath)
 {
     if (wxFileExists(fullPath))
     {
-        wxFile fileToLoad(fullPath);
-        int fileSize = fileToLoad.Length();
-        void *fileData = (void *)malloc(fileSize);
-        if (fileToLoad.Read(fileData, fileSize) == fileSize)
-        {
-            if (!QSPOpenSavedGameFromData((QSP_CHAR *)fileData, QSP_TRUE))
-                ShowError();
-        }
-        free(fileData);
+        if (!QSPOpenSavedGameFromFile(fullPath, QSP_TRUE))
+            ShowError();
     }
 }
 
 void QSPFrame::SaveGameState(const wxString &fullPath)
 {
-    int fileSize = 64 * 1024;
-    void *fileData = (void *)malloc(fileSize);
-    if (!QSPSaveGameAsData((QSP_CHAR *)fileData, fileSize, &fileSize, QSP_TRUE))
-    {
-        while (fileSize)
-        {
-            fileData = (void *)realloc(fileData, fileSize);
-            if (QSPSaveGameAsData((QSP_CHAR *)fileData, fileSize, &fileSize, QSP_TRUE))
-                break;
-        }
-        if (!fileSize)
-        {
-            free(fileData);
-            ShowError();
-            return;
-        }
-    }
-    wxFile fileToSave(fullPath, wxFile::write);
-    fileToSave.Write(fileData, fileSize);
-    free(fileData);
-
+    QSPSaveGameAsFile(fullPath, QSP_TRUE);
     m_savedGamePath = fullPath;
 }
 
