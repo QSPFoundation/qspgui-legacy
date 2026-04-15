@@ -88,9 +88,9 @@ int QSPCallbacks::RefreshInt(QSP_BOOL isForced, QSP_BOOL isNewDesc)
     bool toScroll, canSave;
     if (m_frame->ToQuit()) return 0;
     // -------------------------------
-    toScroll = !(QSPGetNumVarValue(QSP_FMT("DISABLESCROLL"), 0, &numVal) && numVal);
-    canSave = !(QSPGetNumVarValue(QSP_FMT("NOSAVE"), 0, &numVal) && numVal);
-    m_isHtml = QSPGetNumVarValue(QSP_FMT("USEHTML"), 0, &numVal) && numVal;
+    toScroll = !(QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("DISABLESCROLL"), 0, &numVal) && numVal);
+    canSave = !(QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("NOSAVE"), 0, &numVal) && numVal);
+    m_isHtml = QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("USEHTML"), 0, &numVal) && numVal;
     // -------------------------------
     m_frame->GetDesc()->SetIsHtml(m_isHtml);
     if (QSPIsMainDescChanged())
@@ -132,7 +132,7 @@ int QSPCallbacks::RefreshInt(QSP_BOOL isForced, QSP_BOOL isNewDesc)
     }
     m_frame->GetObjects()->SetSelection(QSPGetSelObjectIndex());
     // -------------------------------
-    if (QSPGetStrVarValue(QSP_FMT("BACKIMAGE"), 0, &strVal) && !qspIsEmpty(strVal))
+    if (QSPGetStrVarValue((QSP_CHAR *)QSP_FMT("BACKIMAGE"), 0, &strVal) && !qspIsEmpty(strVal))
         m_frame->GetDesc()->LoadBackImage(qspToWxString(strVal));
     else
         m_frame->GetDesc()->LoadBackImage(wxEmptyString);
@@ -306,7 +306,7 @@ int QSPCallbacks::Input(QSP_CHAR *text, QSP_CHAR *buffer, int maxLen)
     dialog.ShowModal();
     m_frame->EnableControls(true);
 #ifdef _UNICODE
-    wcsncpy(buffer, dialog.GetText().c_str(), maxLen);
+    wcsncpy((wchar_t *)buffer, dialog.GetText().c_str(), maxLen);
 #else
     strncpy(buffer, dialog.GetText().c_str(), maxLen);
 #endif
@@ -334,8 +334,13 @@ int QSPCallbacks::OpenGame(QSP_CHAR *file, QSP_BOOL isAddLocs)
     wxString fullPath(m_frame->ComposeGamePath(qspToWxString(file)));
     if (wxFileExists(fullPath))
     {
-        if (QSPLoadGameWorldFromFile(fullPath, isAddLocs) && !isAddLocs)
-            m_frame->UpdateGamePath(fullPath);
+        QSP_CHAR *file_path = wxStringToQsp(fullPath);
+        if (file_path != nullptr)
+        {
+            if (QSPLoadGameWorldFromFile(file_path, isAddLocs) && !isAddLocs)
+                m_frame->UpdateGamePath(fullPath);
+            delete[] file_path;
+        }
     }
     return 0;
 }
@@ -360,7 +365,12 @@ int QSPCallbacks::OpenGameStatus(QSP_CHAR *file)
     }
     if (wxFileExists(fullPath))
     {
-        QSPOpenSavedGameFromFile(fullPath, QSP_FALSE);
+        QSP_CHAR *file_path = wxStringToQsp(fullPath);
+        if (file_path != nullptr)
+        {
+            QSPOpenSavedGameFromFile(file_path, QSP_FALSE);
+            delete[] file_path;
+        }
     }
     return 0;
 }
@@ -383,7 +393,14 @@ int QSPCallbacks::SaveGameStatus(QSP_CHAR *file)
             return 0;
         fullPath = dialog.GetPath();
     }
-    QSPSaveGameAsFile(fullPath, QSP_FALSE);
+
+    QSP_CHAR *file_path = wxStringToQsp(fullPath);
+    if (file_path != nullptr)
+    {
+        QSPSaveGameAsFile(file_path, QSP_FALSE);
+        delete[] file_path;
+    }
+
     return 0;
 }
 

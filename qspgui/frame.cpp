@@ -373,21 +373,21 @@ void QSPFrame::ApplyParams()
     int setFontSize;
     bool toRefreshUI = false;
     // --------------
-    setBackColor = ((QSPGetNumVarValue(QSP_FMT("BCOLOR"), 0, &numVal) && numVal)
+    setBackColor = ((QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("BCOLOR"), 0, &numVal) && numVal)
         ? wxColour(numVal) : m_backColor);
     if (setBackColor != m_desc->GetBackgroundColour())
     {
         if (ApplyBackColor(setBackColor)) toRefreshUI = true;
     }
     // --------------
-    setFontColor = ((QSPGetNumVarValue(QSP_FMT("FCOLOR"), 0, &numVal) && numVal)
+    setFontColor = ((QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("FCOLOR"), 0, &numVal) && numVal)
         ? wxColour(numVal) : m_fontColor);
     if (setFontColor != m_desc->GetForegroundColour())
     {
         if (ApplyFontColor(setFontColor)) toRefreshUI = true;
     }
     // --------------
-    setLinkColor = ((QSPGetNumVarValue(QSP_FMT("LCOLOR"), 0, &numVal) && numVal)
+    setLinkColor = ((QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("LCOLOR"), 0, &numVal) && numVal)
         ? wxColour(numVal) : m_linkColor);
     if (setLinkColor != m_desc->GetLinkColor())
     {
@@ -398,7 +398,7 @@ void QSPFrame::ApplyParams()
         setFontSize = m_fontSize;
     else
     {
-        setFontSize = ((QSPGetNumVarValue(QSP_FMT("FSIZE"), 0, &numVal) && numVal)
+        setFontSize = ((QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("FSIZE"), 0, &numVal) && numVal)
             ? numVal : m_fontSize);
     }
     if (setFontSize != m_desc->GetTextFont().GetPointSize())
@@ -406,7 +406,7 @@ void QSPFrame::ApplyParams()
         if (ApplyFontSize(setFontSize)) toRefreshUI = true;
     }
     // --------------
-    setFontName = ((QSPGetStrVarValue(QSP_FMT("FNAME"), 0, &strVal) && !qspIsEmpty(strVal))
+    setFontName = ((QSPGetStrVarValue((QSP_CHAR *)QSP_FMT("FNAME"), 0, &strVal) && !qspIsEmpty(strVal))
         ? qspToWxString(strVal) : m_fontName);
     if (!setFontName.IsSameAs(m_desc->GetTextFont().GetFaceName(), false))
     {
@@ -716,30 +716,37 @@ void QSPFrame::OpenGameFile(const wxString& fullPath)
 {
     if (wxFileExists(fullPath))
     {
-        if (QSPLoadGameWorldFromFile(fullPath, QSP_FALSE))
+        QSP_CHAR *file_path = wxStringToQsp(fullPath);
+        if (file_path != nullptr)
         {
-            UpdateGamePath(fullPath);
-            m_isGameOpened = true;
-
-            wxString configString(m_worldPath + QSP_CONFIG);
-            wxString newPath(wxFileExists(configString) ? configString : m_configDefPath);
-            if (newPath != m_configPath)
+            if (QSPLoadGameWorldFromFile(file_path, QSP_FALSE))
             {
-                SaveSettings();
-                m_configPath = newPath;
-                LoadSettings();
+                UpdateGamePath(fullPath);
+                m_isGameOpened = true;
+
+                wxString configString(m_worldPath + QSP_CONFIG);
+                wxString newPath(wxFileExists(configString) ? configString : m_configDefPath);
+                if (newPath != m_configPath)
+                {
+                    SaveSettings();
+                    m_configPath = newPath;
+                    LoadSettings();
+                }
+
+                wxCommandEvent dummy;
+                OnNewGame(dummy);
+
+                if (m_toQuit) return;
+                UpdateTitle();
+                EnableControls(true);
+                m_savedGamePath.Clear();
             }
-
-            wxCommandEvent dummy;
-            OnNewGame(dummy);
-
-            if (m_toQuit) return;
-            UpdateTitle();
-            EnableControls(true);
-            m_savedGamePath.Clear();
+            else
+            {
+                ShowError();
+            }
+            delete[] file_path;
         }
-        else
-            ShowError();
     }
 }
 
@@ -747,14 +754,24 @@ void QSPFrame::OpenGameState(const wxString& fullPath)
 {
     if (wxFileExists(fullPath))
     {
-        if (!QSPOpenSavedGameFromFile(fullPath, QSP_TRUE))
-            ShowError();
+        QSP_CHAR *file_path = wxStringToQsp(fullPath);
+        if (file_path != nullptr)
+        {
+            if (!QSPOpenSavedGameFromFile(file_path, QSP_TRUE))
+                ShowError();
+            delete[] file_path;
+        }
     }
 }
 
 void QSPFrame::SaveGameState(const wxString &fullPath)
 {
-    QSPSaveGameAsFile(fullPath, QSP_TRUE);
+    QSP_CHAR *file_path = wxStringToQsp(fullPath);
+    if (file_path != nullptr)
+    {
+        QSPSaveGameAsFile(file_path, QSP_TRUE);
+        delete[] file_path;
+    }
     m_savedGamePath = fullPath;
 }
 
@@ -1107,8 +1124,13 @@ void QSPFrame::OnLinkClicked(wxHtmlLinkEvent& event)
         else if (href.Upper().StartsWith(wxT("EXEC:")))
         {
             wxString string = href.Mid(5);
-            if (m_toProcessEvents && !QSPExecString(string.c_str(), QSP_TRUE))
-                ShowError();
+            QSP_CHAR *exec_code = wxStringToQsp(string);
+            if (exec_code != nullptr)
+            {
+                if (m_toProcessEvents && !QSPExecString(exec_code, QSP_TRUE))
+                    ShowError();
+                delete[] exec_code;
+            }
         }
         else
             QSPTools::LaunchDefaultBrowser(href);
@@ -1147,7 +1169,12 @@ void QSPFrame::OnInputTextChange(wxCommandEvent& event)
 {
     wxString text(event.GetString());
     m_input->SetText(text, false);
-    QSPSetInputStrText(text.c_str());
+    QSP_CHAR *input_str = wxStringToQsp(text);
+    if (input_str != nullptr)
+    {
+        QSPSetInputStrText(input_str);
+        delete[] input_str;
+    }
 }
 
 void QSPFrame::OnInputTextEnter(wxCommandEvent& WXUNUSED(event))

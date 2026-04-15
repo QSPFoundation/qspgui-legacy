@@ -87,7 +87,37 @@
 
     static wxString qspToWxString(QSP_CHAR *s)
     {
-        return wxString(s);
+        if (!s) return wxEmptyString;
+
+        size_t char_count = 0;
+        while (s[char_count] != 0) {
+            char_count++;
+        }
+
+        return wxString((const char*)s,
+                        wxMBConvUTF16(),
+                        char_count * sizeof(QSP_CHAR));
+    }
+
+    static QSP_CHAR *wxStringToQsp(const wxString &wx_str)
+    {
+        if (wx_str.IsEmpty()) {
+            QSP_CHAR* empty_str = new QSP_CHAR[1];
+            empty_str[0] = 0;
+            return empty_str;
+        }
+
+        wxCharBuffer buffer = wx_str.mb_str(wxMBConvUTF16());
+        if (!buffer) { return nullptr; }
+
+        size_t bytes_count = buffer.length();
+        size_t chars_count = bytes_count / sizeof(QSP_CHAR);
+
+        QSP_CHAR* qsp_str = new QSP_CHAR[chars_count + 1];
+        std::memcpy(qsp_str, buffer.data(), bytes_count);
+        qsp_str[chars_count] = 0;
+
+        return qsp_str;
     }
 
     /* Helpers */
