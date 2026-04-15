@@ -9,7 +9,7 @@ set -e
 # Build
 mkdir -p ./build_packages/linux64_AppImage
 
-IMAGE=dockbuild/ubuntu1804-gcc7
+IMAGE=dockbuild/ubuntu2004-gcc9
 SCRIPT=build_packages/build_AppImage.sh
 
 SSH_DIR="$HOME/.ssh"
