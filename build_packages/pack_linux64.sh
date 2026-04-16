@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -euo pipefail
+set -eu
 
 # Validation
 [ ! -d "./build_packages" ] && echo "Run this script from the project root directory" && exit
