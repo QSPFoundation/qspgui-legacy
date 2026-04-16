@@ -20,7 +20,7 @@ cmake -S . -B "$REL_BUILD_DIR" \
   -DCMAKE_INSTALL_PREFIX="$REL_BUILD_DIR/out" \
   -DCMAKE_BUILD_TYPE=Release
 
-cmake --build "$REL_BUILD_DIR" --parallel
+cmake --build "$REL_BUILD_DIR" --parallel $(sysctl -n hw.ncpu)
 cmake --install "$REL_BUILD_DIR" --component Main --strip
 cpack -B "$REL_BUILD_DIR" --config "$REL_BUILD_DIR/CPackConfig.cmake"
 
