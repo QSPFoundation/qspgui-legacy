@@ -54,7 +54,7 @@ jobs:
           retention-days: 1
 
   build_linux_standard:
-    name: Build ${{ github.ref_name }} (Linux)
+    name: Build ${{ github.ref_name }} (Linux Standard)
     runs-on: ubuntu-latest
     needs: get_tag_metadata
     steps:
@@ -69,7 +69,7 @@ jobs:
           retention-days: 1
 
   build_linux_appimage:
-    name: Build ${{ github.ref_name }} (Linux)
+    name: Build ${{ github.ref_name }} (Linux AppImage)
     runs-on: ubuntu-latest
     needs: get_tag_metadata
     steps:
