@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -euo pipefail
 
 # Validation
 [ ! -d "./build_packages" ] && echo "Run this script from the project root directory" && exit
@@ -8,15 +8,18 @@ set -e
 
 # Build
 mkdir -p ./build_packages/linux64
+mkdir -p ./dist
 
-IMAGE=dockbuild/ubuntu2004-gcc9
-SCRIPT=build_packages/build_linux64.sh
-
+IMAGE="dockbuild/ubuntu2004-gcc9"
+SCRIPT="build_packages/build_linux64.sh"
 SSH_DIR="$HOME/.ssh"
+
 HOST_VOLUMES="-v $SSH_DIR:/home/$(id -un)/.ssh"
-USER_IDS="-e BUILDER_UID=$( id -u ) -e BUILDER_GID=$( id -g ) -e BUILDER_USER=$( id -un ) -e BUILDER_GROUP=$( id -gn )"
+USER_IDS="-e BUILDER_UID=$(id -u) -e BUILDER_GID=$(id -g) -e BUILDER_USER=$(id -un) -e BUILDER_GROUP=$(id -gn)"
 APP_ARGS="-e APP_VERSION=$RELEASE_VER"
-tty -s && TTY_ARGS="-ti" || TTY_ARGS=""
+
+TTY_ARGS=""
+[ -t 0 ] && TTY_ARGS="-ti"
 
 docker run --rm \
   -v "$(pwd)":/work \
@@ -24,7 +27,7 @@ docker run --rm \
   $HOST_VOLUMES \
   $USER_IDS \
   $APP_ARGS \
-  $IMAGE "/work/$SCRIPT"
+  "$IMAGE" "/work/$SCRIPT"
 
 # Move to dist
 mv ./build_packages/linux64/packages/*.rpm "./dist/qspgui-$RELEASE_VER-linux64.rpm"

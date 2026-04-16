@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get annotation and cleaned tag
         id: tag-data
@@ -37,48 +39,63 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   build_win:
-    name: Build and upload ${{ github.ref_name }} (Windows)
+    name: Build ${{ github.ref_name }} (Windows)
     runs-on: ubuntu-latest
     needs: get_tag_metadata
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Build release
         run: ./build_release_windows.sh "${{ needs.get_tag_metadata.outputs.clean_tag }}"
-      - name: Publish release
-        uses: softprops/action-gh-release@v2
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          make_latest: true
-          name: ${{ needs.get_tag_metadata.outputs.clean_tag }}
-          body: ${{ needs.get_tag_metadata.outputs.annotation }}
-          files: dist/*
+          name: win-artifacts
+          path: dist/*
+          retention-days: 1
+
   build_linux:
-    name: Build and upload ${{ github.ref_name }} (Linux)
+    name: Build ${{ github.ref_name }} (Linux)
     runs-on: ubuntu-latest
     needs: get_tag_metadata
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Build release
         run: ./build_release_linux.sh "${{ needs.get_tag_metadata.outputs.clean_tag }}"
-      - name: Publish release
-        uses: softprops/action-gh-release@v2
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          make_latest: true
-          name: ${{ needs.get_tag_metadata.outputs.clean_tag }}
-          body: ${{ needs.get_tag_metadata.outputs.annotation }}
-          files: dist/*
+          name: linux-artifacts
+          path: dist/*
+          retention-days: 1
+
   build_macos:
-    name: Build and upload ${{ github.ref_name }} (MacOS)
+    name: Build ${{ github.ref_name }} (MacOS)
     runs-on: macos-latest
     needs: get_tag_metadata
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Build release
         run: ./build_release_macos.sh "${{ needs.get_tag_metadata.outputs.clean_tag }}"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: dist/*
+          retention-days: 1
+
+  publish_release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: [get_tag_metadata, build_win, build_linux, build_macos]
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           make_latest: true
           name: ${{ needs.get_tag_metadata.outputs.clean_tag }}
