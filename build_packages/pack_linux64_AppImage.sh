@@ -18,6 +18,8 @@ HOST_VOLUMES="-v $SSH_DIR:/home/$(id -un)/.ssh"
 USER_IDS="-e BUILDER_UID=$(id -u) -e BUILDER_GID=$(id -g) -e BUILDER_USER=$(id -un) -e BUILDER_GROUP=$(id -gn)"
 APP_ARGS="-e APP_VERSION=$RELEASE_VER"
 
+DOCKER_OPTS="--cap-add SYS_ADMIN --device /dev/fuse --security-opt apparmor:unconfined"
+
 TTY_ARGS=""
 [ -t 0 ] && TTY_ARGS="-ti"
 
@@ -25,6 +27,7 @@ docker run --rm \
   -v "$(pwd)":/work \
   $TTY_ARGS \
   $HOST_VOLUMES \
+  $DOCKER_OPTS \
   $USER_IDS \
   $APP_ARGS \
   "$IMAGE" "/work/$SCRIPT"

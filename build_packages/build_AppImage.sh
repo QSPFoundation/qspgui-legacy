@@ -9,7 +9,9 @@ sudo apt-get install -y --no-install-recommends \
   ninja-build \
   libgtk-3-dev \
   wget \
-  ca-certificates
+  ca-certificates \
+  fuse \
+  file
 sudo rm -rf /var/lib/apt/lists/*
 
 REL_BUILD_DIR="./build_packages/linux64_AppImage"
@@ -29,5 +31,5 @@ wget -q --show-progress -c "https://github.com/linuxdeploy/linuxdeploy/releases/
 chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-gtk.sh
 
 LIB_PATH=$(find ./AppDir -type d -exec printf ":%s" {} +)
-export APPIMAGE_EXTRACT_AND_RUN=1
+export VERSION="$APP_VERSION"
 LD_LIBRARY_PATH="${LIB_PATH#:}" ./linuxdeploy-x86_64.AppImage --appdir ./AppDir --plugin gtk --output appimage
