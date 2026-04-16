@@ -6,6 +6,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
+  ninja-build \
   libgtk-3-dev \
   wget \
   ca-certificates
@@ -13,7 +14,7 @@ sudo rm -rf /var/lib/apt/lists/*
 
 REL_BUILD_DIR="./build_packages/linux64_AppImage"
 
-cmake -S . -B "$REL_BUILD_DIR" \
+cmake -S . -B "$REL_BUILD_DIR" -GNinja \
   -DAPP_VERSION="$APP_VERSION" \
   -DCMAKE_INSTALL_PREFIX=/usr \
   -DCMAKE_BUILD_TYPE=Release

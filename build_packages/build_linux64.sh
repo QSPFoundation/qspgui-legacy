@@ -6,13 +6,14 @@ export DEBIAN_FRONTEND=noninteractive
 
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
+  ninja-build \
   libgtk-3-dev \
   rpm
 sudo rm -rf /var/lib/apt/lists/*
 
 REL_BUILD_DIR=./build_packages/linux64
 
-cmake -S . -B "$REL_BUILD_DIR" \
+cmake -S . -B "$REL_BUILD_DIR" -GNinja \
   -DAPP_VERSION="$APP_VERSION" \
   -DCPACK_OUTPUT_FILE_PREFIX="$REL_BUILD_DIR/packages" \
   -DCPACK_GENERATOR="TGZ;DEB;RPM" \

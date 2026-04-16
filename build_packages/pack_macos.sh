@@ -11,7 +11,7 @@ REL_BUILD_DIR="./build_packages/macos"
 mkdir -p "$REL_BUILD_DIR"
 mkdir -p "./dist"
 
-cmake -S . -B "$REL_BUILD_DIR" \
+cmake -S . -B "$REL_BUILD_DIR" -GNinja \
   -DAPP_VERSION="$RELEASE_VER" \
   -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=11 \

@@ -73,6 +73,8 @@ jobs:
     runs-on: macos-latest
     needs: get_tag_metadata
     steps:
+      - name: Install dependencies (MacOS)
+        run: brew install ninja
       - uses: actions/checkout@v4
       - name: Build release
         run: ./build_release_macos.sh "${{ needs.get_tag_metadata.outputs.clean_tag }}"
