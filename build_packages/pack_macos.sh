@@ -9,7 +9,6 @@ set -eu
 # Build
 REL_BUILD_DIR="./build_packages/macos"
 mkdir -p "$REL_BUILD_DIR"
-mkdir -p "./dist"
 
 cmake -S . -B "$REL_BUILD_DIR" -GNinja \
   -DAPP_VERSION="$RELEASE_VER" \

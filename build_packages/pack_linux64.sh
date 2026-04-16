@@ -8,7 +8,6 @@ set -eu
 
 # Build
 mkdir -p ./build_packages/linux64
-mkdir -p ./dist
 
 IMAGE="dockbuild/ubuntu2004-gcc9"
 SCRIPT="build_packages/build_linux64.sh"
@@ -18,8 +17,7 @@ HOST_VOLUMES="-v $SSH_DIR:/home/$(id -un)/.ssh"
 USER_IDS="-e BUILDER_UID=$(id -u) -e BUILDER_GID=$(id -g) -e BUILDER_USER=$(id -un) -e BUILDER_GROUP=$(id -gn)"
 APP_ARGS="-e APP_VERSION=$RELEASE_VER"
 
-TTY_ARGS=""
-[ -t 0 ] && TTY_ARGS="-ti"
+tty -s && TTY_ARGS="-ti" || TTY_ARGS=""
 
 docker run --rm \
   -v "$(pwd)":/work \

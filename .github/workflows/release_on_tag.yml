@@ -53,33 +53,18 @@ jobs:
           path: dist/*
           retention-days: 1
 
-  build_linux_standard:
-    name: Build ${{ github.ref_name }} (Linux Standard)
+  build_linux:
+    name: Build ${{ github.ref_name }} (Linux)
     runs-on: ubuntu-latest
     needs: get_tag_metadata
     steps:
       - uses: actions/checkout@v4
       - name: Build release
-        run: ./build_release_linux_standard.sh "${{ needs.get_tag_metadata.outputs.clean_tag }}"
+        run: ./build_release_linux.sh "${{ needs.get_tag_metadata.outputs.clean_tag }}"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-standard-artifacts
-          path: dist/*
-          retention-days: 1
-
-  build_linux_appimage:
-    name: Build ${{ github.ref_name }} (Linux AppImage)
-    runs-on: ubuntu-latest
-    needs: get_tag_metadata
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build release
-        run: ./build_release_linux_appimage.sh "${{ needs.get_tag_metadata.outputs.clean_tag }}"
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-appimage-artifacts
           path: dist/*
           retention-days: 1
 
@@ -103,7 +88,7 @@ jobs:
   publish_release:
     name: Publish Release
     runs-on: ubuntu-latest
-    needs: [get_tag_metadata, build_win, build_linux_standard, build_linux_appimage, build_macos]
+    needs: [get_tag_metadata, build_win, build_linux, build_macos]
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4

@@ -8,7 +8,6 @@ set -eu
 
 # Build
 mkdir -p ./build_packages/linux64_AppImage
-mkdir -p ./dist
 
 IMAGE="dockbuild/ubuntu2004-gcc9"
 SCRIPT="build_packages/build_AppImage.sh"
@@ -17,11 +16,10 @@ SSH_DIR="$HOME/.ssh"
 HOST_VOLUMES="-v $SSH_DIR:/home/$(id -un)/.ssh"
 USER_IDS="-e BUILDER_UID=$(id -u) -e BUILDER_GID=$(id -g) -e BUILDER_USER=$(id -un) -e BUILDER_GROUP=$(id -gn)"
 APP_ARGS="-e APP_VERSION=$RELEASE_VER"
-
+# Allow usage of fuse
 DOCKER_OPTS="--cap-add SYS_ADMIN --device /dev/fuse --security-opt apparmor:unconfined"
 
-TTY_ARGS=""
-[ -t 0 ] && TTY_ARGS="-ti"
+tty -s && TTY_ARGS="-ti" || TTY_ARGS=""
 
 docker run --rm \
   -v "$(pwd)":/work \
@@ -33,5 +31,5 @@ docker run --rm \
   "$IMAGE" "/work/$SCRIPT"
 
 # Cleanup & Move to dist
-rm -f ./build_packages/linux64_AppImage/linuxdeploy-*.AppImage
+rm ./build_packages/linux64_AppImage/linuxdeploy-*.AppImage
 mv ./build_packages/linux64_AppImage/*.AppImage "./dist/QSP_Classic-$RELEASE_VER-x86_64.AppImage"

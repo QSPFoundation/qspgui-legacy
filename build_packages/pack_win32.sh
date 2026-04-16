@@ -9,7 +9,6 @@ set -eu
 # Build
 REL_BUILD_DIR="./build_packages/win32"
 mkdir -p "$REL_BUILD_DIR"
-mkdir -p "./dist"
 
 DOCKCROSS_IMG="dockcross/windows-static-x86:20240812-60fa1b0"
 DOCKCROSS_SCRIPT="./build_packages/dockcross-windows-static-x86"
