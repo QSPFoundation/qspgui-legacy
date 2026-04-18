@@ -2,8 +2,6 @@
 
 set -eu
 
-export DEBIAN_FRONTEND=noninteractive
-
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
   ninja-build \
