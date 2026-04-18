@@ -38,10 +38,10 @@
     #include "pathprovider.h"
     #include "updateappdialog.h"
 
-    #include "qspgui_config.h"
+    #include "qspgui_legacy_config.h"
 
-    #define QSP_VER wxT(QSPGUI_VER_STR)
-    #define QSP_LOGO wxT("Quest Soft Player ") QSP_VER
+    #define QSP_VER wxT(QSPGUI_LEGACY_VER_STR)
+    #define QSP_LOGO wxT("Quest Soft Legacy Player ") QSP_VER
 
     enum
     {

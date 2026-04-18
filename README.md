@@ -1,4 +1,4 @@
-# Classic QSP Legacy player
+# Classic Legacy QSP player
 
 Please check [Releases](https://github.com/QSPFoundation/qspgui-legacy/releases) section.
 

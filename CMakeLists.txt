@@ -6,7 +6,7 @@ endif()
 
 string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" CMAKE_APP_VERSION "${APP_VERSION}")
 
-project(qspgui VERSION ${CMAKE_APP_VERSION} HOMEPAGE_URL "https://qsp.org")
+project(qspgui-legacy VERSION ${CMAKE_APP_VERSION} HOMEPAGE_URL "https://qsp.org")
 
 include(CMakePackageConfigHelpers)
 include(GenerateExportHeader)
@@ -104,61 +104,61 @@ else()
 	FetchContent_MakeAvailable(wxWidgets-custom)
 endif()
 
-configure_file(qspgui_config.h.cmakein qspgui_config.h @ONLY)
+configure_file(qspgui_legacy_config.h.cmakein qspgui_legacy_config.h @ONLY)
 
-set(QSPGUI_SOURCES
-	qspgui/animwin.cpp
-	qspgui/app.cpp
-	qspgui/callbacks_gui.cpp
-	qspgui/comtools.cpp
-	qspgui/frame.cpp
-	qspgui/imgcanvas.cpp
-	qspgui/initevent.cpp
-	qspgui/inputbox.cpp
-	qspgui/inputdlg.cpp
-	qspgui/listbox.cpp
-	qspgui/msgdlg.cpp
-	qspgui/textbox.cpp
-	qspgui/transhelper.cpp
-	qspgui/updateappdialog.cpp
-	qspgui/sound/sound_engine.c
+set(QSPGUI_LEGACY_SOURCES
+	qspgui-legacy/animwin.cpp
+	qspgui-legacy/app.cpp
+	qspgui-legacy/callbacks_gui.cpp
+	qspgui-legacy/comtools.cpp
+	qspgui-legacy/frame.cpp
+	qspgui-legacy/imgcanvas.cpp
+	qspgui-legacy/initevent.cpp
+	qspgui-legacy/inputbox.cpp
+	qspgui-legacy/inputdlg.cpp
+	qspgui-legacy/listbox.cpp
+	qspgui-legacy/msgdlg.cpp
+	qspgui-legacy/textbox.cpp
+	qspgui-legacy/transhelper.cpp
+	qspgui-legacy/updateappdialog.cpp
+	qspgui-legacy/sound/sound_engine.c
 )
 if (WIN32)
-	list(APPEND QSPGUI_SOURCES qspgui/rsc/res.rc)
+	list(APPEND QSPGUI_LEGACY_SOURCES qspgui-legacy/rsc/res.rc)
 	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/misc/common/icons/logo.ico" "${CMAKE_BINARY_DIR}/misc/icons/logo.ico" COPYONLY)
-	add_executable(qspgui WIN32 ${QSPGUI_SOURCES})
-	target_compile_definitions(qspgui PRIVATE _CRT_SECURE_NO_WARNINGS)
-	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT qspgui)
+	add_executable(qspgui-legacy WIN32 ${QSPGUI_LEGACY_SOURCES})
+	target_compile_definitions(qspgui-legacy PRIVATE _CRT_SECURE_NO_WARNINGS)
+	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT qspgui-legacy)
 	if (MSVC)
-		target_link_options(qspgui PRIVATE /STACK:4194304)
+		target_link_options(qspgui-legacy PRIVATE /STACK:4194304)
 	else()
-		target_link_options(qspgui PRIVATE -Wl,--stack,4194304)
+		target_link_options(qspgui-legacy PRIVATE -Wl,--stack,4194304)
 	endif()
 elseif (APPLE)
-	add_executable(qspgui MACOSX_BUNDLE ${QSPGUI_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/misc/macos/icon.icns")
-	set_target_properties(qspgui PROPERTIES
-		MACOSX_BUNDLE_BUNDLE_NAME "QSP Classic"
+	add_executable(qspgui-legacy MACOSX_BUNDLE ${QSPGUI_LEGACY_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/misc/macos/icon.icns")
+	set_target_properties(qspgui-legacy PROPERTIES
+		MACOSX_BUNDLE_BUNDLE_NAME "QSP Legacy Classic"
 		MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
 		MACOSX_BUNDLE_COPYRIGHT "(c) QSP Foundation"
-		MACOSX_BUNDLE_GUI_IDENTIFIER "org.qsp.qspgui"
+		MACOSX_BUNDLE_GUI_IDENTIFIER "org.qsp.qspgui.legacy"
 		MACOSX_BUNDLE_ICON_FILE "icon.icns"
-		MACOSX_BUNDLE_INFO_STRING "QSP Classic"
+		MACOSX_BUNDLE_INFO_STRING "QSP Legacy Classic"
 		MACOSX_BUNDLE_LONG_VERSION_STRING "${CMAKE_PROJECT_VERSION}"
 		MACOSX_BUNDLE_SHORT_VERSION_STRING "${CMAKE_PROJECT_VERSION}"
 		RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/misc/macos/icon.icns")
 elseif (UNIX)
-	add_executable(qspgui ${QSPGUI_SOURCES})
+	add_executable(qspgui-legacy ${QSPGUI_LEGACY_SOURCES})
 else()
 	message(FATAL_ERROR "Platform is not supported")
 endif()
 
-target_compile_definitions(qspgui PRIVATE _UNICODE)
-target_link_libraries(qspgui PRIVATE qsp-legacy wxbase wxcore wxadv wxaui wxnet wxhtml)
+target_compile_definitions(qspgui-legacy PRIVATE _UNICODE)
+target_link_libraries(qspgui-legacy PRIVATE qsp-legacy wxbase wxcore wxadv wxaui wxnet wxhtml)
 
 # Installation
 
 if (WIN32)
-	set(BUNDLE_NAME qspgui.exe)
+	set(BUNDLE_NAME qspgui_legacy.exe)
 	set(BINDIR ${CMAKE_INSTALL_BINDIR})
 	set(LIBDIR ${CMAKE_INSTALL_LIBDIR})
 	set(RLIBDIR ${CMAKE_INSTALL_BINDIR})
@@ -166,7 +166,7 @@ if (WIN32)
 	set(DATADIR ${CMAKE_INSTALL_BINDIR})
 	set(INSTALL_RPATH "")
 elseif (APPLE)
-	set(BUNDLE_NAME qspgui.app)
+	set(BUNDLE_NAME qspgui_legacy.app)
 	set(BINDIR ${BUNDLE_NAME}/Contents/MacOS)
 	set(LIBDIR ${BUNDLE_NAME}/Contents/Frameworks)
 	set(RLIBDIR ${BUNDLE_NAME}/Contents/Frameworks)
@@ -174,19 +174,19 @@ elseif (APPLE)
 	set(DATADIR ${BUNDLE_NAME}/Contents/Resources)
 	set(INSTALL_RPATH "@loader_path;@loader_path/../Frameworks")
 elseif (UNIX)
-	set(BUNDLE_NAME qspgui)
+	set(BUNDLE_NAME qspgui_legacy)
 	set(BINDIR ${CMAKE_INSTALL_BINDIR})
 	set(LIBDIR ${CMAKE_INSTALL_LIBDIR})
 	set(RLIBDIR ${CMAKE_INSTALL_LIBDIR})
 	set(HEADERDIR ${CMAKE_INSTALL_INCLUDEDIR})
-	set(DATADIR ${CMAKE_INSTALL_DATADIR}/qspgui)
+	set(DATADIR ${CMAKE_INSTALL_DATADIR}/qspgui-legacy)
 	set(INSTALL_RPATH "$ORIGIN;$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 else()
 	message(FATAL_ERROR "Platform is not supported")
 endif()
 
-set_target_properties(qspgui qsp-legacy PROPERTIES INSTALL_RPATH "${INSTALL_RPATH}")
-install(TARGETS qspgui qsp-legacy
+set_target_properties(qspgui-legacy qsp-legacy PROPERTIES INSTALL_RPATH "${INSTALL_RPATH}")
+install(TARGETS qspgui-legacy qsp-legacy
 		COMPONENT Main
 		RUNTIME DESTINATION ${BINDIR}
 		LIBRARY DESTINATION ${RLIBDIR}
@@ -195,7 +195,7 @@ install(TARGETS qspgui qsp-legacy
 		PUBLIC_HEADER DESTINATION ${HEADERDIR}
 		BUNDLE DESTINATION .)
 
-install(IMPORTED_RUNTIME_ARTIFACTS qspgui
+install(IMPORTED_RUNTIME_ARTIFACTS qspgui-legacy
 		COMPONENT Main
 		RUNTIME DESTINATION ${BINDIR}
 		LIBRARY DESTINATION ${RLIBDIR}
@@ -219,7 +219,7 @@ if (APPLE)
 			fixup_bundle(\"${CMAKE_INSTALL_PREFIX}/${BUNDLE_NAME}\" \"\" \"${DEP_DIRS}\")"
 			COMPONENT Main)
 elseif (UNIX)
-	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/misc/linux/qspgui.desktop" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications" COMPONENT Main)
+	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/misc/linux/qspgui_legacy.desktop" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications" COMPONENT Main)
 	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/misc/common/icons/qsp.svg" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps" COMPONENT Main)
 endif()
 
@@ -229,12 +229,12 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/misc/common/sound" DESTINATION "$
 # Packaging
 
 if (WIN32)
-	set(CPACK_PACKAGE_NAME "QSP Classic")
+	set(CPACK_PACKAGE_NAME "QSP Legacy Classic")
 else()
 	set(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
 endif()
 set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "QSP Classic player")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "QSP Legacy Classic player")
 set(CPACK_PACKAGE_VENDOR "QSP Foundation")
 set(CPACK_PACKAGE_CONTACT "byte@qsp.org")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
@@ -250,29 +250,29 @@ set(CPACK_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 
-set(CPACK_PACKAGE_EXECUTABLES qspgui "QSP Classic")
-set(CPACK_CREATE_DESKTOP_LINKS qspgui)
-set(CPACK_NSIS_INSTALLED_ICON_NAME "${BINDIR}\\qspgui.exe")
+set(CPACK_PACKAGE_EXECUTABLES qspgui-legacy "QSP Legacy Classic")
+set(CPACK_CREATE_DESKTOP_LINKS qspgui-legacy)
+set(CPACK_NSIS_INSTALLED_ICON_NAME "${BINDIR}\\qspgui_legacy.exe")
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_MODIFY_PATH ON)
 set(CPACK_NSIS_MANIFEST_DPI_AWARE ON)
 
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
-     WriteRegStr HKCR '.qsp' '' 'QSPClassic'
-     WriteRegStr HKCR '.gam' '' 'QSPClassic'
-     WriteRegStr HKCR 'QSPClassic' '' 'QSP Game'
-     WriteRegStr HKCR 'QSPClassic\\shell' '' 'open'
-     WriteRegStr HKCR 'QSPClassic\\DefaultIcon' \\
-                      '' '$INSTDIR\\${BINDIR}\\qspgui.exe,0'
-     WriteRegStr HKCR 'QSPClassic\\shell\\open\\command' \\
-                      '' '$INSTDIR\\${BINDIR}\\qspgui.exe \"%1\"'
+     WriteRegStr HKCR '.qsp' '' 'QSPLegacyClassic'
+     WriteRegStr HKCR '.gam' '' 'QSPLegacyClassic'
+     WriteRegStr HKCR 'QSPLegacyClassic' '' 'QSP Game'
+     WriteRegStr HKCR 'QSPLegacyClassic\\shell' '' 'open'
+     WriteRegStr HKCR 'QSPLegacyClassic\\DefaultIcon' \\
+                      '' '$INSTDIR\\${BINDIR}\\qspgui_legacy.exe,0'
+     WriteRegStr HKCR 'QSPLegacyClassic\\shell\\open\\command' \\
+                      '' '$INSTDIR\\${BINDIR}\\qspgui_legacy.exe \"%1\"'
      System::Call \\
        'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
      ")
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
      DeleteRegKey HKCR '.qsp'
      DeleteRegKey HKCR '.gam'
-     DeleteRegKey HKCR 'QSPClassic'
+     DeleteRegKey HKCR 'QSPLegacyClassic'
      ")
 
 set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
@@ -281,4 +281,4 @@ set(CPACK_COMPONENTS_ALL Main)
 
 include(CPack)
 
-cpack_add_component(Main DISPLAY_NAME "QSP Player" REQUIRED)
+cpack_add_component(Main DISPLAY_NAME "QSP Legacy Player" REQUIRED)
