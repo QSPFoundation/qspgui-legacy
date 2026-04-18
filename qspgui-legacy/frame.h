@@ -41,7 +41,7 @@
     #include "qspgui_legacy_config.h"
 
     #define QSP_VER wxT(QSPGUI_LEGACY_VER_STR)
-    #define QSP_LOGO wxT("Quest Soft Legacy Player ") QSP_VER
+    #define QSP_LOGO wxT("Quest Soft Player Legacy ") QSP_VER
 
     enum
     {
