@@ -305,11 +305,28 @@ int QSPCallbacks::Input(QSP_CHAR *text, QSP_CHAR *buffer, int maxLen)
     m_frame->EnableControls(false);
     dialog.ShowModal();
     m_frame->EnableControls(true);
-#ifdef _UNICODE
-    wcsncpy((wchar_t *)buffer, dialog.GetText().c_str(), maxLen);
-#else
-    strncpy(buffer, dialog.GetText().c_str(), maxLen);
-#endif
+
+    wxString wx_str = dialog.GetText();
+    if (wx_str.IsEmpty())
+    {
+        buffer[0] = 0;
+        return 0;
+    }
+
+    wxCharBuffer tempBuffer = wx_str.mb_str(wxMBConvUTF16());
+    if (!tempBuffer)
+    {
+        buffer[0] = 0;
+        return 0;
+    }
+
+    size_t chars_count = tempBuffer.length() / sizeof(QSP_CHAR);
+    size_t copy_chars = (chars_count < (size_t)maxLen) ? chars_count : (size_t)maxLen;
+
+    std::memcpy(buffer, tempBuffer.data(), copy_chars * sizeof(QSP_CHAR));
+
+    buffer[copy_chars] = 0;
+
     return 0;
 }
 
