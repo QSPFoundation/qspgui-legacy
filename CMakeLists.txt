@@ -137,6 +137,7 @@ if (WIN32)
 elseif (APPLE)
 	add_executable(qspgui-legacy MACOSX_BUNDLE ${QSPGUI_LEGACY_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/misc/macos/icon.icns")
 	set_target_properties(qspgui-legacy PROPERTIES
+		OUTPUT_NAME "qspgui_legacy"
 		MACOSX_BUNDLE_BUNDLE_NAME "QSP Legacy Classic"
 		MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
 		MACOSX_BUNDLE_COPYRIGHT "(c) QSP Foundation"
