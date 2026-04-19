@@ -28,6 +28,6 @@ docker run --rm \
   "$IMAGE" "/work/$SCRIPT"
 
 # Move to dist
-mv ./build_packages/linux64/packages/*.rpm "./dist/qspgui-$RELEASE_VER-linux64.rpm"
-mv ./build_packages/linux64/packages/*.deb "./dist/qspgui-$RELEASE_VER-linux64.deb"
-mv ./build_packages/linux64/packages/*.tar.gz "./dist/qspgui-$RELEASE_VER-linux64.tar.gz"
+mv ./build_packages/linux64/packages/*.rpm "./dist/qspgui-legacy-$RELEASE_VER-linux64.rpm"
+mv ./build_packages/linux64/packages/*.deb "./dist/qspgui-legacy-$RELEASE_VER-linux64.deb"
+mv ./build_packages/linux64/packages/*.tar.gz "./dist/qspgui-legacy-$RELEASE_VER-linux64.tar.gz"

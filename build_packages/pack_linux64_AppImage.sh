@@ -32,4 +32,4 @@ docker run --rm \
 
 # Cleanup & Move to dist
 rm ./build_packages/linux64_AppImage/linuxdeploy-*.AppImage
-mv ./build_packages/linux64_AppImage/*.AppImage "./dist/QSP_Classic-$RELEASE_VER-x86_64.AppImage"
+mv ./build_packages/linux64_AppImage/*.AppImage "./dist/QSP_Legacy_Classic-$RELEASE_VER-x86_64.AppImage"

@@ -30,5 +30,5 @@ fi
 "$DOCKCROSS_SCRIPT" cpack -B "$REL_BUILD_DIR" --config "$REL_BUILD_DIR/CPackConfig.cmake"
 
 # Move to dist
-mv "$REL_BUILD_DIR"/packages/*.zip "./dist/qspgui-$RELEASE_VER-win32.zip"
-mv "$REL_BUILD_DIR"/packages/*.exe "./dist/qspgui-$RELEASE_VER-win32.exe"
+mv "$REL_BUILD_DIR"/packages/*.zip "./dist/qspgui-legacy-$RELEASE_VER-win32.zip"
+mv "$REL_BUILD_DIR"/packages/*.exe "./dist/qspgui-legacy-$RELEASE_VER-win32.exe"
