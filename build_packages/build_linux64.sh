@@ -6,7 +6,8 @@ sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
   ninja-build \
   libgtk-3-dev \
-  rpm
+  rpm \
+  file
 sudo rm -rf /var/lib/apt/lists/*
 
 REL_BUILD_DIR=./build_packages/linux64
