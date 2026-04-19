@@ -3,5 +3,5 @@ Name=QSP Classic
 Type=Application
 Terminal=false
 Categories=Game;Development;
-Exec=qspgui
+Exec=qspgui-legacy
 Icon=qsp
