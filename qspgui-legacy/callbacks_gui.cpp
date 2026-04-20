@@ -213,8 +213,6 @@ int QSPCallbacks::ShowPane(int type, QSP_BOOL toShow)
         m_frame->ShowPane(ID_OBJECTS, toShow != QSP_FALSE);
     if (type & QSP_WIN_INPUT)
         m_frame->ShowPane(ID_INPUT, toShow != QSP_FALSE);
-    // if (type & QSP_WIN_VIEW)
-    //     m_frame->ShowPane(ID_VIEWPIC, toShow != QSP_FALSE);
     return 0;
 }
 
