@@ -15,152 +15,143 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef CALLBACKS_GUI_H
-    #define CALLBACKS_GUI_H
+#pragma once
 
-    #include <map>
-    #include <qsp_default.h>
-    #include "frame.h"
-    #include "msgdlg.h"
-    #include "inputdlg.h"
-    #include "sound/sound_engine.h"
+#include <map>
+#include <vector>
+#include <memory>
+#include <qsp_default.h>
+#include "frame.h"
+#include "msgdlg.h"
+#include "inputdlg.h"
+#include "sound/sound_engine.h"
 
-    typedef struct QSPSound_
+struct QSPSound
+{
+    ma_sound_file Sound{nullptr};
+    int Volume{0};
+
+    bool Play(const wxString& file, const int volume, const float volumeCoeff)
     {
-        ma_sound_file Sound;
-        int Volume;
-
-        QSPSound_()
+        Sound = sound_play_file_w(file.c_str());
+        if (Sound)
         {
-            Sound = 0;
-            Volume = 0;
+            SetVolume(volume, volumeCoeff);
+            return true;
         }
-
-        bool Play(const wxString& file, int volume, float volumeCoeff)
-        {
-            #ifdef _UNICODE
-                Sound = sound_play_file_w(file.c_str());
-            #else
-                Sound = sound_play_file(file.c_str());
-            #endif
-            if (Sound)
-            {
-                SetVolume(volume, volumeCoeff);
-                return true;
-            }
-            return false;
-        }
-
-        void SetVolume(int volume, float volumeCoeff)
-        {
-            if (Sound)
-            {
-                Volume = volume;
-                sound_set_volume(Sound, volumeCoeff * volume / 100.0f);
-            }
-        }
-
-        bool IsPlaying() const
-        {
-            if (Sound)
-                return (bool)sound_is_playing(Sound);
-            return false;
-        }
-
-        void Close()
-        {
-            if (Sound)
-            {
-                sound_close_file(Sound);
-                Sound = 0;
-            }
-        }
-    } QSPSound;
-
-    typedef std::map<wxString, QSPSound> QSPSounds;
-    typedef std::map<wxString, wxString> QSPVersionInfoValues;
-
-    static bool qspIsEmpty(QSP_CHAR *s)
-    {
-        return s;
+        return false;
     }
 
-    static wxString qspToWxString(QSP_CHAR *s)
+    void SetVolume(const int volume, const float volumeCoeff)
     {
-        if (!s) return wxEmptyString;
-
-        size_t char_count = 0;
-        while (s[char_count] != 0) {
-            char_count++;
+        if (Sound)
+        {
+            Volume = volume;
+            sound_set_volume(Sound, volumeCoeff * volume / 100.0f);
         }
-
-        return wxString((const char*)s,
-                        wxMBConvUTF16(),
-                        char_count * sizeof(QSP_CHAR));
     }
 
-    static QSP_CHAR *wxStringToQsp(const wxString &wx_str)
+    [[nodiscard]] bool IsPlaying() const
     {
-        if (wx_str.IsEmpty()) {
-            QSP_CHAR* empty_str = new QSP_CHAR[1];
-            empty_str[0] = 0;
-            return empty_str;
-        }
-
-        wxCharBuffer buffer = wx_str.mb_str(wxMBConvUTF16());
-        if (!buffer) { return nullptr; }
-
-        size_t bytes_count = buffer.length();
-        size_t chars_count = bytes_count / sizeof(QSP_CHAR);
-
-        QSP_CHAR* qsp_str = new QSP_CHAR[chars_count + 1];
-        std::memcpy(qsp_str, buffer.data(), bytes_count);
-        qsp_str[chars_count] = 0;
-
-        return qsp_str;
+        return Sound && static_cast<bool>(sound_is_playing(Sound));
     }
 
-    /* Helpers */
-    #define QSP_STATIC_LEN(x) (sizeof(x) / sizeof(QSP_CHAR) - 1)
-
-    class QSPCallbacks
+    void Close()
     {
-    public:
-        // Methods
-        static void Init(QSPFrame *frame);
-        static void DeInit();
-        static void SetOverallVolume(float coeff);
+        if (Sound)
+        {
+            sound_close_file(Sound);
+            Sound = nullptr;
+        }
+    }
+};
 
-        // Callbacks
-        static int RefreshInt(QSP_BOOL isForced, QSP_BOOL isNewDesc);
-        static int SetTimer(int msecs);
-        static int SetInputStrText(QSP_CHAR *text);
-        static int IsPlay(QSP_CHAR *file);
-        static int CloseFile(QSP_CHAR *file);
-        static int PlayFile(QSP_CHAR *file, int volume);
-        static int ShowPane(int type, QSP_BOOL toShow);
-        static int Sleep(int msecs);
-        static int GetMSCount();
-        static int Msg(QSP_CHAR *str);
-        static int ShowMenu(QSPListItem *items, int count);
-        static int Input(QSP_CHAR *text, QSP_CHAR *buffer, int maxLen);
-        static int ShowImage(QSP_CHAR *file);
-        static int OpenGame(QSP_CHAR *file, QSP_BOOL isAddLocs);
-        static int OpenGameStatus(QSP_CHAR *file);
-        static int SaveGameStatus(QSP_CHAR *file);
-    private:
-        // Internal methods
-        static bool SetVolume(QSP_CHAR *file, int volume);
-        static void UpdateSounds();
+using QSPSounds = std::map<wxString, QSPSound>;
+using QSPVersionInfoValues = std::map<wxString, wxString>;
 
-        // Fields
-        static QSPFrame *m_frame;
-        static bool m_isHtml;
-        static QSPSounds m_sounds;
-        static float m_volumeCoeff;
-        static QSPVersionInfoValues m_versionInfo;
+inline bool qspGetVar(const char16_t* name, int* val)
+{
+    const auto* qspName = reinterpret_cast<QSP_CHAR*>(const_cast<char16_t*>(name));
+    return QSPGetNumVarValue(qspName, 0, val) != 0;
+}
 
-        static const int MAX_LIST_ITEMS = 1000;
+inline bool qspGetStr(const char16_t* name, QSP_CHAR** val)
+{
+    const auto* qspName = reinterpret_cast<QSP_CHAR*>(const_cast<char16_t*>(name));
+    return QSPGetStrVarValue(qspName, 0, val) != 0;
+}
+
+inline bool qspIsEmpty(const QSP_CHAR *s)
+{
+    return s != nullptr && s[0] == 0;
+}
+
+inline wxString qspToWxString(const QSP_CHAR *s)
+{
+    if (!s) return {};
+
+    return wxString {
+        reinterpret_cast<const char*>(s),
+        wxMBConvUTF16()
     };
+}
 
-#endif
+inline std::unique_ptr<QSP_CHAR[]> wxStringToQsp(const wxString &wx_str)
+{
+    if (wx_str.IsEmpty()) {
+        auto empty_str = std::make_unique<QSP_CHAR[]>(1);
+        empty_str[0] = 0;
+        return empty_str;
+    }
+
+    wxCharBuffer buffer = wx_str.mb_str(wxMBConvUTF16());
+    if (!buffer) return nullptr;
+
+    const size_t bytes_count = buffer.length();
+    const size_t chars_count = bytes_count / sizeof(QSP_CHAR);
+
+    auto qsp_str = std::make_unique<QSP_CHAR[]>(chars_count + 1);
+    std::memcpy(qsp_str.get(), buffer.data(), bytes_count);
+    qsp_str[chars_count] = 0;
+
+    return qsp_str;
+}
+
+#define QSP_STATIC_LEN(x) (sizeof(x) / sizeof(QSP_CHAR) - 1)
+
+class QSPCallbacks
+{
+public:
+    static void Init(QSPFrame *frame);
+    static void DeInit();
+    static void SetOverallVolume(float coeff);
+
+    static int RefreshInt(QSP_BOOL isForced, QSP_BOOL isNewDesc);
+    static int SetTimer(int msecs);
+    static int SetInputStrText(QSP_CHAR *text);
+    static int IsPlay(const QSP_CHAR *file);
+    static int CloseFile(const QSP_CHAR *file);
+    static int PlayFile(QSP_CHAR *file, int volume);
+    static int ShowPane(int type, QSP_BOOL toShow);
+    static int Sleep(int msecs);
+    static int GetMSCount();
+    static int Msg(QSP_CHAR *str);
+    static int ShowMenu(QSPListItem *items, int count);
+    static int Input(QSP_CHAR *text, QSP_CHAR *buffer, int maxLen);
+    static int ShowImage(QSP_CHAR *file);
+    static int OpenGame(QSP_CHAR *file, QSP_BOOL isAddLocs);
+    static int OpenGameStatus(QSP_CHAR *file);
+    static int SaveGameStatus(QSP_CHAR *file);
+
+private:
+    static bool SetVolume(QSP_CHAR *file, int volume);
+    static void UpdateSounds();
+
+    static QSPFrame *m_frame;
+    static bool m_isHtml;
+    static QSPSounds m_sounds;
+    static float m_volumeCoeff;
+    static QSPVersionInfoValues m_versionInfo;
+
+    static constexpr int MAX_LIST_ITEMS = 1000;
+};

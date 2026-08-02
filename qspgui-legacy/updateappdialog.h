@@ -15,24 +15,20 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef UPDATE_APP_DIALOG_H
-    #define UPDATE_APP_DIALOG_H
+#pragma once
 
-    #include <wx/wx.h>
-    #include <wx/hyperlink.h>
+#include <wx/wx.h>
+#include <wx/hyperlink.h>
 
-    class UpdateAppDialog : public wxDialog
-    {
-        DECLARE_CLASS(UpdateAppDialog)
-        DECLARE_EVENT_TABLE()
+class UpdateAppDialog : public wxDialog
+{
+public:
+    UpdateAppDialog(wxWindow *parent, const wxString &title,
+                    const wxString& newVersion, const wxString& releaseNotes, const wxString& updateUrl,
+                    int style = wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER);
 
-        public:
-            UpdateAppDialog(wxWindow *parent, const wxString &title,
-                const wxString& newVersion, const wxString& releaseNotes, const wxString& updateUrl,
-                int style = wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER);
+private:
+    void OnTextUrl(const wxTextUrlEvent &event);
 
-        private:
-            void OnTextUrl(wxTextUrlEvent &event);
-    };
-
-#endif
+    DECLARE_CLASS(UpdateAppDialog)
+};

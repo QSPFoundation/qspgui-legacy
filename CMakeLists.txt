@@ -18,7 +18,7 @@ set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
@@ -61,7 +61,7 @@ if (USE_INSTALLED_WX)
 else()
 	FetchContent_Declare(wxWidgets-custom
 		GIT_REPOSITORY https://github.com/wxWidgets/wxWidgets.git
-		GIT_TAG 5d63efc902e8b29c05ee492ff0c732a929f7b096
+		GIT_TAG 670835aec7e54b9e9d5a50d6a1aea1e8ba0bcdb2
 		#GIT_SHALLOW true # it works only with branch names and tags
 		GIT_PROGRESS true
 		SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/wxWidgets-download"
@@ -138,6 +138,7 @@ elseif (APPLE)
 	add_executable(qspgui-legacy MACOSX_BUNDLE ${QSPGUI_LEGACY_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/misc/macos/icon.icns")
 	set_target_properties(qspgui-legacy PROPERTIES
 		OUTPUT_NAME "qspgui_legacy"
+		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/misc/macos/Info.plist.in"
 		MACOSX_BUNDLE_BUNDLE_NAME "QSP Legacy Classic"
 		MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
 		MACOSX_BUNDLE_COPYRIGHT "(c) QSP Foundation"

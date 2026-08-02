@@ -17,91 +17,101 @@
 
 #include "inputdlg.h"
 #include "comtools.h"
+#include <algorithm>
 
 wxIMPLEMENT_CLASS(QSPInputDlg, wxDialog);
 
-BEGIN_EVENT_TABLE(QSPInputDlg, wxDialog)
-    EVT_HTML_LINK_CLICKED(ID_INPUT_DESC, QSPInputDlg::OnLinkClicked)
-    EVT_INIT_DIALOG(QSPInputDlg::OnInitDialog)
-END_EVENT_TABLE()
-
 QSPInputDlg::QSPInputDlg(wxWindow* parent,
-                         wxWindowID id,
+                         const wxWindowID id,
                          const wxColour& backColor,
                          const wxColour& fontColor,
                          const wxFont& font,
                          const wxString& caption,
                          const wxString& text,
-                         bool isHtml,
+                         const bool isHtml,
                          PathProvider *pathProvider)
 {
     if (!Create(parent, id, caption, wxDefaultPosition, wxDefaultSize, wxCAPTION | wxRESIZE_BORDER | wxSYSTEM_MENU)) return;
-    // ----------
-    SetBackgroundColour(backColor);
-    wxSizer *sizerUp = new wxBoxSizer(wxVERTICAL);
-    m_desc = new QSPTextBox(this, ID_INPUT_DESC);
+
+    Bind(wxEVT_HTML_LINK_CLICKED, &QSPInputDlg::OnLinkClicked, this, ID_INPUT_DESC);
+    Bind(wxEVT_INIT_DIALOG, &QSPInputDlg::OnInitDialog, this);
+
+    wxWindowBase::SetBackgroundColour(backColor);
+
+    auto* sizerUp = new wxBoxSizer{wxVERTICAL};
+
+    m_desc = new QSPTextBox{this, ID_INPUT_DESC};
     m_desc->SetPathProvider(pathProvider);
     m_desc->SetIsHtml(isHtml);
     m_desc->SetBackgroundColour(backColor);
     m_desc->SetForegroundColour(fontColor);
     m_desc->SetTextFont(font);
     m_desc->SetText(text);
-    wxTextCtrl *inputStr = new wxTextCtrl(this, wxID_ANY);
+
+    auto* inputStr = new wxTextCtrl{this, wxID_ANY};
     inputStr->SetBackgroundColour(backColor);
     inputStr->SetForegroundColour(fontColor);
     inputStr->SetFont(font);
-    wxStaticLine* line = new wxStaticLine(this, wxID_STATIC, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    sizerUp->Add(m_desc, 1, wxALL | wxGROW, 2);
-    sizerUp->Add(inputStr, 0, wxALL | wxGROW, 2);
-    sizerUp->Add(line, 0, wxALL | wxGROW, 2);
-    // ----------
-    wxSizer *sizerBottom = new wxBoxSizer(wxHORIZONTAL);
-    wxButton *btnOk = new wxButton(this, wxID_OK, _("OK"));
-    wxButton *btnCancel = new wxButton(this, wxID_CANCEL, _("Cancel"));
+
+    auto* line = new wxStaticLine{this, wxID_STATIC, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL};
+
+    sizerUp->Add(m_desc, 1, wxALL | wxGROW, FromDIP(2));
+    sizerUp->Add(inputStr, 0, wxALL | wxGROW, FromDIP(2));
+    sizerUp->Add(line, 0, wxALL | wxGROW, FromDIP(2));
+
+    auto* sizerBottom = new wxBoxSizer{wxHORIZONTAL};
+    auto* btnOk = new wxButton{this, wxID_OK, _("OK")};
+    auto* btnCancel = new wxButton{this, wxID_CANCEL, _("Cancel")};
+
     btnOk->SetDefault();
     btnOk->SetFont(font);
     btnOk->SetBackgroundColour(backColor);
     btnOk->SetForegroundColour(fontColor);
+
     btnCancel->SetFont(font);
     btnCancel->SetBackgroundColour(backColor);
     btnCancel->SetForegroundColour(fontColor);
-    sizerBottom->Add(btnOk, 0, wxALL, 2);
-    sizerBottom->Add(btnCancel, 0, wxALL, 2);
-    // ----------
-    wxSizer *sizerMain = new wxBoxSizer(wxVERTICAL);
+
+    sizerBottom->Add(btnOk, 0, wxALL, FromDIP(2));
+    sizerBottom->Add(btnCancel, 0, wxALL, FromDIP(2));
+
+    auto* sizerMain = new wxBoxSizer{wxVERTICAL};
     sizerMain->Add(sizerUp, 1, wxGROW, 0);
     sizerMain->Add(sizerBottom, 0, wxALIGN_RIGHT, 0);
-    // ----------
+
     inputStr->SetValidator(wxGenericValidator(&m_text));
-    sizerMain->SetMinSize(MinWidth, MinHeight);
+
+    sizerMain->SetMinSize(FromDIP(wxSize{MinWidth, MinHeight}));
     SetSizerAndFit(sizerMain);
     inputStr->SetFocus();
 }
 
-void QSPInputDlg::OnInitDialog(wxInitDialogEvent& WXUNUSED(event))
+void QSPInputDlg::OnInitDialog([[maybe_unused]] wxInitDialogEvent& event)
 {
-    int deltaH = GetClientSize().GetHeight() - m_desc->GetSize().GetHeight();
-    int deltaW = GetClientSize().GetWidth() - m_desc->GetSize().GetWidth();
+    const int deltaH = GetClientSize().GetHeight() - m_desc->GetSize().GetHeight();
+    const int deltaW = GetClientSize().GetWidth() - m_desc->GetSize().GetWidth();
+
     int height = m_desc->GetInternalRepresentation()->GetHeight() + m_desc->GetCharHeight() + deltaH;
     int width = m_desc->GetInternalRepresentation()->GetWidth() + deltaW;
-    height = wxMin(wxMax(height, MinHeight), MaxHeight);
-    width = wxMin(wxMax(width, MinWidth), MaxWidth);
+
+    height = std::clamp(height, FromDIP(MinHeight), FromDIP(MaxHeight));
+    width = std::clamp(width, FromDIP(MinWidth), FromDIP(MaxWidth));
+
     SetClientSize(width, height);
     Center();
 }
 
 void QSPInputDlg::OnLinkClicked(wxHtmlLinkEvent& event)
 {
-    wxString href;
-    wxHtmlLinkInfo info(event.GetLinkInfo());
-    if (info.GetEvent()->LeftUp())
+    if (const wxHtmlLinkInfo info{event.GetLinkInfo()}; info.GetEvent()->LeftUp())
     {
-        href = info.GetHref();
-        if (href[0] == wxT('#'))
+        if (wxString href = info.GetHref(); !href.empty() && href[0] == '#')
             m_desc->LoadPage(href);
         else
             QSPTools::LaunchDefaultBrowser(href);
     }
     else
+    {
         event.Skip();
+    }
 }

@@ -18,62 +18,84 @@
 #include "updateappdialog.h"
 #include "comtools.h"
 
-IMPLEMENT_CLASS(UpdateAppDialog, wxDialog)
-
-BEGIN_EVENT_TABLE(UpdateAppDialog, wxDialog)
-    EVT_TEXT_URL(wxID_ANY, UpdateAppDialog::OnTextUrl)
-END_EVENT_TABLE()
+wxIMPLEMENT_CLASS(UpdateAppDialog, wxDialog);
 
 UpdateAppDialog::UpdateAppDialog(wxWindow *parent, const wxString &title,
-    const wxString &newVersion, const wxString& releaseNotes, const wxString &updateUrl, int style) :
-    wxDialog(parent, wxID_ANY, title, wxDefaultPosition, wxSize(400, 400), style)
+    const wxString &newVersion, const wxString& releaseNotes, const wxString &updateUrl, const int style) :
+    wxDialog(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, style) // wxSize(400, 400)
 {
-    wxBoxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
+    Bind(wxEVT_TEXT_URL, &UpdateAppDialog::OnTextUrl, this);
 
-    wxStaticText *updateMessage = new wxStaticText(this, wxID_ANY,
-        wxString::Format(_("A new version (%s) is available!"), newVersion.wx_str()));
+    auto* mainSizer = new wxBoxSizer{wxVERTICAL};
+
+    auto* updateMessage = new wxStaticText{
+        this,
+        wxID_ANY,
+        wxString::Format(_("A new version (%s) is available!"), newVersion)
+    };
+
     wxFont updateMessageFont = updateMessage->GetFont();
     updateMessageFont.SetWeight(wxFONTWEIGHT_BOLD);
     updateMessageFont.SetPointSize(updateMessageFont.GetPointSize() + 2);
     updateMessage->SetFont(updateMessageFont);
 
-    wxHyperlinkCtrl *link = new wxHyperlinkCtrl(this, wxID_ANY, _("Click here to download the update"), updateUrl);
+    auto* link = new wxHyperlinkCtrl{
+        this,
+        wxID_ANY,
+        _("Click here to download the update"), updateUrl
+    };
 
-    wxStaticText *releaseNotesLabel = new wxStaticText(this, wxID_ANY, _("Release notes:"));
+    auto* releaseNotesLabel = new wxStaticText{
+        this,
+        wxID_ANY,
+        _("Release notes:")
+    };
 
-    wxTextCtrl *releaseNotesText = new wxTextCtrl(this, wxID_ANY,
-        releaseNotes, wxDefaultPosition, wxSize(380, 200),
-        wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH | wxTE_AUTO_URL);
+    auto* releaseNotesText = new wxTextCtrl{
+        this,
+        wxID_ANY,
+        releaseNotes,
+        wxDefaultPosition,
+        FromDIP(wxSize{380, 200}),
+        wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH | wxTE_AUTO_URL
+    };
 
-    wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-    wxButton *updateBtn = new wxButton(this, wxID_OK, _("Get the latest version"));
-    wxButton *laterBtn = new wxButton(this, wxID_CANCEL, _("Later"));
+    auto* buttonSizer = new wxBoxSizer{wxHORIZONTAL};
+    auto* updateBtn = new wxButton{this, wxID_OK, _("Get the latest version")};
+    auto* laterBtn = new wxButton{this, wxID_CANCEL, _("Later")};
 
-    buttonSizer->Add(updateBtn, 0, wxALL, 5);
-    buttonSizer->Add(laterBtn, 0, wxALL, 5);
+    buttonSizer->Add(updateBtn, 0, wxALL, FromDIP(5));
+    buttonSizer->Add(laterBtn, 0, wxALL, FromDIP(5));
 
-    mainSizer->Add(updateMessage, 0, wxLEFT | wxRIGHT | wxTOP | wxALIGN_CENTER, 10);
-    mainSizer->Add(link, 0, wxALL | wxALIGN_CENTER, 5);
-    mainSizer->Add(releaseNotesLabel, 0, wxALL, 5);
-    mainSizer->Add(releaseNotesText, 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
-    mainSizer->Add(buttonSizer, 0, wxALL | wxALIGN_CENTER, 5);
+    mainSizer->Add(updateMessage, 0, wxLEFT | wxRIGHT | wxTOP | wxALIGN_CENTER, FromDIP(10));
+    mainSizer->Add(link, 0, wxALL | wxALIGN_CENTER, FromDIP(5));
+    mainSizer->Add(releaseNotesLabel, 0, wxALL, FromDIP(5));
+    mainSizer->Add(releaseNotesText, 1, wxLEFT | wxRIGHT | wxEXPAND, FromDIP(5));
+    mainSizer->Add(buttonSizer, 0, wxALL | wxALIGN_CENTER, FromDIP(5));
 
     SetSizerAndFit(mainSizer);
     SetAutoLayout(true);
 
-    SetMinClientSize(wxSize(400, 350));
+    wxWindowBase::SetMinClientSize(FromDIP(wxSize{400, 350}));
 }
 
-void UpdateAppDialog::OnTextUrl(wxTextUrlEvent &event)
+void UpdateAppDialog::OnTextUrl(const wxTextUrlEvent &event)
 {
     if (event.GetMouseEvent().LeftUp())
     {
-        wxTextCtrl *textCtrl = wxStaticCast(event.GetEventObject(), wxTextCtrl);
-        wxString fullText = textCtrl->GetValue();
+        if (const auto* textCtrl = dynamic_cast<wxTextCtrl*>(event.GetEventObject()))
+        {
+            const wxString fullText = textCtrl->GetValue();
 
-        wxString link = fullText.Mid(event.GetURLStart(), event.GetURLEnd() - event.GetURLStart());
-
-        if (!link.IsEmpty())
-            QSPTools::LaunchDefaultBrowser(link);
+            if (
+                const wxString link = fullText.Mid(
+                    event.GetURLStart(),
+                    event.GetURLEnd() - event.GetURLStart()
+                );
+                !link.IsEmpty()
+            ) {
+                QSPTools::LaunchDefaultBrowser(link);
+            }
+        }
     }
 }

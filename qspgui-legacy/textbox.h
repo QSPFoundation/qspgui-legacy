@@ -15,59 +15,55 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef TEXTBOX_H
-    #define TEXTBOX_H
+#pragma once
 
-    #include <wx/wx.h>
-    #include <wx/fontmap.h>
-    #include <wx/html/htmlwin.h>
-    #include "pathprovider.h"
+#include <wx/wx.h>
+#include <wx/fontmap.h>
+#include <wx/html/htmlwin.h>
+#include "pathprovider.h"
 
-    class QSPTextBox : public wxHtmlWindow
-    {
-        DECLARE_CLASS(QSPTextBox)
-        DECLARE_EVENT_TABLE()
-    public:
-        // C-tors / D-tor
-        QSPTextBox(wxWindow *parent, wxWindowID id);
+class QSPTextBox : public wxHtmlWindow
+{
+public:
+    QSPTextBox(wxWindow *parent, wxWindowID id);
 
-        // Methods
-        void RefreshUI();
-        void LoadBackImage(const wxString& imagePath);
-        void SetPathProvider(PathProvider *provider) { m_pathProvider = provider; }
+    void RefreshUI();
+    void LoadBackImage(const wxString& imagePath);
+    void SetPathProvider(PathProvider *provider) { m_pathProvider = provider; }
 
-        // Accessors
-        void SetIsHtml(bool isHtml);
-        void SetText(const wxString& text, bool toScroll = false);
-        void SetTextFont(const wxFont& font);
-        wxFont GetTextFont() const { return m_font; }
-        wxString GetText() const { return m_text; }
-        void SetLinkColor(const wxColour& clr);
-        const wxColour& GetLinkColor() const { return m_Parser->GetLinkColor(); }
-        void SetBackgroundImage(const wxBitmap& bmpBg);
-    protected:
-        // Internal methods
-        void CalcImageSize();
-        virtual wxHtmlOpeningStatus OnHTMLOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const;
+    void SetIsHtml(bool isHtml);
+    void SetText(const wxString& text, bool toScroll = false);
+    void SetTextFont(const wxFont& font);
 
-        // Events
-        void OnSize(wxSizeEvent& event);
-        void OnEraseBackground(wxEraseEvent& event);
-        void OnKeyUp(wxKeyEvent& event);
-        void OnMouseWheel(wxMouseEvent& event);
-        void OnMouseClick(wxMouseEvent& event);
+    [[nodiscard]] wxFont GetTextFont() const { return m_font; }
+    [[nodiscard]] wxString GetText() const { return m_text; }
 
-        // Fields
-        PathProvider *m_pathProvider;
-        bool m_toUseHtml;
-        wxString m_outFormat;
-        wxString m_imagePath;
-        wxFont m_font;
-        wxString m_text;
-        wxBitmap m_bmpBg;
-        wxBitmap m_bmpRealBg;
-        int m_posX;
-        int m_posY;
-    };
+    void SetLinkColor(const wxColour& clr);
+    [[nodiscard]] const wxColour& GetLinkColor() const { return m_Parser->GetLinkColor(); }
+    void SetBackgroundImage(const wxBitmap& bmpBg);
 
-#endif
+protected:
+    void CalcImageSize();
+
+    wxHtmlOpeningStatus OnHTMLOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const override;
+
+    void OnSize(wxSizeEvent& event);
+    void OnEraseBackground(const wxEraseEvent& event);
+    void OnKeyUp(wxKeyEvent& event);
+    void OnMouseWheel(wxMouseEvent& event);
+    void OnMouseClick(wxMouseEvent& event);
+
+private:
+    PathProvider* m_pathProvider{nullptr};
+    bool m_toUseHtml{false};
+    wxString m_outFormat{};
+    wxString m_imagePath{};
+    wxFont m_font{*wxNORMAL_FONT};
+    wxString m_text{};
+    wxBitmap m_bmpBg{};
+    wxBitmap m_bmpRealBg{};
+    int m_posX{0};
+    int m_posY{0};
+
+    DECLARE_CLASS(QSPTextBox)
+};

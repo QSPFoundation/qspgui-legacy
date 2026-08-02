@@ -15,30 +15,28 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef APP_H
-    #define APP_H
+#pragma once
 
-    #include <wx/wx.h>
-    #include <wx/stdpaths.h>
-    #include <wx/clipbrd.h>
-    #include "frame.h"
-    #include "callbacks_gui.h"
-    #include "transhelper.h"
+#include <wx/wx.h>
+#include <wx/stdpaths.h>
+#include <wx/clipbrd.h>
+#include "frame.h"
+#include "callbacks_gui.h"
+#include "transhelper.h"
 
-    class QSPApp : public wxApp
-    {
-    public:
-        // Overloaded methods
-        virtual bool OnInit();
-        virtual int OnExit();
-        virtual void OnInitCmdLine(wxCmdLineParser &parser);
-        virtual bool OnCmdLineParsed(wxCmdLineParser &parser);
-    protected:
-        void InitUI();
-        bool GetAutoRunEvent(wxInitEvent& initEvent);
-        // Fields
-        QSPTranslationHelper *m_transHelper;
-        wxString m_gameFile;
-    };
+class QSPApp : public wxApp
+{
+public:
+    bool OnInit() override;
+    int OnExit() override;
+    void OnInitCmdLine(wxCmdLineParser &parser) override;
+    bool OnCmdLineParsed(wxCmdLineParser &parser) override;
 
-#endif
+protected:
+    void InitUI();
+    bool GetAutoRunEvent(wxInitEvent& initEvent);
+
+private:
+    std::unique_ptr<QSPTranslationHelper> m_transHelper{nullptr};
+    wxString m_gameFile{};
+};

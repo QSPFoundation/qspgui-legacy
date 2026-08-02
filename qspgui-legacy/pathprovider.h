@@ -15,18 +15,16 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef PATHPROVIDER_H
-    #define PATHPROVIDER_H
+#pragma once
 
-    #include <wx/wx.h>
+#include <wx/wx.h>
 
-    class PathProvider
-    {
-    public:
-        // Accessor
-        virtual wxString ComposeGamePath(const wxString &relativePath) const = 0;
-        virtual wxString GetGamePath() const = 0;
-        virtual bool IsValidFullPath(const wxString &path) const = 0;
-    };
+class PathProvider
+{
+public:
+    virtual ~PathProvider() = default;
 
-#endif
+    [[nodiscard]] virtual wxString ComposeGamePath(const wxString &relativePath) const = 0;
+    [[nodiscard]] virtual wxString GetGamePath() const = 0;
+    [[nodiscard]] virtual bool IsValidFullPath(const wxString &path) const = 0;
+};

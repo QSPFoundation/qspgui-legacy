@@ -15,37 +15,29 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef INPUTBOX_H
-    #define INPUTBOX_H
+#pragma once
 
-    #include <wx/wx.h>
+#include <wx/wx.h>
 
-    wxDECLARE_EVENT(wxEVT_ENTER, wxCommandEvent);
+wxDECLARE_EVENT(wxEVT_ENTER, wxCommandEvent);
 
-    #define EVT_ENTER(winid, func) \
-        wx__DECLARE_EVT1(wxEVT_ENTER, winid, wxCommandEventHandler(func))
+class QSPInputBox : public wxTextCtrl
+{
+public:
+    QSPInputBox(wxWindow *parent, wxWindowID id);
 
-    class QSPInputBox : public wxTextCtrl
-    {
-        DECLARE_CLASS(QSPInputBox)
-        DECLARE_EVENT_TABLE()
-    public:
-        // C-tors / D-tor
-        QSPInputBox(wxWindow *parent, wxWindowID id);
+    void SetText(const wxString& text, bool toChangeValue = true);
+    [[nodiscard]] wxString GetText() const { return m_text; }
 
-        // Accessors
-        void SetText(const wxString& text, bool toChangeValue = true);
-        wxString GetText() const { return m_text; }
-    protected:
-        // Events
-        void OnChar(wxKeyEvent& event);
-        void OnKeyDown(wxKeyEvent& event);
-        void OnMouseWheel(wxMouseEvent& event);
+protected:
+    void OnChar(wxKeyEvent& event);
+    void OnKeyDown(wxKeyEvent& event);
+    void OnMouseWheel(wxMouseEvent& event);
 
-        // Fields
-        wxString m_text;
-        wxArrayString m_strings;
-        int m_selIndex;
-    };
+private:
+    wxString m_text{};
+    wxArrayString m_strings{};
+    int m_selIndex{-1};
 
-#endif
+    DECLARE_CLASS(QSPInputBox)
+};

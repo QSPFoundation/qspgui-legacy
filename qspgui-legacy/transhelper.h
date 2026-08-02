@@ -15,31 +15,28 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef TRANSHELPER_H
-    #define TRANSHELPER_H
+#pragma once
 
-    #include <wx/wx.h>
-    #include <wx/dir.h>
-    #include <wx/filename.h>
-    #include <wx/confbase.h>
+#include <wx/wx.h>
+#include <wx/dir.h>
+#include <wx/filename.h>
+#include <wx/confbase.h>
+#include <wx/intl.h>
+#include <memory>
 
-    class QSPTranslationHelper
-    {
-    public:
-        // C-tors / D-tor
-        QSPTranslationHelper(const wxString &appName, const wxString &path);
-        ~QSPTranslationHelper();
+class QSPTranslationHelper
+{
+public:
+    QSPTranslationHelper(wxString appName, wxString path);
+    ~QSPTranslationHelper() = default;
 
-        // Methods
-        void Load(wxConfigBase &config, const wxString &key);
-        void Save(wxConfigBase &config, const wxString &key) const;
-        bool AskUserForLanguage();
-        void UpdateLocale(int lang);
-    private:
-        // Fields
-        wxString m_appName;
-        wxString m_path;
-        wxLocale *m_locale;
-    };
+    void Load(const wxConfigBase &config, const wxString &key);
+    void Save(wxConfigBase &config, const wxString &key) const;
+    bool AskUserForLanguage();
+    void UpdateLocale(int lang);
 
-#endif
+private:
+    wxString m_appName;
+    wxString m_path;
+    std::unique_ptr<wxLocale> m_locale{nullptr};
+};

@@ -15,46 +15,39 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef MSGDLG_H
-    #define MSGDLG_H
+#pragma once
 
-    #include <wx/wx.h>
-    #include <wx/statline.h>
-    #include "textbox.h"
-    #include "pathprovider.h"
+#include <wx/wx.h>
+#include <wx/statline.h>
+#include "textbox.h"
+#include "pathprovider.h"
 
-    enum
-    {
-        ID_MSG_DESC
-    };
+constexpr int ID_MSG_DESC = wxID_HIGHEST + 1;
 
-    class QSPMsgDlg : public wxDialog
-    {
-        const int MinWidth = 450;
-        const int MaxWidth = 550;
-        const int MinHeight = 100;
-        const int MaxHeight = 350;
+class QSPMsgDlg : public wxDialog
+{
+public:
+    QSPMsgDlg(wxWindow *parent,
+              wxWindowID id,
+              const wxColour &backColor,
+              const wxColour &fontColor,
+              const wxFont &font,
+              const wxString &caption,
+              const wxString &text,
+              bool isHtml,
+              PathProvider *pathProvider);
 
-        DECLARE_CLASS(QSPMsgDlg)
-        DECLARE_EVENT_TABLE()
-    public:
-        // C-tors / D-tor
-        QSPMsgDlg(wxWindow* parent,
-                  wxWindowID id,
-                  const wxColour& backColor,
-                  const wxColour& fontColor,
-                  const wxFont& font,
-                  const wxString& caption,
-                  const wxString& text,
-                  bool isHtml,
-                  PathProvider *pathProvider);
-    protected:
-        // Events
-        void OnInitDialog(wxInitDialogEvent& event);
-        void OnLinkClicked(wxHtmlLinkEvent& event);
+protected:
+    void OnInitDialog(wxInitDialogEvent &event);
+    void OnLinkClicked(wxHtmlLinkEvent &event);
 
-        // Fields
-        QSPTextBox *m_desc;
-    };
+private:
+    static constexpr int MinWidth = 450;
+    static constexpr int MaxWidth = 550;
+    static constexpr int MinHeight = 100;
+    static constexpr int MaxHeight = 350;
 
-#endif
+    QSPTextBox *m_desc{nullptr};
+
+    DECLARE_CLASS(QSPMsgDlg)
+};

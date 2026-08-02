@@ -15,51 +15,45 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef INPUTDLG_H
-    #define INPUTDLG_H
+#pragma once
 
-    #include <wx/wx.h>
-    #include <wx/statline.h>
-    #include <wx/valgen.h>
-    #include "textbox.h"
-    #include "pathprovider.h"
+#include <wx/wx.h>
+#include <wx/statline.h>
+#include <wx/valgen.h>
+#include "textbox.h"
+#include "pathprovider.h"
 
-    enum
-    {
-        ID_INPUT_DESC
-    };
+constexpr int ID_INPUT_DESC = wxID_HIGHEST + 20;
 
-    class QSPInputDlg : public wxDialog
-    {
-        const int MinWidth = 420;
-        const int MaxWidth = 550;
-        const int MinHeight = 150;
-        const int MaxHeight = 350;
+class QSPInputDlg : public wxDialog
+{
+public:
+    QSPInputDlg(wxWindow* parent,
+                wxWindowID id,
+                const wxColour& backColor,
+                const wxColour& fontColor,
+                const wxFont& font,
+                const wxString& caption,
+                const wxString& text,
+                bool isHtml,
+                PathProvider *pathProvider);
 
-        DECLARE_CLASS(QSPInputDlg)
-        DECLARE_EVENT_TABLE()
-    public:
-        // C-tors / D-tor
-        QSPInputDlg(wxWindow* parent,
-                    wxWindowID id,
-                    const wxColour& backColor,
-                    const wxColour& fontColor,
-                    const wxFont& font,
-                    const wxString& caption,
-                    const wxString& text,
-                    bool isHtml,
-                    PathProvider *pathProvider);
+    [[nodiscard]] wxString GetText() const { return m_text; }
 
-        // Accessors
-        wxString GetText() const { return m_text; }
-    protected:
-        // Events
-        void OnInitDialog(wxInitDialogEvent& event);
-        void OnLinkClicked(wxHtmlLinkEvent& event);
+protected:
+    void OnInitDialog(wxInitDialogEvent& event);
+    void OnLinkClicked(wxHtmlLinkEvent& event);
 
-        // Fields
-        QSPTextBox *m_desc;
-        wxString m_text;
-    };
+private:
+    // Константы делаем static constexpr
+    static constexpr int MinWidth = 420;
+    static constexpr int MaxWidth = 550;
+    static constexpr int MinHeight = 150;
+    static constexpr int MaxHeight = 350;
 
-#endif
+    QSPTextBox* m_desc{nullptr};
+    wxString m_text{};
+
+    DECLARE_CLASS(QSPInputDlg)
+};
+

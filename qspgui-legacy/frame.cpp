@@ -18,7 +18,7 @@
 #include "frame.h"
 #include "comtools.h"
 #include "callbacks_gui.h"
-
+#include <wx/wupdlock.h>
 #include "icons/logo.xpm"
 #include "icons/logo_big.xpm"
 #include "icons/open.xpm"
@@ -29,169 +29,201 @@
 #include "icons/windowmode.xpm"
 #include "icons/about.xpm"
 
-BEGIN_EVENT_TABLE(QSPFrame, wxFrame)
-    EVT_INIT(QSPFrame::OnInit)
-    EVT_CLOSE(QSPFrame::OnClose)
-    EVT_TIMER(ID_TIMER, QSPFrame::OnTimer)
-    EVT_MENU(wxID_EXIT, QSPFrame::OnQuit)
-    EVT_MENU(ID_OPENGAME, QSPFrame::OnOpenGame)
-    EVT_MENU(ID_NEWGAME, QSPFrame::OnNewGame)
-    EVT_MENU(ID_OPENGAMESTAT, QSPFrame::OnOpenGameStat)
-    EVT_MENU(ID_SAVEGAMESTAT, QSPFrame::OnSaveGameStat)
-    EVT_MENU(ID_QUICKSAVE, QSPFrame::OnQuickSave)
-    EVT_MENU(ID_SELECTFONT, QSPFrame::OnSelectFont)
-    EVT_MENU(ID_USEFONTSIZE, QSPFrame::OnUseFontSize)
-    EVT_MENU(ID_SELECTFONTCOLOR, QSPFrame::OnSelectFontColor)
-    EVT_MENU(ID_SELECTBACKCOLOR, QSPFrame::OnSelectBackColor)
-    EVT_MENU(ID_SELECTLINKCOLOR, QSPFrame::OnSelectLinkColor)
-    EVT_MENU(ID_CHECKUPDATESONSTARTUP, QSPFrame::OnCheckUpdatesOnStartup)
-    EVT_MENU(ID_SELECTLANG, QSPFrame::OnSelectLang)
-    EVT_MENU(ID_TOGGLEWINMODE, QSPFrame::OnToggleWinMode)
-    EVT_MENU(ID_TOGGLEOBJS, QSPFrame::OnToggleObjs)
-    EVT_MENU(ID_TOGGLEACTS, QSPFrame::OnToggleActs)
-    EVT_MENU(ID_TOGGLEDESC, QSPFrame::OnToggleDesc)
-    EVT_MENU(ID_TOGGLEINPUT, QSPFrame::OnToggleInput)
-    EVT_MENU(ID_TOGGLECAPTIONS, QSPFrame::OnToggleCaptions)
-    EVT_MENU(ID_TOGGLEHOTKEYS, QSPFrame::OnToggleHotkeys)
-    EVT_MENU(ID_VOLUME0, QSPFrame::OnVolume)
-    EVT_MENU(ID_VOLUME20, QSPFrame::OnVolume)
-    EVT_MENU(ID_VOLUME40, QSPFrame::OnVolume)
-    EVT_MENU(ID_VOLUME60, QSPFrame::OnVolume)
-    EVT_MENU(ID_VOLUME80, QSPFrame::OnVolume)
-    EVT_MENU(ID_VOLUME100, QSPFrame::OnVolume)
-    EVT_MENU(ID_CHECKUPDATES, QSPFrame::OnCheckUpdates)
-    EVT_MENU(wxID_ABOUT, QSPFrame::OnAbout)
-    EVT_HTML_LINK_CLICKED(ID_MAINDESC, QSPFrame::OnLinkClicked)
-    EVT_HTML_LINK_CLICKED(ID_VARSDESC, QSPFrame::OnLinkClicked)
-    EVT_LISTBOX(ID_OBJECTS, QSPFrame::OnObjectChange)
-    EVT_LISTBOX(ID_ACTIONS, QSPFrame::OnActionChange)
-    EVT_LISTBOX_DCLICK(ID_ACTIONS, QSPFrame::OnActionDblClick)
-    EVT_TEXT(ID_INPUT, QSPFrame::OnInputTextChange)
-    EVT_ENTER(ID_INPUT, QSPFrame::OnInputTextEnter)
-    EVT_KEY_UP(QSPFrame::OnKey)
-    EVT_MOUSEWHEEL(QSPFrame::OnWheel)
-    EVT_LEFT_DOWN(QSPFrame::OnMouseClick)
-    EVT_AUI_PANE_CLOSE(QSPFrame::OnPaneClose)
-    EVT_DROP_FILES(QSPFrame::OnDropFiles)
-END_EVENT_TABLE()
-
 wxIMPLEMENT_CLASS(QSPFrame, wxFrame);
 
 QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper) :
-    wxFrame(NULL, wxID_ANY, wxEmptyString),
+    wxFrame(nullptr, wxID_ANY, wxEmptyString),
     m_configDefPath(configPath),
     m_configPath(configPath),
     m_transHelper(transHelper)
 {
     wxRegisterId(ID_DUMMY);
+
     Bind(wxEVT_WEBREQUEST_STATE, &QSPFrame::OnVersionRequestState, this);
+    Bind(wxEVT_CLOSE_WINDOW, &QSPFrame::OnClose, this);
+    Bind(wxEVT_TIMER, &QSPFrame::OnTimer, this, ID_TIMER);
+    Bind(wxEVT_MENU, &QSPFrame::OnQuit, this, wxID_EXIT);
+    Bind(wxEVT_MENU, &QSPFrame::OnOpenGame, this, ID_OPENGAME);
+    Bind(wxEVT_MENU, &QSPFrame::OnNewGame, this, ID_NEWGAME);
+    Bind(wxEVT_MENU, &QSPFrame::OnOpenGameStat, this, ID_OPENGAMESTAT);
+    Bind(wxEVT_MENU, &QSPFrame::OnSaveGameStat, this, ID_SAVEGAMESTAT);
+    Bind(wxEVT_MENU, &QSPFrame::OnSelectFont, this, ID_SELECTFONT);
+    Bind(wxEVT_MENU, &QSPFrame::OnUseFontSize, this, ID_USEFONTSIZE);
+    Bind(wxEVT_MENU, &QSPFrame::OnSelectFontColor, this, ID_SELECTFONTCOLOR);
+    Bind(wxEVT_MENU, &QSPFrame::OnSelectBackColor, this, ID_SELECTBACKCOLOR);
+    Bind(wxEVT_MENU, &QSPFrame::OnSelectLinkColor, this, ID_SELECTLINKCOLOR);
+    Bind(wxEVT_MENU, &QSPFrame::OnCheckUpdatesOnStartup, this, ID_CHECKUPDATESONSTARTUP);
+    Bind(wxEVT_MENU, &QSPFrame::OnSelectLang, this, ID_SELECTLANG);
+    Bind(wxEVT_MENU, &QSPFrame::OnToggleWinMode, this, ID_TOGGLEWINMODE);
+    Bind(wxEVT_MENU, &QSPFrame::OnToggleObjs, this, ID_TOGGLEOBJS);
+    Bind(wxEVT_MENU, &QSPFrame::OnToggleActs, this, ID_TOGGLEACTS);
+    Bind(wxEVT_MENU, &QSPFrame::OnToggleDesc, this, ID_TOGGLEDESC);
+    Bind(wxEVT_MENU, &QSPFrame::OnToggleInput, this, ID_TOGGLEINPUT);
+    Bind(wxEVT_MENU, &QSPFrame::OnToggleCaptions, this, ID_TOGGLECAPTIONS);
+    Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME0);
+    Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME20);
+    Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME40);
+    Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME60);
+    Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME80);
+    Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME100);
+    Bind(wxEVT_MENU, &QSPFrame::OnCheckUpdates, this, ID_CHECKUPDATES);
+    Bind(wxEVT_MENU, &QSPFrame::OnAbout, this, wxID_ABOUT);
+
+    Bind(wxEVT_HTML_LINK_CLICKED, &QSPFrame::OnLinkClicked, this, ID_MAINDESC);
+    Bind(wxEVT_HTML_LINK_CLICKED, &QSPFrame::OnLinkClicked, this, ID_VARSDESC);
+    Bind(wxEVT_LISTBOX, &QSPFrame::OnObjectChange, this, ID_OBJECTS);
+    Bind(wxEVT_LISTBOX, &QSPFrame::OnActionChange, this, ID_ACTIONS);
+    Bind(wxEVT_LISTBOX_DCLICK, &QSPFrame::OnActionDblClick, this, ID_ACTIONS);
+    Bind(wxEVT_TEXT, &QSPFrame::OnInputTextChange, this, ID_INPUT);
+    Bind(wxEVT_TEXT_ENTER, &QSPFrame::OnInputTextEnter, this, ID_INPUT);
+    Bind(wxEVT_KEY_UP, &QSPFrame::OnKey, this);
+    Bind(wxEVT_MOUSEWHEEL, &QSPFrame::OnWheel, this);
+    Bind(wxEVT_LEFT_DOWN, &QSPFrame::OnMouseClick, this);
+    Bind(wxEVT_AUI_PANE_CLOSE, &QSPFrame::OnPaneClose, this);
+    Bind(wxEVT_DROP_FILES, &QSPFrame::OnDropFiles, this);
 
     SetIcon(wxICON(logo));
-    DragAcceptFiles(true);
-    m_timer = new wxTimer(this, ID_TIMER);
+    wxWindow::DragAcceptFiles(true);
+    m_timer = new wxTimer{this, ID_TIMER};
     m_menu = new wxMenu;
-    // Menu
-    wxMenuBar *menuBar = new wxMenuBar;
+
+    auto* menuBar = new wxMenuBar;
     m_fileMenu = new wxMenu;
-    wxMenuItem *fileOpenItem = new wxMenuItem(m_fileMenu, ID_OPENGAME, wxT("-"));
-    fileOpenItem->SetBitmap(wxBitmap(open_xpm));
+
+    auto* fileOpenItem = new wxMenuItem{m_fileMenu, ID_OPENGAME, "-"};
+    fileOpenItem->SetBitmap(wxBitmap{open_xpm});
     m_fileMenu->Append(fileOpenItem);
-    wxMenuItem *fileNewItem = new wxMenuItem(m_fileMenu, ID_NEWGAME, wxT("-"));
+
+    auto *fileNewItem = new wxMenuItem{m_fileMenu, ID_NEWGAME, "-"};
     fileNewItem->SetBitmap(wxBitmap(new_xpm));
     m_fileMenu->Append(fileNewItem);
     m_fileMenu->AppendSeparator();
-    wxMenuItem *fileExitItem = new wxMenuItem(m_fileMenu, wxID_EXIT);
+
+    auto *fileExitItem = new wxMenuItem{m_fileMenu, wxID_EXIT};
     fileExitItem->SetBitmap(wxBitmap(exit_xpm));
     m_fileMenu->Append(fileExitItem);
-    // ------------
+
     m_gameMenu = new wxMenu;
-    wxMenuItem *gameOpenItem = new wxMenuItem(m_gameMenu, ID_OPENGAMESTAT, wxT("-"));
+    auto *gameOpenItem = new wxMenuItem{m_gameMenu, ID_OPENGAMESTAT, "-"};
     gameOpenItem->SetBitmap(wxBitmap(statusopen_xpm));
     m_gameMenu->Append(gameOpenItem);
-    m_gameMenu->Append(ID_SAVEGAMESTAT, wxT("-"));
-    wxMenuItem *gameSaveItem = new wxMenuItem(m_gameMenu, ID_QUICKSAVE, wxT("-"));
+    m_gameMenu->Append(ID_SAVEGAMESTAT, "-");
+
+    auto *gameSaveItem = new wxMenuItem{m_gameMenu, ID_QUICKSAVE, "-"};
     gameSaveItem->SetBitmap(wxBitmap(statussave_xpm));
     m_gameMenu->Append(gameSaveItem);
-    // ------------
-    wxMenu *wndsMenu = new wxMenu;
-    wndsMenu->Append(ID_TOGGLEOBJS, wxT("-"));
-    wndsMenu->Append(ID_TOGGLEACTS, wxT("-"));
-    wndsMenu->Append(ID_TOGGLEDESC, wxT("-"));
-    wndsMenu->Append(ID_TOGGLEINPUT, wxT("-"));
+
+    auto *wndsMenu = new wxMenu;
+    wndsMenu->Append(ID_TOGGLEOBJS, "-");
+    wndsMenu->Append(ID_TOGGLEACTS, "-");
+    wndsMenu->Append(ID_TOGGLEDESC, "-");
+    wndsMenu->Append(ID_TOGGLEINPUT, "-");
     wndsMenu->AppendSeparator();
-    wndsMenu->Append(ID_TOGGLECAPTIONS, wxT("-"));
-    wndsMenu->Append(ID_TOGGLEHOTKEYS, wxT("-"));
-    // ------------
-    wxMenu *fontMenu = new wxMenu;
-    fontMenu->Append(ID_SELECTFONT, wxT("-"));
-    fontMenu->AppendCheckItem(ID_USEFONTSIZE, wxT("-"));
-    // ------------
-    wxMenu *colorsMenu = new wxMenu;
-    colorsMenu->Append(ID_SELECTFONTCOLOR, wxT("-"));
-    colorsMenu->Append(ID_SELECTBACKCOLOR, wxT("-"));
-    colorsMenu->Append(ID_SELECTLINKCOLOR, wxT("-"));
-    // ------------
-    wxMenu *volumeMenu = new wxMenu;
-    volumeMenu->AppendRadioItem(ID_VOLUME0, wxT("-"));
-    volumeMenu->AppendRadioItem(ID_VOLUME20, wxT("-"));
-    volumeMenu->AppendRadioItem(ID_VOLUME40, wxT("-"));
-    volumeMenu->AppendRadioItem(ID_VOLUME60, wxT("-"));
-    volumeMenu->AppendRadioItem(ID_VOLUME80, wxT("-"));
-    volumeMenu->AppendRadioItem(ID_VOLUME100, wxT("-"));
-    // ------------
+    wndsMenu->Append(ID_TOGGLECAPTIONS, "-");
+    wndsMenu->Append(ID_TOGGLEHOTKEYS, "-");
+
+    auto *fontMenu = new wxMenu;
+    fontMenu->Append(ID_SELECTFONT, "-");
+    fontMenu->AppendCheckItem(ID_USEFONTSIZE, "-");
+
+    auto *colorsMenu = new wxMenu;
+    colorsMenu->Append(ID_SELECTFONTCOLOR, "-");
+    colorsMenu->Append(ID_SELECTBACKCOLOR, "-");
+    colorsMenu->Append(ID_SELECTLINKCOLOR, "-");
+
+    auto *volumeMenu = new wxMenu;
+    volumeMenu->AppendRadioItem(ID_VOLUME0, "-");
+    volumeMenu->AppendRadioItem(ID_VOLUME20, "-");
+    volumeMenu->AppendRadioItem(ID_VOLUME40, "-");
+    volumeMenu->AppendRadioItem(ID_VOLUME60, "-");
+    volumeMenu->AppendRadioItem(ID_VOLUME80, "-");
+    volumeMenu->AppendRadioItem(ID_VOLUME100, "-");
+
     m_settingsMenu = new wxMenu;
-    m_settingsMenu->Append(ID_SHOWHIDE, wxT("-"), wndsMenu);
-    m_settingsMenu->Append(ID_FONT, wxT("-"), fontMenu);
-    m_settingsMenu->Append(ID_COLORS, wxT("-"), colorsMenu);
-    m_settingsMenu->Append(ID_VOLUME, wxT("-"), volumeMenu);
-    m_settingsMenu->AppendCheckItem(ID_CHECKUPDATESONSTARTUP, wxT("-"));
+    m_settingsMenu->Append(ID_SHOWHIDE, "-", wndsMenu);
+    m_settingsMenu->Append(ID_FONT, "-", fontMenu);
+    m_settingsMenu->Append(ID_COLORS, "-", colorsMenu);
+    m_settingsMenu->Append(ID_VOLUME, "-", volumeMenu);
+    m_settingsMenu->AppendCheckItem(ID_CHECKUPDATESONSTARTUP, "-");
     m_settingsMenu->AppendSeparator();
-    wxMenuItem *settingsWinModeItem = new wxMenuItem(m_settingsMenu, ID_TOGGLEWINMODE, wxT("-"));
+
+    auto *settingsWinModeItem = new wxMenuItem{m_settingsMenu, ID_TOGGLEWINMODE, "-"};
     settingsWinModeItem->SetBitmap(wxBitmap(windowmode_xpm));
     m_settingsMenu->Append(settingsWinModeItem);
     m_settingsMenu->AppendSeparator();
-    m_settingsMenu->Append(ID_SELECTLANG, wxT("-"));
-    // ------------
-    wxMenu *helpMenu = new wxMenu;
-    helpMenu->Append(ID_CHECKUPDATES, wxT("-"));
+    m_settingsMenu->Append(ID_SELECTLANG, "-");
+
+    auto *helpMenu = new wxMenu;
+    helpMenu->Append(ID_CHECKUPDATES, "-");
     helpMenu->AppendSeparator();
-    wxMenuItem *helpAboutItem = new wxMenuItem(helpMenu, wxID_ABOUT, wxT("-"));
+    auto *helpAboutItem = new wxMenuItem{helpMenu, wxID_ABOUT, "-"};
     helpAboutItem->SetBitmap(wxBitmap(about_xpm));
     helpMenu->Append(helpAboutItem);
-    // ------------
-    menuBar->Append(m_fileMenu, wxT("-"));
-    menuBar->Append(m_gameMenu, wxT("-"));
-    menuBar->Append(m_settingsMenu, wxT("-"));
-    menuBar->Append(helpMenu, wxT("-"));
-    SetMenuBar(menuBar);
-    // --------------------------------------
+
+    menuBar->Append(m_fileMenu, "-");
+    menuBar->Append(m_gameMenu, "-");
+    menuBar->Append(m_settingsMenu, "-");
+    menuBar->Append(helpMenu, "-");
+    wxFrameBase::SetMenuBar(menuBar);
+
     m_manager = new wxAuiManager(this);
     m_manager->SetDockSizeConstraint(0.5, 0.5);
     m_imgView = new QSPImgCanvas(this, ID_VIEWPIC);
-    m_manager->AddPane(m_imgView, wxAuiPaneInfo().Name(wxT("imgview")).MinSize(50, 50).BestSize(150, 150).Top().MaximizeButton().Hide());
+    m_manager->AddPane(
+        m_imgView,
+        wxAuiPaneInfo().Name("imgview")
+        .MinSize(FromDIP(wxSize{50, 50}))
+        .BestSize(FromDIP(wxSize{150, 150}))
+        .Top().MaximizeButton().Hide()
+    );
     m_desc = new QSPTextBox(this, ID_MAINDESC);
-    m_manager->AddPane(m_desc, wxAuiPaneInfo().Name(wxT("desc")).CenterPane());
+    m_manager->AddPane(m_desc, wxAuiPaneInfo().Name("desc").CenterPane());
     m_objects = new QSPListBox(this, ID_OBJECTS);
-    m_manager->AddPane(m_objects, wxAuiPaneInfo().Name(wxT("objs")).MinSize(50, 50).BestSize(100, 100).Right().MaximizeButton());
-    m_actions = new QSPListBox(this, ID_ACTIONS, LB_EXTENDED);
-    m_manager->AddPane(m_actions, wxAuiPaneInfo().Name(wxT("acts")).MinSize(50, 50).BestSize(100, 100).Bottom().MaximizeButton());
+    m_manager->AddPane(
+        m_objects,
+        wxAuiPaneInfo().Name("objs")
+        .MinSize(FromDIP(wxSize{50, 50}))
+        .BestSize(FromDIP(wxSize{100, 100}))
+        .Right().MaximizeButton()
+    );
+    m_actions = new QSPListBox(this, ID_ACTIONS, ListBoxType::Extended);
+    m_manager->AddPane(
+        m_actions,
+        wxAuiPaneInfo().Name("acts")
+        .MinSize(FromDIP(wxSize{50, 50}))
+        .BestSize(FromDIP(wxSize{100, 100}))
+        .Bottom().MaximizeButton()
+    );
     m_vars = new QSPTextBox(this, ID_VARSDESC);
-    m_manager->AddPane(m_vars, wxAuiPaneInfo().Name(wxT("vars")).MinSize(50, 50).BestSize(100, 100).Bottom().MaximizeButton());
+    m_manager->AddPane(
+        m_vars,
+        wxAuiPaneInfo().Name("vars")
+        .MinSize(FromDIP(wxSize{50, 50}))
+        .BestSize(FromDIP(wxSize{100, 100}))
+        .Bottom().MaximizeButton()
+    );
     m_input = new QSPInputBox(this, ID_INPUT);
-    m_manager->AddPane(m_input, wxAuiPaneInfo().Name(wxT("input")).MinSize(50, 20).BestSize(100, 20).Bottom().Layer(1));
-    // --------------------------------------
+    m_manager->AddPane(
+        m_input,
+        wxAuiPaneInfo().Name("input")
+        .MinSize(FromDIP(wxSize{50, 20}))
+        .BestSize(FromDIP(wxSize{100, 20}))
+        .Bottom().Layer(1)
+    );
+
     m_desc->SetPathProvider(this);
     m_objects->SetPathProvider(this);
     m_actions->SetPathProvider(this);
     m_vars->SetPathProvider(this);
-    // --------------------------------------
-    SetMinClientSize(wxSize(450, 300));
-    SetOverallVolume(100);
+
     m_savedGamePath.Clear();
     m_worldPath.Clear();
     m_toQuit = false;
     m_keyPressedWhileDisabled = false;
     m_isGameOpened = false;
+
+    wxWindowBase::SetMinClientSize(FromDIP(wxSize{450, 300}));
+    SetOverallVolume(100);
 }
 
 QSPFrame::~QSPFrame()
@@ -210,24 +242,24 @@ void QSPFrame::SaveSettings()
     if (IsIconized()) Iconize(false);
     if ((isMaximized = IsMaximized())) Maximize(false);
     wxFileConfig cfg(wxEmptyString, wxEmptyString, m_configPath);
-    cfg.Write(wxT("Colors/BackColor"), m_backColor.Blue() << 16 | m_backColor.Green() << 8 | m_backColor.Red());
-    cfg.Write(wxT("Colors/FontColor"), m_fontColor.Blue() << 16 | m_fontColor.Green() << 8 | m_fontColor.Red());
-    cfg.Write(wxT("Colors/LinkColor"), m_linkColor.Blue() << 16 | m_linkColor.Green() << 8 | m_linkColor.Red());
-    cfg.Write(wxT("Font/FontSize"), m_fontSize);
-    cfg.Write(wxT("Font/FontName"), m_fontName);
-    cfg.Write(wxT("Font/UseFontSize"), m_toUseFontSize);
-    cfg.Write(wxT("General/Volume"), m_volume);
-    cfg.Write(wxT("General/ShowHotkeys"), m_toShowHotkeys);
-    cfg.Write(wxT("General/Panels"), m_manager->SavePerspective());
-    cfg.Write(wxT("General/CheckUpdates"), m_toCheckUpdates);
-    m_transHelper->Save(cfg, wxT("General/Language"));
+    cfg.Write("Colors/BackColor", m_backColor.Blue() << 16 | m_backColor.Green() << 8 | m_backColor.Red());
+    cfg.Write("Colors/FontColor", m_fontColor.Blue() << 16 | m_fontColor.Green() << 8 | m_fontColor.Red());
+    cfg.Write("Colors/LinkColor", m_linkColor.Blue() << 16 | m_linkColor.Green() << 8 | m_linkColor.Red());
+    cfg.Write("Font/FontSize", m_fontSize);
+    cfg.Write("Font/FontName", m_fontName);
+    cfg.Write("Font/UseFontSize", m_toUseFontSize);
+    cfg.Write("General/Volume", m_volume);
+    cfg.Write("General/ShowHotkeys", m_toShowHotkeys);
+    cfg.Write("General/Panels", m_manager->SavePerspective());
+    cfg.Write("General/CheckUpdates", m_toCheckUpdates);
+    m_transHelper->Save(cfg, "General/Language");
     GetPosition(&x, &y);
     GetClientSize(&w, &h);
-    cfg.Write(wxT("Pos/Left"), x);
-    cfg.Write(wxT("Pos/Top"), y);
-    cfg.Write(wxT("Pos/Width"), w);
-    cfg.Write(wxT("Pos/Height"), h);
-    cfg.Write(wxT("Pos/Maximize"), isMaximized);
+    cfg.Write("Pos/Left", x);
+    cfg.Write("Pos/Top", y);
+    cfg.Write("Pos/Width", w);
+    cfg.Write("Pos/Height", h);
+    cfg.Write("Pos/Maximize", isMaximized);
 }
 
 void QSPFrame::LoadSettings()
@@ -235,12 +267,12 @@ void QSPFrame::LoadSettings()
     bool toMaximize;
     int x, y, w, h, temp;
     Hide();
-    wxFileConfig cfg(wxEmptyString, wxEmptyString, m_configPath);
-    cfg.Read(wxT("Colors/BackColor"), &temp, 0xE0E0E0);
+    const wxFileConfig cfg(wxEmptyString, wxEmptyString, m_configPath);
+    cfg.Read("Colors/BackColor", &temp, 0xE0E0E0);
     m_backColor = wxColour(temp);
-    cfg.Read(wxT("Colors/FontColor"), &temp, 0x000000);
+    cfg.Read("Colors/FontColor", &temp, 0x000000);
     m_fontColor = wxColour(temp);
-    cfg.Read(wxT("Colors/LinkColor"), &temp, 0xFF0000);
+    cfg.Read("Colors/LinkColor", &temp, 0xFF0000);
     m_linkColor = wxColour(temp);
     temp = wxNORMAL_FONT->GetPointSize();
     if (temp < 12) temp = 12;
@@ -265,7 +297,7 @@ void QSPFrame::LoadSettings()
     cfg.Read(wxT("General/Panels"), &panels);
     cfg.Read(wxT("General/CheckUpdates"), &m_toCheckUpdates, true);
     m_transHelper->Load(cfg, wxT("General/Language"));
-    // -------------------------------------------------
+
     SetOverallVolume(m_volume);
     ApplyBackColor(m_backColor);
     ApplyFontColor(m_fontColor);
@@ -281,18 +313,18 @@ void QSPFrame::LoadSettings()
     m_settingsMenu->Check(ID_CHECKUPDATESONSTARTUP, m_toCheckUpdates);
     m_manager->LoadPerspective(panels);
     m_manager->RestoreMaximizedPane();
-    // Check for correct position
-    wxSize winSize(ClientToWindowSize(wxSize(w, h)));
+
+    const wxSize winSize(ClientToWindowSize(wxSize(w, h)));
     w = winSize.GetWidth();
     h = winSize.GetHeight();
-    wxRect dispRect(wxGetClientDisplayRect());
+    const wxRect dispRect(wxGetClientDisplayRect());
     if (w > dispRect.GetWidth()) w = dispRect.GetWidth();
     if (h > dispRect.GetHeight()) h = dispRect.GetHeight();
     if (x < dispRect.GetLeft()) x = dispRect.GetLeft();
     if (y < dispRect.GetTop()) y = dispRect.GetTop();
     if (x + w - 1 > dispRect.GetRight()) x = dispRect.GetRight() - w + 1;
     if (y + h - 1 > dispRect.GetBottom()) y = dispRect.GetBottom() - h + 1;
-    // --------------------------
+
     SetSize(x, y, w, h);
     ShowPane(ID_VIEWPIC, false);
     ShowPane(ID_ACTIONS, true);
@@ -302,6 +334,7 @@ void QSPFrame::LoadSettings()
     ReCreateGUI();
     if (toMaximize) Maximize();
     Show();
+
     m_manager->Update();
 }
 
@@ -323,23 +356,24 @@ void QSPFrame::EnableControls(bool status, bool isExtended)
     m_keyPressedWhileDisabled = false;
 }
 
-void QSPFrame::ShowPane(wxWindowID id, bool toShow)
+void QSPFrame::ShowPane(const wxWindowID id, const bool toShow)
 {
-    int i;
-    wxAuiPaneInfoArray& allPanes = m_manager->GetAllPanes();
-    wxON_BLOCK_EXIT_THIS0(QSPFrame::Thaw);
-    Freeze();
-    wxAuiPaneInfo *maximizedPane = NULL;
-    wxAuiPaneInfo *pane = NULL;
-    for (i = (int)allPanes.GetCount() - 1; i >= 0; --i)
+    const wxAuiPaneInfoArray& allPanes = m_manager->GetAllPanes();
+
+    wxWindowUpdateLocker noUpdates{this};
+
+    const wxAuiPaneInfo* maximizedPane = nullptr;
+    wxAuiPaneInfo* pane = nullptr;
+
+    for (auto& currentPane : allPanes)
     {
-        wxAuiPaneInfo &currentPane = allPanes.Item(i);
-        wxWindow *paneWindow = currentPane.window;
-        if (paneWindow && paneWindow->GetId() == id)
+        if (currentPane.window && currentPane.window->GetId() == id)
             pane = &currentPane;
+
         if (currentPane.IsMaximized())
             maximizedPane = &currentPane;
     }
+
     if (pane)
     {
         if (maximizedPane)
@@ -354,7 +388,9 @@ void QSPFrame::ShowPane(wxWindowID id, bool toShow)
                 }
             }
             else if (pane->HasFlag(wxAuiPaneInfo::savedHiddenState) == toShow)
+            {
                 pane->SetFlag(wxAuiPaneInfo::savedHiddenState, !toShow);
+            }
         }
         else if (pane->IsShown() != toShow)
         {
@@ -368,47 +404,51 @@ void QSPFrame::ApplyParams()
 {
     int numVal;
     QSP_CHAR *strVal;
-    wxColour setBackColor, setFontColor, setLinkColor;
-    wxString setFontName;
     int setFontSize;
     bool toRefreshUI = false;
-    // --------------
-    setBackColor = ((QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("BCOLOR"), 0, &numVal) && numVal)
-        ? wxColour(numVal) : m_backColor);
-    if (setBackColor != m_desc->GetBackgroundColour())
+
+    if (
+        const wxColour setBackColor = qspGetVar(QSP_FMT("BCOLOR"), &numVal) && numVal ? wxColour(numVal) : m_backColor;
+        setBackColor != m_desc->GetBackgroundColour()
+    )
     {
         if (ApplyBackColor(setBackColor)) toRefreshUI = true;
     }
-    // --------------
-    setFontColor = ((QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("FCOLOR"), 0, &numVal) && numVal)
-        ? wxColour(numVal) : m_fontColor);
-    if (setFontColor != m_desc->GetForegroundColour())
+
+    if (
+        const wxColour setFontColor = qspGetVar(QSP_FMT("FCOLOR"), &numVal) && numVal ? wxColour(numVal): m_fontColor;
+        setFontColor != m_desc->GetForegroundColour())
     {
         if (ApplyFontColor(setFontColor)) toRefreshUI = true;
     }
-    // --------------
-    setLinkColor = ((QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("LCOLOR"), 0, &numVal) && numVal)
-        ? wxColour(numVal) : m_linkColor);
-    if (setLinkColor != m_desc->GetLinkColor())
+
+    if (
+        const wxColour setLinkColor = qspGetVar(QSP_FMT("LCOLOR"), &numVal) && numVal ? wxColour(numVal): m_linkColor;
+        setLinkColor != m_desc->GetLinkColor()
+    )
     {
         if (ApplyLinkColor(setLinkColor)) toRefreshUI = true;
     }
-    // --------------
+
     if (m_toUseFontSize)
+    {
         setFontSize = m_fontSize;
+    }
     else
     {
-        setFontSize = ((QSPGetNumVarValue((QSP_CHAR *)QSP_FMT("FSIZE"), 0, &numVal) && numVal)
-            ? numVal : m_fontSize);
+        setFontSize =  qspGetVar(QSP_FMT("FSIZE"), &numVal) && numVal ? numVal : m_fontSize;
     }
+
     if (setFontSize != m_desc->GetTextFont().GetPointSize())
     {
         if (ApplyFontSize(setFontSize)) toRefreshUI = true;
     }
-    // --------------
-    setFontName = ((QSPGetStrVarValue((QSP_CHAR *)QSP_FMT("FNAME"), 0, &strVal) && !qspIsEmpty(strVal))
-        ? qspToWxString(strVal) : m_fontName);
-    if (!setFontName.IsSameAs(m_desc->GetTextFont().GetFaceName(), false))
+
+
+    if (
+        const wxString setFontName = qspGetStr(QSP_FMT("FNAME"), &strVal) && !qspIsEmpty(strVal) ? qspToWxString(strVal): m_fontName;
+        !setFontName.IsSameAs(m_desc->GetTextFont().GetFaceName(), false)
+    )
     {
         if (ApplyFontName(setFontName))
             toRefreshUI = true;
@@ -417,7 +457,7 @@ void QSPFrame::ApplyParams()
             if (ApplyFontName(m_fontName)) toRefreshUI = true;
         }
     }
-    // --------------
+
     if (toRefreshUI) RefreshUI();
 }
 
@@ -431,19 +471,27 @@ void QSPFrame::DeleteMenu()
 void QSPFrame::AddMenuItem(const wxString &name, const wxString &imgPath)
 {
     Connect(m_menuItemId, wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(QSPFrame::OnMenu));
-    if (name == wxT("-"))
+
+    if (name == "-")
+    {
         m_menu->AppendSeparator();
+    }
     else
     {
-        wxMenuItem *item = new wxMenuItem(m_menu, m_menuItemId, name);
-        wxString imageFullPath(ComposeGamePath(imgPath));
-        if (wxFileExists(imageFullPath))
+        auto *item = new wxMenuItem(m_menu, m_menuItemId, name);
+        if (
+            const wxString imageFullPath(ComposeGamePath(imgPath));
+            wxFileExists(imageFullPath)
+        )
         {
-            wxBitmap itemBmp(imageFullPath, wxBITMAP_TYPE_ANY);
-            if (itemBmp.Ok()) item->SetBitmap(itemBmp);
+            if (
+                const wxBitmap itemBmp(imageFullPath, wxBITMAP_TYPE_ANY);
+                itemBmp.IsOk()
+            ) item->SetBitmap(itemBmp);
         }
         m_menu->Append(item);
     }
+
     ++m_menuItemId;
 }
 
@@ -456,7 +504,7 @@ int QSPFrame::ShowMenu()
 
 void QSPFrame::UpdateGamePath(const wxString &fullPath)
 {
-    wxFileName fileName(fullPath, wxPATH_DOS);
+    const wxFileName fileName(fullPath, wxPATH_DOS);
     m_worldPath = fileName.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
 }
 
@@ -467,8 +515,10 @@ wxString QSPFrame::ComposeGamePath(const wxString &relativePath) const
 
     wxFileName fullPath(m_worldPath + relativePath, wxPATH_DOS);
     fullPath.MakeAbsolute();
-    wxString normalizedPath(fullPath.GetFullPath());
-    if (normalizedPath.StartsWith(m_worldPath))
+    if (
+        wxString normalizedPath(fullPath.GetFullPath());
+        normalizedPath.StartsWith(m_worldPath)
+    )
         return normalizedPath;
 
     return wxEmptyString;
@@ -527,7 +577,7 @@ void QSPFrame::ShowError()
                      false,
                      this
     );
-    bool oldToProcessEvents = m_toProcessEvents;
+    const bool oldToProcessEvents = m_toProcessEvents;
     m_toProcessEvents = false;
     dialog.ShowModal();
     m_toProcessEvents = oldToProcessEvents;
@@ -549,12 +599,12 @@ void QSPFrame::ReCreateGUI()
 {
     wxMenuBar *menuBar = GetMenuBar();
     UpdateTitle();
-    // ------------
+
     menuBar->SetMenuLabel(0, _("&Quest"));
     menuBar->SetMenuLabel(1, _("&Game"));
     menuBar->SetMenuLabel(2, _("&Settings"));
     menuBar->SetMenuLabel(3, _("&Help"));
-    // ------------
+
     menuBar->SetLabel(ID_OPENGAME, _("&Open game...\tAlt-O"));
     menuBar->SetLabel(ID_NEWGAME, _("&Restart game\tAlt-N"));
     menuBar->SetLabel(wxID_EXIT, _("&Quit\tAlt-X"));
@@ -587,13 +637,13 @@ void QSPFrame::ReCreateGUI()
     menuBar->SetLabel(ID_SELECTLANG, _("Select &language...\tAlt-L"));
     menuBar->SetLabel(ID_CHECKUPDATES, _("Check for latest version"));
     menuBar->SetLabel(wxID_ABOUT, _("&About...\tCtrl-H"));
-    // --------------------------------------
+
     m_manager->GetPane(wxT("imgview")).Caption(_("Preview"));
     m_manager->GetPane(wxT("objs")).Caption(_("Objects"));
     m_manager->GetPane(wxT("acts")).Caption(_("Actions"));
     m_manager->GetPane(wxT("vars")).Caption(_("Additional desc"));
     m_manager->GetPane(wxT("input")).Caption(_("Input area"));
-    // --------------------------------------
+
     m_manager->Update();
 }
 
@@ -607,7 +657,7 @@ void QSPFrame::RefreshUI()
     m_imgView->RefreshUI();
 }
 
-void QSPFrame::ApplyFont(const wxFont& font)
+void QSPFrame::ApplyFont(const wxFont &font)
 {
     m_desc->SetTextFont(font);
     m_objects->SetTextFont(font);
@@ -682,9 +732,9 @@ void QSPFrame::CallPaneFunc(wxWindowID id, QSP_BOOL toShow) const
     case ID_INPUT:
         QSPShowWindow(QSP_WIN_INPUT, toShow);
         break;
-    // case ID_VIEWPIC:
-    //     QSPShowWindow(QSP_WIN_VIEW, toShow);
-    //     break;
+    case ID_VIEWPIC:
+        // QSPShowWindow(QSP_WIN_VIEW, toShow);
+        break;
     }
 }
 
@@ -705,10 +755,10 @@ void QSPFrame::SetOverallVolume(int percents)
     m_volume = percents;
 }
 
-void QSPFrame::TogglePane(wxWindowID id)
+void QSPFrame::TogglePane(const wxWindowID id)
 {
-    bool toShow = !m_manager->GetPane(FindWindow(id)).IsShown();
-    CallPaneFunc(id, (QSP_BOOL)toShow);
+    const bool toShow = !m_manager->GetPane(FindWindow(id)).IsShown();
+    CallPaneFunc(id, toShow);
     ShowPane(id, toShow);
 }
 
@@ -716,17 +766,25 @@ void QSPFrame::OpenGameFile(const wxString& fullPath)
 {
     if (wxFileExists(fullPath))
     {
-        QSP_CHAR *file_path = wxStringToQsp(fullPath);
-        if (file_path != nullptr)
+        if (
+            const auto file_path = wxStringToQsp(fullPath);
+            file_path != nullptr
+        )
         {
-            if (QSPLoadGameWorldFromFile(file_path, QSP_FALSE))
+            if (!QSPLoadGameWorldFromFile(file_path.get(), QSP_FALSE))
+            {
+                ShowError();
+            }
+            else
             {
                 UpdateGamePath(fullPath);
                 m_isGameOpened = true;
 
-                wxString configString(m_worldPath + QSP_CONFIG);
-                wxString newPath(wxFileExists(configString) ? configString : m_configDefPath);
-                if (newPath != m_configPath)
+                const wxString configString(m_worldPath + QSP_CONFIG);
+                if (
+                    const wxString newPath(wxFileExists(configString) ? configString : m_configDefPath);
+                    newPath != m_configPath
+                )
                 {
                     SaveSettings();
                     m_configPath = newPath;
@@ -741,11 +799,6 @@ void QSPFrame::OpenGameFile(const wxString& fullPath)
                 EnableControls(true);
                 m_savedGamePath.Clear();
             }
-            else
-            {
-                ShowError();
-            }
-            delete[] file_path;
         }
     }
 }
@@ -754,23 +807,24 @@ void QSPFrame::OpenGameState(const wxString& fullPath)
 {
     if (wxFileExists(fullPath))
     {
-        QSP_CHAR *file_path = wxStringToQsp(fullPath);
-        if (file_path != nullptr)
+        if (
+            const auto file_path = wxStringToQsp(fullPath);
+            file_path != nullptr
+        )
         {
-            if (!QSPOpenSavedGameFromFile(file_path, QSP_TRUE))
-                ShowError();
-            delete[] file_path;
+            if (!QSPOpenSavedGameFromFile(file_path.get(), QSP_TRUE)) ShowError();
         }
     }
 }
 
 void QSPFrame::SaveGameState(const wxString &fullPath)
 {
-    QSP_CHAR *file_path = wxStringToQsp(fullPath);
-    if (file_path != nullptr)
+    if (
+        const auto file_path = wxStringToQsp(fullPath);
+        file_path != nullptr
+    )
     {
-        QSPSaveGameAsFile(file_path, QSP_TRUE);
-        delete[] file_path;
+        QSPSaveGameAsFile(file_path.get(), QSP_TRUE);
     }
     m_savedGamePath = fullPath;
 }
@@ -788,37 +842,53 @@ void QSPFrame::ProcessVersionResult(const wxString& versionInfo, int type)
 
     if (!versionInfo.IsEmpty())
     {
-        wxRegEx versionRegEx("\"name\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
-        if (versionRegEx.Matches(versionInfo))
+        if (
+            const wxRegEx versionRegEx(R"lit("name"\s*:\s*"((?:[^"\\]|\\.)*)")lit");
+            versionRegEx.Matches(versionInfo)
+        )
         {
             isSuccess = true;
-            wxString latestVersion = versionRegEx.GetMatch(versionInfo, 1);
-            if (latestVersion > QSP_VER)
+            if (
+                const wxString latestVersion = versionRegEx.GetMatch(versionInfo, 1);
+                latestVersion > QSP_VER
+            )
             {
                 wxString releaseNotes;
-                wxRegEx releaseNotesRegEx("\"body\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
-                if (releaseNotesRegEx.Matches(versionInfo))
+                if (
+                    const wxRegEx releaseNotesRegEx(R"lit("body"\s*:\s*"((?:[^"\\]|\\.)*)")lit");
+                    releaseNotesRegEx.Matches(versionInfo)
+                )
                 {
                     releaseNotes = releaseNotesRegEx.GetMatch(versionInfo, 1);
                     releaseNotes.Replace("\\r\\n", "\n");
                     releaseNotes.Replace("\\n", "\n");
                 }
                 wxString releaseUrl(QSP_LATESTVERPAGE);
-                wxRegEx releaseUrlRegEx("\"html_url\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
-                if (releaseUrlRegEx.Matches(versionInfo))
+                if (
+                    const wxRegEx releaseUrlRegEx(R"lit("html_url"\s*:\s*"((?:[^"\\]|\\.)*)")lit");
+                    releaseUrlRegEx.Matches(versionInfo)
+                )
                     releaseUrl = releaseUrlRegEx.GetMatch(versionInfo, 1);
 
-                UpdateAppDialog dialog(this, _("Update available"),
-                    latestVersion, releaseNotes, releaseUrl);
+                UpdateAppDialog dialog(
+                    this,
+                    _("Update available"),
+                    latestVersion,
+                    releaseNotes,
+                    releaseUrl
+                );
                 dialog.CenterOnParent();
                 if (dialog.ShowModal() == wxID_OK)
                     QSPTools::LaunchDefaultBrowser(releaseUrl);
             }
             else if (type == UPDATE_SHOW_ALL_RESULTS)
             {
-                wxMessageDialog dlgMsg(this,
+                wxMessageDialog dlgMsg(
+                    this,
                     _("Your app is already up to date."),
-                    _("Info"), wxOK | wxCENTRE | wxICON_INFORMATION);
+                    _("Info"),
+                    wxOK | wxCENTRE | wxICON_INFORMATION
+                );
                 dlgMsg.ShowModal();
             }
         }
@@ -826,19 +896,22 @@ void QSPFrame::ProcessVersionResult(const wxString& versionInfo, int type)
 
     if (!isSuccess && type == UPDATE_SHOW_ALL_RESULTS)
     {
-        wxMessageDialog dlgMsg(this,
+        wxMessageDialog dlgMsg(
+            this,
             _("Can't check the latest version!"),
-            _("Error"), wxOK | wxCENTRE | wxICON_ERROR);
+            _("Error"),
+            wxOK | wxCENTRE | wxICON_ERROR
+        );
         dlgMsg.ShowModal();
     }
 }
 
-void QSPFrame::OnInit(wxInitEvent& event)
+void QSPFrame::OnInit(const wxInitEvent& event)
 {
     OpenGameFile(event.GetInitString());
 }
 
-void QSPFrame::OnClose(wxCloseEvent& WXUNUSED(event))
+void QSPFrame::OnClose([[maybe_unused]] wxCloseEvent& event)
 {
     SaveSettings();
     EnableControls(false, true);
@@ -846,7 +919,7 @@ void QSPFrame::OnClose(wxCloseEvent& WXUNUSED(event))
     m_toQuit = true;
 }
 
-void QSPFrame::OnTimer(wxTimerEvent& WXUNUSED(event))
+void QSPFrame::OnTimer([[maybe_unused]] wxTimerEvent& event)
 {
     if (m_toProcessEvents && !QSPExecCounter(QSP_TRUE))
         ShowError();
@@ -862,7 +935,7 @@ void QSPFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
     Close();
 }
 
-void QSPFrame::OnVersionRequestState(wxWebRequestEvent& event)
+void QSPFrame::OnVersionRequestState(const wxWebRequestEvent& event)
 {
     switch (event.GetState())
     {
@@ -876,38 +949,50 @@ void QSPFrame::OnVersionRequestState(wxWebRequestEvent& event)
     }
 }
 
-void QSPFrame::OnOpenGame(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnOpenGame([[maybe_unused]] wxCommandEvent& event)
 {
-    wxFileDialog dialog(this, _("Select game file"),
-                        wxEmptyString, wxEmptyString,
-                        _("QSP games (*.qsp;*.gam)|*.qsp;*.gam"),
-                        wxFD_OPEN);
+    wxFileDialog dialog(
+        this,
+        _("Select game file"),
+        wxEmptyString,
+        wxEmptyString,
+        _("QSP games (*.qsp;*.gam)|*.qsp;*.gam"),
+        wxFD_OPEN
+    );
     if (dialog.ShowModal() == wxID_OK)
         OpenGameFile(dialog.GetPath());
 }
 
-void QSPFrame::OnNewGame(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnNewGame([[maybe_unused]] wxCommandEvent& event)
 {
     if (!QSPRestartGame(QSP_TRUE))
         ShowError();
 }
 
-void QSPFrame::OnOpenGameStat(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnOpenGameStat([[maybe_unused]] wxCommandEvent& event)
 {
-    wxFileDialog dialog(this, _("Select saved game file"),
-                        wxEmptyString, wxEmptyString,
-                        _("Saved game files (*.sav)|*.sav"),
-                        wxFD_OPEN);
+    wxFileDialog dialog(
+        this,
+        _("Select saved game file"),
+        wxEmptyString,
+        wxEmptyString,
+        _("Saved game files (*.sav)|*.sav"),
+        wxFD_OPEN
+    );
     if (dialog.ShowModal() == wxID_OK)
         OpenGameState(dialog.GetPath());
 }
 
-void QSPFrame::OnSaveGameStat(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnSaveGameStat([[maybe_unused]] wxCommandEvent& event)
 {
-    wxFileDialog dialog(this, _("Select file to save"),
-                        wxEmptyString, wxT("game.sav"),
-                        _("Saved game files (*.sav)|*.sav"),
-                        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+    wxFileDialog dialog(
+        this,
+        _("Select file to save"),
+        wxEmptyString,
+        "game.sav",
+        _("Saved game files (*.sav)|*.sav"),
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT
+    );
     if (dialog.ShowModal() == wxID_OK)
         SaveGameState(dialog.GetPath());
 }
@@ -947,7 +1032,7 @@ void QSPFrame::OnSelectFont(wxCommandEvent& WXUNUSED(event))
     }
 }
 
-void QSPFrame::OnUseFontSize(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnUseFontSize([[maybe_unused]] wxCommandEvent& event)
 {
     m_toUseFontSize = !m_toUseFontSize;
     if (m_toProcessEvents)
@@ -959,7 +1044,7 @@ void QSPFrame::OnUseFontSize(wxCommandEvent& WXUNUSED(event))
     }
 }
 
-void QSPFrame::OnSelectFontColor(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnSelectFontColor([[maybe_unused]] wxCommandEvent& event)
 {
     wxColourData data;
     data.SetColour(m_fontColor);
@@ -978,7 +1063,7 @@ void QSPFrame::OnSelectFontColor(wxCommandEvent& WXUNUSED(event))
     }
 }
 
-void QSPFrame::OnSelectBackColor(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnSelectBackColor([[maybe_unused]] wxCommandEvent& event)
 {
     wxColourData data;
     data.SetColour(m_backColor);
@@ -997,7 +1082,7 @@ void QSPFrame::OnSelectBackColor(wxCommandEvent& WXUNUSED(event))
     }
 }
 
-void QSPFrame::OnSelectLinkColor(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnSelectLinkColor([[maybe_unused]] wxCommandEvent& event)
 {
     wxColourData data;
     data.SetColour(m_linkColor);
@@ -1016,17 +1101,17 @@ void QSPFrame::OnSelectLinkColor(wxCommandEvent& WXUNUSED(event))
     }
 }
 
-void QSPFrame::OnCheckUpdatesOnStartup(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnCheckUpdatesOnStartup([[maybe_unused]] wxCommandEvent& event)
 {
     m_toCheckUpdates = !m_toCheckUpdates;
 }
 
-void QSPFrame::OnSelectLang(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnSelectLang([[maybe_unused]] wxCommandEvent& event)
 {
     if (m_transHelper->AskUserForLanguage()) ReCreateGUI();
 }
 
-void QSPFrame::OnVolume(wxCommandEvent& event)
+void QSPFrame::OnVolume(const wxCommandEvent& event)
 {
     int volume = 100;
     switch (event.GetId())
@@ -1040,144 +1125,151 @@ void QSPFrame::OnVolume(wxCommandEvent& event)
     SetOverallVolume(volume);
 }
 
-void QSPFrame::OnToggleWinMode(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnToggleWinMode([[maybe_unused]] wxCommandEvent& event)
 {
     ShowFullScreen(!IsFullScreen());
 }
 
-void QSPFrame::OnToggleObjs(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnToggleObjs([[maybe_unused]] wxCommandEvent& event)
 {
     TogglePane(ID_OBJECTS);
 }
 
-void QSPFrame::OnToggleActs(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnToggleActs([[maybe_unused]] wxCommandEvent& event)
 {
     TogglePane(ID_ACTIONS);
 }
 
-void QSPFrame::OnToggleDesc(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnToggleDesc([[maybe_unused]] wxCommandEvent& event)
 {
     TogglePane(ID_VARSDESC);
 }
 
-void QSPFrame::OnToggleInput(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnToggleInput([[maybe_unused]] wxCommandEvent& event)
 {
     TogglePane(ID_INPUT);
 }
 
-void QSPFrame::OnToggleCaptions(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnToggleCaptions([[maybe_unused]] wxCommandEvent& event)
 {
-    int i;
-    bool toShow = !m_manager->GetPane(m_objects).HasCaption();
-    wxAuiPaneInfoArray& allPanes = m_manager->GetAllPanes();
-    for (i = (int)allPanes.GetCount() - 1; i >= 0; --i)
+    const bool toShow = !m_manager->GetPane(m_objects).HasCaption();
+    const wxAuiPaneInfoArray& allPanes = m_manager->GetAllPanes();
+    for (int i = static_cast<int>(allPanes.GetCount()) - 1; i >= 0; --i)
         allPanes.Item(i).CaptionVisible(toShow);
     m_manager->GetPane(m_desc).CaptionVisible(false);
     m_manager->Update();
 }
 
-void QSPFrame::OnToggleHotkeys(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnToggleHotkeys([[maybe_unused]] wxCommandEvent& event)
 {
     m_toShowHotkeys = !m_toShowHotkeys;
     if (m_toProcessEvents) QSPCallbacks::RefreshInt(QSP_FALSE, QSP_FALSE);
 }
 
-void QSPFrame::OnCheckUpdates(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnCheckUpdates([[maybe_unused]] wxCommandEvent& event)
 {
     CheckLatestVersion(UPDATE_SHOW_ALL_RESULTS);
 }
 
-void QSPFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnAbout([[maybe_unused]] wxCommandEvent& event)
 {
     wxAboutDialogInfo info;
     info.SetIcon(wxIcon(logo_big_xpm));
     info.SetName(QSP_LOGO);
-    info.SetCopyright(wxT("QSP Foundation, 2001-2025"));
-    QSP_CHAR *version = (QSP_CHAR *)QSPGetVersion();
-    QSP_CHAR *libCompiledDate = (QSP_CHAR *)QSPGetCompiledDateTime();
-    wxString guiCompiledDate(wxT(__DATE__) wxT(", ") wxT(__TIME__));
+    info.SetCopyright(wxT("QSP Foundation, 2001-2026"));
+
+    const auto *version = const_cast<QSP_CHAR *>(QSPGetVersion());
+    const auto *libCompiledDate = const_cast<QSP_CHAR *>(QSPGetCompiledDateTime());
+    const wxString guiCompiledDate(wxT(__DATE__) wxT(", ") wxT(__TIME__));
+
     info.SetDescription(wxString::Format(
         _("Engine version: %s\nEngine compiled: %s\nGUI compiled: %s"),
         qspToWxString(version).wx_str(),
         qspToWxString(libCompiledDate).wx_str(),
         guiCompiledDate.wx_str()
     ));
-    info.SetWebSite(wxT("https://qsp.org"));
-    // ----
+    info.SetWebSite("https://qsp.org");
+
     wxAboutBox(info, this);
 }
 
 void QSPFrame::OnLinkClicked(wxHtmlLinkEvent& event)
 {
-    wxString href;
-    wxHtmlLinkInfo info(event.GetLinkInfo());
-    if (info.GetEvent()->LeftUp())
+    if (
+        const wxHtmlLinkInfo info(event.GetLinkInfo());
+        info.GetEvent()->LeftUp()
+    )
     {
-        href = info.GetHref();
-        if (href.StartsWith(wxT("#")))
+        if (
+            const wxString href = info.GetHref();
+            href.StartsWith("#")
+        )
         {
             if (event.GetId() == m_desc->GetId())
                 m_desc->LoadPage(href);
             else
                 m_vars->LoadPage(href);
         }
-        else if (href.Upper().StartsWith(wxT("EXEC:")))
+        else if (href.Upper().StartsWith("EXEC:"))
         {
-            wxString string = href.Mid(5);
-            QSP_CHAR *exec_code = wxStringToQsp(string);
-            if (exec_code != nullptr)
+            const wxString string = href.Mid(5);
+            if (
+                const auto exec_code = wxStringToQsp(string);
+                exec_code != nullptr
+            )
             {
-                if (m_toProcessEvents && !QSPExecString(exec_code, QSP_TRUE))
-                    ShowError();
-                delete[] exec_code;
+                if (m_toProcessEvents && !QSPExecString(exec_code.get(), QSP_TRUE)) ShowError();
             }
         }
         else
+        {
             QSPTools::LaunchDefaultBrowser(href);
+        }
     }
     else
+    {
         event.Skip();
+    }
 }
 
-void QSPFrame::OnObjectChange(wxCommandEvent& event)
+void QSPFrame::OnObjectChange(const wxCommandEvent& event)
 {
-    // show selection first
     m_objects->Update();
     wxThread::Sleep(10);
-    // execute the handler
+
     if (!QSPSetSelObjectIndex(event.GetInt(), QSP_TRUE))
         ShowError();
 }
 
-void QSPFrame::OnActionChange(wxCommandEvent& event)
+void QSPFrame::OnActionChange(const wxCommandEvent& event)
 {
-    // show selection first
     m_actions->Update();
     wxThread::Sleep(10);
-    // execute the handler
+
     if (!QSPSetSelActionIndex(event.GetInt(), QSP_TRUE))
         ShowError();
 }
 
-void QSPFrame::OnActionDblClick(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnActionDblClick([[maybe_unused]] wxCommandEvent& event)
 {
     if (!QSPExecuteSelActionCode(QSP_TRUE))
         ShowError();
 }
 
-void QSPFrame::OnInputTextChange(wxCommandEvent& event)
+void QSPFrame::OnInputTextChange(const wxCommandEvent& event)
 {
-    wxString text(event.GetString());
+    const wxString text(event.GetString());
     m_input->SetText(text, false);
-    QSP_CHAR *input_str = wxStringToQsp(text);
-    if (input_str != nullptr)
+    if (
+        const auto input_str = wxStringToQsp(text);
+        input_str != nullptr
+    )
     {
-        QSPSetInputStrText(input_str);
-        delete[] input_str;
+        QSPSetInputStrText(input_str.get());
     }
 }
 
-void QSPFrame::OnInputTextEnter(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnInputTextEnter([[maybe_unused]] wxCommandEvent& event)
 {
     if (!QSPExecUserInput(QSP_TRUE))
         ShowError();
@@ -1186,20 +1278,20 @@ void QSPFrame::OnInputTextEnter(wxCommandEvent& WXUNUSED(event))
 void QSPFrame::OnKey(wxKeyEvent& event)
 {
     event.Skip();
-    // Exit fullscreen mode
+
     if (IsFullScreen() && event.GetKeyCode() == WXK_ESCAPE)
     {
         ShowFullScreen(false);
         return;
     }
-    // Process key pressed event
+
     if (event.GetKeyCode() == WXK_SPACE)
         m_keyPressedWhileDisabled = true;
-    // Process action shortcut
-    if (m_toProcessEvents && !event.HasModifiers() && wxWindow::FindFocus() != m_input)
+
+    if (m_toProcessEvents && !event.HasModifiers() && FindFocus() != m_input)
     {
         int ind = -1;
-        int actsCount = QSPGetActions(NULL, 0);
+        const int actsCount = QSPGetActions(nullptr, 0);
         switch (event.GetKeyCode())
         {
         case '1': case WXK_NUMPAD1: case WXK_NUMPAD_END: ind = 0; break;
@@ -1226,10 +1318,10 @@ void QSPFrame::OnKey(wxKeyEvent& event)
     }
 }
 
-void QSPFrame::OnWheel(wxMouseEvent& event)
+void QSPFrame::OnWheel(const wxMouseEvent& event)
 {
-    wxWindow *win = wxFindWindowAtPoint(wxGetMousePosition());
-    if (win) win->ScrollLines(-event.GetWheelRotation() / event.GetWheelDelta() * event.GetLinesPerAction());
+    if (wxWindow *win = wxFindWindowAtPoint(wxGetMousePosition()))
+        win->ScrollLines(-event.GetWheelRotation() / event.GetWheelDelta() * event.GetLinesPerAction());
 }
 
 void QSPFrame::OnMouseClick(wxMouseEvent& event)
@@ -1246,7 +1338,7 @@ void QSPFrame::OnPaneClose(wxAuiManagerEvent& event)
         event.Veto();
 }
 
-void QSPFrame::OnDropFiles(wxDropFilesEvent& event)
+void QSPFrame::OnDropFiles(const wxDropFilesEvent& event)
 {
     if (event.GetNumberOfFiles() && (!m_isGameOpened || m_toProcessEvents))
     {

@@ -15,42 +15,25 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef INITEVENT_H
-    #define INITEVENT_H
+#pragma once
 
-    #include <wx/wx.h>
+#include <wx/wx.h>
 
-    class wxInitEvent : public wxEvent
+class wxInitEvent : public wxEvent
+{
+public:
+    wxInitEvent();
+    wxInitEvent(const wxInitEvent& event);
+
+    [[nodiscard]] wxString GetInitString() const { return m_initString; }
+    void SetInitString(wxString str) { m_initString = std::move(str); }
+
+    [[nodiscard]] wxEvent* Clone() const override
     {
-    public:
-        // C-tors / D-tor
-        wxInitEvent();
-        wxInitEvent(const wxInitEvent& event);
+        return new wxInitEvent(*this);
+    }
+private:
+    wxString m_initString{};
 
-        // Accessors
-        wxString GetInitString() const { return m_initString; }
-        void SetInitString(const wxString& str) { m_initString = str; }
-
-        // Overloaded methods
-        virtual wxEvent *Clone() const
-        {
-            return new wxInitEvent(*this);
-        }
-    protected:
-        // Fields
-        wxString m_initString;
-    private:
-        DECLARE_DYNAMIC_CLASS(wxInitEvent)
-    };
-
-    wxDECLARE_EVENT(wxEVT_INIT, wxInitEvent);
-
-    typedef void (wxEvtHandler::*wxInitEventFunction)(wxInitEvent&);
-
-    #define wxInitEventHandler(func) \
-        wxEVENT_HANDLER_CAST(wxInitEventFunction, func)
-
-    #define EVT_INIT(func) \
-        wx__DECLARE_EVT0(wxEVT_INIT, wxInitEventHandler(func))
-
-#endif
+    DECLARE_DYNAMIC_CLASS(wxInitEvent)
+};

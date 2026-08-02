@@ -15,29 +15,21 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef ANIMWIN_H
-    #define ANIMWIN_H
+#pragma once
 
-    #include <wx/wx.h>
-    #include <wx/animate.h>
-    #include <wx/generic/animate.h>
+#include <wx/wx.h>
+#include <wx/animate.h>
+#include <wx/generic/animate.h>
 
-    class QSPAnimWin : public wxGenericAnimationCtrl
-    {
-        DECLARE_CLASS(QSPAnimWin)
-        DECLARE_EVENT_TABLE()
-    public:
-        // C-tors / D-tor
-        QSPAnimWin(wxWindow *parent);
+class QSPAnimWin : public wxGenericAnimationCtrl
+{
+public:
+    QSPAnimWin(wxWindow *parent);
 
-        // Methods
-        void RefreshUI();
-        virtual bool LoadFile(const wxString& filename, wxAnimationType type = wxANIMATION_TYPE_ANY);
-    protected:
-        // Events
-        void OnKeyUp(wxKeyEvent& event);
-        void OnMouseWheel(wxMouseEvent& event);
-        void OnMouseClick(wxMouseEvent& event);
-    };
+    void RefreshUI();
 
-#endif
+    [[nodiscard]] bool LoadFile(const wxString &filename, wxAnimationType type = wxANIMATION_TYPE_ANY) override;
+
+private:
+    DECLARE_CLASS(QSPAnimWin)
+};

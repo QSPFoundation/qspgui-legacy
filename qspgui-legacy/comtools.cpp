@@ -17,187 +17,158 @@
 
 #include "comtools.h"
 
-void QSPTools::LaunchDefaultBrowser(const wxString& url)
+void QSPTools::LaunchDefaultBrowser(const wxString &url)
 {
-    /* Validate URLs, don't allow opening files & directories */
-    bool canOpen;
-    const wxURI uri(url);
+    const wxURI uri{url};
 
-    if (uri.HasScheme())
-    {
-        canOpen = uri.GetScheme() == wxT("http")
-            || uri.GetScheme() == wxT("https")
-            || uri.GetScheme() == wxT("mailto");
-    }
-    else
-    {
-        canOpen = !wxFileExists(url) && !wxDirExists(url);
-    }
+    const bool canOpen = uri.HasScheme()
+                             ? uri.GetScheme() == "http" || uri.GetScheme() == "https" || uri.GetScheme() == "mailto"
+                             : !wxFileExists(url) && !wxDirExists(url);
 
     if (canOpen)
         wxLaunchDefaultBrowser(url);
 }
 
-wxString QSPTools::GetHexColor(const wxColour& color)
+wxString QSPTools::GetHexColor(const wxColour &color)
 {
-    return wxString::Format(wxT("%.2X%.2X%.2X"), (int)color.Red(), (int)color.Green(), (int)color.Blue());
+    return wxString::Format("%.2X%.2X%.2X",
+                            static_cast<int>(color.Red()),
+                            static_cast<int>(color.Green()),
+                            static_cast<int>(color.Blue()));
 }
 
-wxString QSPTools::HtmlizeWhitespaces(const wxString& str)
+wxString QSPTools::HtmlizeWhitespaces(const wxString &str)
 {
-    wxString::const_iterator i;
-    wxChar ch, quote;
     wxString out;
-    size_t j, linepos = 0;
+    out.reserve(str.length() * 1.2);
+
+    size_t linepos = 0;
     bool isLastSpace = true;
-    for (i = str.begin(); i != str.end(); ++i)
+
+    auto appendSpace = [&]
     {
-        switch (ch = *i)
+        out << (isLastSpace ? "&nbsp;" : " ");
+        isLastSpace = !isLastSpace;
+    };
+
+    for (auto i = str.begin(); i != str.end(); ++i)
+    {
+        if (const wxChar ch = *i; ch == '<')
         {
-        case wxT('<'):
-            quote = 0;
+            out << ch;
+            wxChar quote = 0;
+            ++i;
+
             while (i != str.end())
             {
-                ch = *i;
+                wxChar inner_ch = *i;
                 if (quote)
                 {
-                    if (ch == wxT('\\'))
+                    if (inner_ch == '\\')
                     {
                         if (++i == str.end()) break;
-                        ch = *i;
-                        if (ch == quote)
+
+                        inner_ch = *i;
+                        if (inner_ch == quote)
                         {
-                            switch (ch)
-                            {
-                            case wxT('"'):
-                                out << wxT("&quot;");
-                                break;
-                            case wxT('\''):
-                                out << wxT("&apos;");
-                                break;
-                            }
+                            out << (inner_ch == '"' ? "&quot;" : "&apos;");
                             ++i;
                             continue;
                         }
-                        out << wxT('\\');
+                        out << '\\';
                     }
-                    switch (ch)
+
+                    if (inner_ch == '&') out << "&amp;";
+                    else if (inner_ch == '<') out << "&lt;";
+                    else if (inner_ch == '>') out << "&gt;";
+                    else
                     {
-                    case wxT('&'):
-                        out << wxT("&amp;");
-                        break;
-                    case wxT('<'):
-                        out << wxT("&lt;");
-                        break;
-                    case wxT('>'):
-                        out << wxT("&gt;");
-                        break;
-                    default:
-                        if (ch == quote)
-                            quote = 0;
-                        out << ch;
-                        break;
+                        if (inner_ch == quote) quote = 0;
+                        out << inner_ch;
                     }
-                }
-                else
+                } else
                 {
-                    out << ch;
-                    if (ch == wxT('>'))
-                        break;
-                    else if (ch == wxT('"') || ch == wxT('\''))
-                        quote = ch;
+                    out << inner_ch;
+                    if (inner_ch == '>') break;
+                    if (inner_ch == '"' || inner_ch == '\'') quote = inner_ch;
                 }
                 ++i;
             }
+
             if (i == str.end()) return out;
             isLastSpace = true;
-            break;
-        case wxT(' '):
-            if (isLastSpace)
-                out << wxT("&nbsp;");
-            else
-                out << wxT(' ');
-            isLastSpace = !isLastSpace;
+        } else if (ch == ' ')
+        {
+            appendSpace();
             ++linepos;
-            break;
-        case wxT('\r'):
-            break;
-        case wxT('\n'):
-            out << wxT("<br />");
+        } else if (ch == '\r')
+        {
+            // ignore \r
+        } else if (ch == '\n')
+        {
+            out << "<br />";
             isLastSpace = true;
             linepos = 0;
-            break;
-        case wxT('\t'):
-            for (j = 4 - linepos % 4; j > 0; --j)
+        } else if (ch == '\t')
+        {
+            const size_t spaces = 4 - (linepos % 4);
+            for (size_t j = 0; j < spaces; ++j)
             {
-                if (isLastSpace)
-                    out << wxT("&nbsp;");
-                else
-                    out << wxT(' ');
-                isLastSpace = !isLastSpace;
+                appendSpace();
             }
-            linepos += 4 - linepos % 4;
-            break;
-        default:
+            linepos += spaces;
+        } else
+        {
             out << ch;
             isLastSpace = false;
             ++linepos;
-            break;
         }
     }
+
     return out;
 }
 
-wxString QSPTools::ProceedAsPlain(const wxString& str)
+wxString QSPTools::ProceedAsPlain(const wxString &str)
 {
-    wxString::const_iterator i;
-    wxChar ch;
     wxString out;
-    for (i = str.begin(); i != str.end(); ++i)
+    out.reserve(str.length() * 1.1);
+
+    for (const wxChar ch : str)
     {
-        switch (ch = *i)
-        {
-        case wxT('<'):
-            out << wxT("&lt;");
-            break;
-        case wxT('>'):
-            out << wxT("&gt;");
-            break;
-        case wxT('&'):
-            out << wxT("&amp;");
-            break;
-        default:
-            out << ch;
-            break;
-        }
+        if (ch == '<') out << "&lt;";
+        else if (ch == '>') out << "&gt;";
+        else if (ch == '&') out << "&amp;";
+        else out << ch;
     }
+
     return out;
 }
 
 wxString QSPTools::GetAppPath(const wxString &path, const wxString &file)
 {
-    wxFileName appFullPath(wxStandardPaths::Get().GetExecutablePath());
-    wxFileName appPath(appFullPath.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) + path, file);
+    wxFileName appFullPath{wxStandardPaths::Get().GetExecutablePath()};
+    wxFileName appPath{appFullPath.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) + path, file};
     return appPath.GetFullPath();
 }
 
 wxString QSPTools::GetResourcePath(const wxString &path, const wxString &file)
 {
     wxPathList resourcePathList;
-    resourcePathList.AddEnvList(wxT("XDG_DATA_DIRS"));
+    resourcePathList.AddEnvList("XDG_DATA_DIRS");
     resourcePathList.Add(wxStandardPaths::Get().GetResourcesDir());
 
     wxArrayString prefixes;
     prefixes.Add(QSP_APPNAME);
     prefixes.Add(wxEmptyString);
 
-    for (wxPathList::iterator it = resourcePathList.begin(); it != resourcePathList.end(); ++it)
+    for (const wxString& resDir : resourcePathList)
     {
-        for (wxArrayString::iterator prefixIt = prefixes.begin(); prefixIt != prefixes.end(); ++prefixIt)
+        for (const wxString& prefix : prefixes)
         {
-            wxFileName resourcePath(*it, file); /* directory & file names are separated */
-            if (!prefixIt->IsEmpty())
-                resourcePath.Assign(resourcePath.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) + *prefixIt, file);
+            wxFileName resourcePath{resDir, file};
+
+            if (!prefix.IsEmpty())
+                resourcePath.Assign(resourcePath.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) + prefix, file);
 
             if (!path.IsEmpty())
                 resourcePath.Assign(resourcePath.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) + path, file);
@@ -212,7 +183,7 @@ wxString QSPTools::GetResourcePath(const wxString &path, const wxString &file)
 
 wxString QSPTools::GetConfigPath(const wxString &path, const wxString &file)
 {
-    wxFileName configPath(wxStandardPaths::Get().GetUserDir(wxStandardPathsBase::Dir_Config), file);
+    wxFileName configPath{wxStandardPaths::Get().GetUserDir(wxStandardPathsBase::Dir_Config), file};
 
     if (!path.IsEmpty())
         configPath.Assign(configPath.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) + path, file);
@@ -222,22 +193,17 @@ wxString QSPTools::GetConfigPath(const wxString &path, const wxString &file)
 
 wxString QSPTools::GetPlatform()
 {
-    wxOperatingSystemId osId = wxPlatformInfo::Get().GetOperatingSystemId();
+    const wxOperatingSystemId osId = wxPlatformInfo::Get().GetOperatingSystemId();
 
-    const wxChar* string = wxT("Unknown");
-    if (osId & wxOS_WINDOWS)
-        string = wxT("Windows");
-    else if (osId & wxOS_MAC)
-        string = wxT("MacOS");
-    else if (osId & wxOS_UNIX_LINUX)
-        string = wxT("Linux");
-    else if (osId & wxOS_UNIX)
-        string = wxT("Unix");
+    if (osId & wxOS_WINDOWS) return "Windows";
+    if (osId & wxOS_MAC) return "MacOS";
+    if (osId & wxOS_UNIX_LINUX) return "Linux";
+    if (osId & wxOS_UNIX) return "Unix";
 
-    return string;
+    return "Unknown";
 }
 
-wxString QSPTools::GetVersion(const wxString& libVersion)
+wxString QSPTools::GetVersion(const wxString &libVersion)
 {
-    return wxString::Format(wxT("%s (classic)"), libVersion.wx_str());
+    return wxString::Format("%s (classic)", libVersion);
 }

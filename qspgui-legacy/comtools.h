@@ -15,37 +15,37 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef TOOLS_H
-    #define TOOLS_H
+#pragma once
+#include <wx/wx.h>
+#include <wx/filename.h>
+#include <wx/stdpaths.h>
+#include <wx/scopeguard.h>
+#include <wx/filefn.h>
+#include <wx/uri.h>
 
-    #include <wx/wx.h>
-    #include <wx/filename.h>
-    #include <wx/stdpaths.h>
-    #include <wx/scopeguard.h>
-    #include <wx/filefn.h>
-    #include <wx/uri.h>
+inline constexpr const char* QSP_APPNAME = "qspgui";
+inline constexpr const char* QSP_CONFIG = "qspgui.cfg";
+inline constexpr const char* QSP_TRANSLATIONS = "langs";
+inline constexpr const char* QSP_SOUNDPLUGINS = "sound";
+inline constexpr const char* QSP_MIDISOUNDFONT = "midi.sf2";
 
-    #define QSP_APPNAME wxT("qspgui")
-    #define QSP_CONFIG wxT("qspgui.cfg")
-    #define QSP_TRANSLATIONS wxT("langs")
-    #define QSP_SOUNDPLUGINS wxT("sound")
-    #define QSP_MIDISOUNDFONT wxT("midi.sf2")
+inline constexpr const char* QSP_LATESTVERAPI = "https://api.github.com/repos/QSPFoundation/qspgui-legacy/releases/latest";
+inline constexpr const char* QSP_LATESTVERPAGE = "https://github.com/QSPFoundation/qspgui-legacy/releases/latest";
 
-    #define QSP_LATESTVERAPI wxT("https://api.github.com/repos/QSPFoundation/qspgui-legacy/releases/latest")
-    #define QSP_LATESTVERPAGE wxT("https://github.com/QSPFoundation/qspgui-legacy/releases/latest")
+class QSPTools
+{
+public:
+    QSPTools() = delete;
 
-    class QSPTools
-    {
-    public:
-        static void LaunchDefaultBrowser(const wxString& url);
-        static wxString GetHexColor(const wxColour& color);
-        static wxString HtmlizeWhitespaces(const wxString& str);
-        static wxString ProceedAsPlain(const wxString& str);
-        static wxString GetAppPath(const wxString &path = wxEmptyString, const wxString &file = wxEmptyString);
-        static wxString GetResourcePath(const wxString &path = wxEmptyString, const wxString &file = wxEmptyString);
-        static wxString GetConfigPath(const wxString &path = wxEmptyString, const wxString &file = wxEmptyString);
-        static wxString GetPlatform();
-        static wxString GetVersion(const wxString& libVersion);
-    };
+    static void LaunchDefaultBrowser(const wxString &url);
+    static wxString GetHexColor(const wxColour &color);
+    static wxString HtmlizeWhitespaces(const wxString &str);
+    static wxString ProceedAsPlain(const wxString &str);
 
-#endif
+    static wxString GetAppPath(const wxString &path = wxEmptyString, const wxString &file = wxEmptyString);
+    static wxString GetResourcePath(const wxString &path = wxEmptyString, const wxString &file = wxEmptyString);
+    static wxString GetConfigPath(const wxString &path = wxEmptyString, const wxString &file = wxEmptyString);
+
+    static wxString GetPlatform();
+    static wxString GetVersion(const wxString &libVersion);
+};

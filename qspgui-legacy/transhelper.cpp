@@ -17,72 +17,82 @@
 
 #include "transhelper.h"
 
-QSPTranslationHelper::QSPTranslationHelper(const wxString &appName, const wxString &path) :
-    m_appName(appName), m_path(path), m_locale(0)
+#include <utility>
+
+QSPTranslationHelper::QSPTranslationHelper(wxString appName, wxString path)
+    : m_appName(std::move(appName)), m_path(std::move(path))
 {
 }
 
-QSPTranslationHelper::~QSPTranslationHelper()
-{
-    if (m_locale) delete m_locale;
-}
-
-void QSPTranslationHelper::Load(wxConfigBase &config, const wxString &key)
+void QSPTranslationHelper::Load(const wxConfigBase &config, const wxString &key)
 {
     wxString langName;
     config.Read(key, &langName, wxEmptyString);
+
     if (langName.IsEmpty())
+    {
         UpdateLocale(wxLANGUAGE_DEFAULT);
+    }
     else
     {
-        const wxLanguageInfo *langInfo = wxLocale::FindLanguageInfo(langName);
-        if (langInfo)
+        if (const wxLanguageInfo* langInfo = wxLocale::FindLanguageInfo(langName)) {
             UpdateLocale(langInfo->Language);
-        else
+        } else {
             UpdateLocale(wxLANGUAGE_DEFAULT);
+        }
     }
 }
 
 void QSPTranslationHelper::Save(wxConfigBase &config, const wxString &key) const
 {
-    config.Write(key, m_locale ? m_locale->GetCanonicalName() : wxString(wxEmptyString));
+    config.Write(key, m_locale ? m_locale->GetCanonicalName() : wxString{});
 }
 
 bool QSPTranslationHelper::AskUserForLanguage()
 {
     wxArrayString names;
     wxArrayInt identifiers;
-    wxString filename;
-    const wxLanguageInfo *langinfo;
+
     names.Add(_("Default"));
     identifiers.Add(wxLANGUAGE_DEFAULT);
-    wxDir dir(m_path);
+
+    wxDir dir{m_path};
     if (dir.IsOpened())
     {
-        for (bool cont = dir.GetFirst(&filename, wxT("*"), wxDIR_DEFAULT); cont; cont = dir.GetNext(&filename))
+        wxString filename;
+        bool hasFiles = dir.GetFirst(&filename, "*", wxDIR_DEFAULT);
+        while (hasFiles)
         {
-            if ((langinfo = wxLocale::FindLanguageInfo(filename)))
+            if (const wxLanguageInfo* langinfo = wxLocale::FindLanguageInfo(filename))
             {
                 names.Add(langinfo->Description);
                 identifiers.Add(langinfo->Language);
             }
+            hasFiles = dir.GetNext(&filename);
         }
     }
-    int index = wxGetSingleChoiceIndex(_("Select language"), _("Language"), names);
-    if (index >= 0)
+
+    if (
+        const int index = wxGetSingleChoiceIndex(_("Select language"), _("Language"), names);
+        index >= 0
+    )
     {
         UpdateLocale(identifiers[index]);
         return true;
     }
+
     return false;
 }
 
-void QSPTranslationHelper::UpdateLocale(int lang)
+void QSPTranslationHelper::UpdateLocale(const int lang)
 {
-    if (m_locale) delete m_locale;
-    m_locale = new wxLocale;
+    m_locale = std::make_unique<wxLocale>();
     m_locale->Init(lang);
-    m_locale->AddCatalogLookupPathPrefix(m_path);
+
+    wxLocale::AddCatalogLookupPathPrefix(m_path);
+
     if (!m_locale->AddCatalog(m_appName))
-        m_locale->AddCatalog(m_appName + wxT('_') + m_locale->GetCanonicalName().BeforeFirst(wxT('_')));
+    {
+        m_locale->AddCatalog(m_appName + "_" + m_locale->GetCanonicalName().BeforeFirst('_'));
+    }
 }

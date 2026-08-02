@@ -17,50 +17,58 @@
 
 #include "listbox.h"
 #include "comtools.h"
+#include <wx/wupdlock.h>
 
 wxIMPLEMENT_CLASS(QSPListBox, wxHtmlListBox);
 
-BEGIN_EVENT_TABLE(QSPListBox, wxHtmlListBox)
-    EVT_MOTION(QSPListBox::OnMouseMove)
-    EVT_LEFT_DOWN(QSPListBox::OnMouseClick)
-    EVT_CHAR(QSPListBox::OnChar)
-    EVT_KEY_UP(QSPListBox::OnKeyUp)
-    EVT_MOUSEWHEEL(QSPListBox::OnMouseWheel)
-END_EVENT_TABLE()
-
-wxHtmlOpeningStatus QSPListBox::OnHTMLOpeningURL(wxHtmlURLType WXUNUSED(type), const wxString& url, wxString *redirect) const
+wxHtmlOpeningStatus QSPListBox::OnHTMLOpeningURL(
+    [[maybe_unused]] wxHtmlURLType type,
+    const wxString &url,
+    wxString *redirect
+) const
 {
-    if (m_pathProvider)
-    {
-        if (m_pathProvider->IsValidFullPath(url)) return wxHTML_OPEN;
-        *redirect = m_pathProvider->ComposeGamePath(url);
-        return wxHTML_REDIRECT;
-    }
-    return wxHTML_OPEN;
+    if (!m_pathProvider) return wxHTML_OPEN;
+
+    if (m_pathProvider->IsValidFullPath(url)) return wxHTML_OPEN;
+
+    *redirect = m_pathProvider->ComposeGamePath(url);
+
+    return wxHTML_REDIRECT;
 }
 
-QSPListBox::QSPListBox(wxWindow *parent, wxWindowID id, ListBoxType type) : wxHtmlListBox(parent, id, wxDefaultPosition, wxDefaultSize, wxNO_BORDER)
+QSPListBox::QSPListBox(
+    wxWindow *parent,
+    const wxWindowID id,
+    const ListBoxType type
+) : wxHtmlListBox(parent, id, wxDefaultPosition, wxDefaultSize, wxNO_BORDER), m_type(type)
 {
-    m_type = type;
-    m_toUseHtml = false;
-    m_toShowNums = false;
-    m_font = *wxNORMAL_FONT;
-    m_pathProvider = NULL;
-    wxString commonPart(wxString::Format(
-        wxT("<META HTTP-EQUIV = \"Content-Type\" CONTENT = \"text/html; charset=%s\">")
-        wxT("<FONT COLOR = #%%%%s><TABLE CELLSPACING = 4 CELLPADDING = 0><TR>%%s</TR></TABLE></FONT>"),
-        wxFontMapper::GetEncodingName(wxLocale::GetSystemEncoding()).wx_str()
-    ));
-    m_outFormat = wxString::Format(commonPart, wxT("<TD WIDTH = 100%%>%s</TD>"));
-    m_outFormatNums = wxString::Format(commonPart, wxT("<TD>[%ld]</TD><TD WIDTH = 100%%>%s</TD>"));
-    m_outFormatImage = wxString::Format(commonPart, wxT("<TD><IMG SRC=\"%s\"></TD><TD WIDTH = 100%%>%s</TD>"));
-    m_outFormatImageNums = wxString::Format(commonPart, wxT("<TD>[%ld]</TD><TD><IMG SRC=\"%s\"></TD><TD WIDTH = 100%%>%s</TD>"));
-    wxString fontName(m_font.GetFaceName());
+    Bind(wxEVT_MOTION, &QSPListBox::OnMouseMove, this);
+    Bind(wxEVT_LEFT_DOWN, &QSPListBox::OnMouseClick, this);
+    Bind(wxEVT_CHAR, &QSPListBox::OnChar, this);
+    Bind(wxEVT_KEY_UP, &QSPListBox::OnKeyUp, this);
+    Bind(wxEVT_MOUSEWHEEL, &QSPListBox::OnMouseWheel, this);
+
+    const wxString commonPart = wxString::Format(
+        "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=%s\">"
+        "<FONT COLOR=#%%%%s><TABLE CELLSPACING=4 CELLPADDING=0><TR>%%s</TR></TABLE></FONT>",
+        wxFontMapper::GetEncodingName(wxLocale::GetSystemEncoding())
+    );
+
+    m_outFormat = wxString::Format(commonPart, "<TD WIDTH=100%%>%s</TD>");
+    m_outFormatNums = wxString::Format(commonPart, "<TD>[%ld]</TD><TD WIDTH=100%%>%s</TD>");
+    m_outFormatImage = wxString::Format(commonPart, "<TD><IMG SRC=\"%s\"></TD><TD WIDTH=100%%>%s</TD>");
+    m_outFormatImageNums = wxString::Format(commonPart, "<TD>[%ld]</TD><TD><IMG SRC=\"%s\"></TD><TD WIDTH=100%%>%s</TD>");
+
+    const wxString fontName = m_font.GetFaceName();
     SetStandardFonts(m_font.GetPointSize(), fontName, fontName);
     SetSelectionBackground(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT));
 }
 
-void QSPListBox::SetStandardFonts(int size, const wxString& normal_face, const wxString& fixed_face)
+void QSPListBox::SetStandardFonts(
+    const int size,
+    const wxString &normal_face,
+    const wxString &fixed_face
+)
 {
     CreateHTMLParser();
     m_htmlParser->SetStandardFonts(size, normal_face, fixed_face);
@@ -69,8 +77,7 @@ void QSPListBox::SetStandardFonts(int size, const wxString& normal_face, const w
 
 void QSPListBox::RefreshUI()
 {
-    wxON_BLOCK_EXIT_THIS0(QSPListBox::Thaw);
-    Freeze();
+    wxWindowUpdateLocker noUpdates{this};
     RefreshAll();
 }
 
@@ -80,7 +87,7 @@ void QSPListBox::BeginItems()
     m_newDescs.Clear();
 }
 
-void QSPListBox::AddItem(const wxString& image, const wxString& desc)
+void QSPListBox::AddItem(const wxString &image, const wxString &desc)
 {
     m_newImages.Add(image);
     m_newDescs.Add(desc);
@@ -88,57 +95,58 @@ void QSPListBox::AddItem(const wxString& image, const wxString& desc)
 
 void QSPListBox::EndItems()
 {
-    size_t count;
-    if (m_images != m_newImages || m_descs != m_newDescs)
-    {
-        m_images = m_newImages;
-        m_descs = m_newDescs;
-        wxON_BLOCK_EXIT_THIS0(QSPListBox::Thaw);
-        Freeze();
-        count = m_descs.GetCount();
-        SetItemCount(count);
-        RefreshAll();
-        if (count) ScrollToRow(0);
-    }
+    if (m_images == m_newImages && m_descs == m_newDescs) return;
+
+    m_images = m_newImages;
+    m_descs = m_newDescs;
+
+    wxWindowUpdateLocker noUpdates{this};
+
+    const size_t count = m_descs.GetCount();
+    SetItemCount(count);
+    RefreshAll();
+
+    if (count > 0) ScrollToRow(0);
 }
 
-void QSPListBox::SetIsHtml(bool isHtml)
+void QSPListBox::SetIsHtml(const bool isHtml)
 {
-    if (m_toUseHtml != isHtml)
-    {
-        m_toUseHtml = isHtml;
-        RefreshUI();
-    }
+    if (m_toUseHtml == isHtml) return;
+
+    m_toUseHtml = isHtml;
+    RefreshUI();
 }
 
-void QSPListBox::SetToShowNums(bool toShow)
+void QSPListBox::SetToShowNums(const bool toShow)
 {
-    if (m_toShowNums != toShow)
-    {
-        m_toShowNums = toShow;
-        RefreshUI();
-    }
+    if (m_toShowNums == toShow) return;
+
+    m_toShowNums = toShow;
+    RefreshUI();
 }
 
-void QSPListBox::SetTextFont(const wxFont& font)
+void QSPListBox::SetTextFont(const wxFont &font)
 {
-    int fontSize = font.GetPointSize();
-    wxString fontName(font.GetFaceName());
-    if (!m_font.GetFaceName().IsSameAs(fontName, false) || m_font.GetPointSize() != fontSize)
+    const int fontSize = font.GetPointSize();
+
+    if (
+        const wxString fontName = font.GetFaceName();
+        !m_font.GetFaceName().IsSameAs(fontName, false) || m_font.GetPointSize() != fontSize
+    )
     {
         m_font = font;
         SetStandardFonts(fontSize, fontName, fontName);
     }
 }
 
-void QSPListBox::SetLinkColor(const wxColour& clr)
+void QSPListBox::SetLinkColor(const wxColour &clr)
 {
     CreateHTMLParser();
     m_htmlParser->SetLinkColor(clr);
     RefreshUI();
 }
 
-const wxColour& QSPListBox::GetLinkColor() const
+const wxColour &QSPListBox::GetLinkColor() const
 {
     CreateHTMLParser();
     return m_htmlParser->GetLinkColor();
@@ -148,59 +156,59 @@ void QSPListBox::CreateHTMLParser() const
 {
     if (!m_htmlParser)
     {
-        QSPListBox *self = wxConstCast(this, QSPListBox);
+        auto *self = const_cast<QSPListBox*>(this);
         self->m_htmlParser = new wxHtmlWinParser(self);
         m_htmlParser->SetDC(new wxClientDC(self));
         m_htmlParser->SetFS(&self->m_filesystem);
-        #if !wxUSE_UNICODE
-            m_htmlParser->SetInputEncoding(wxLocale::GetSystemEncoding());
-        #endif
         m_htmlParser->SetStandardFonts();
     }
 }
 
-wxString QSPListBox::OnGetItem(size_t n) const
+wxString QSPListBox::OnGetItem(const size_t n) const
 {
-    wxString color(QSPTools::GetHexColor(GetForegroundColour()));
-    wxString text(QSPTools::HtmlizeWhitespaces(m_toUseHtml ? m_descs[n] : QSPTools::ProceedAsPlain(m_descs[n])));
+    const wxString color = QSPTools::GetHexColor(GetForegroundColour());
+    const wxString text = QSPTools::HtmlizeWhitespaces(m_toUseHtml ? m_descs[n] : QSPTools::ProceedAsPlain(m_descs[n]));
+
     if (m_toShowNums && n < 9)
     {
         if (m_images[n].IsEmpty())
-            return wxString::Format(m_outFormatNums, color.wx_str(), n + 1, text.wx_str());
+            return wxString::Format(m_outFormatNums, color, n + 1, text);
         else
-            return wxString::Format(m_outFormatImageNums, color.wx_str(), n + 1, m_images[n].wx_str(), text.wx_str());
+            return wxString::Format(m_outFormatImageNums, color, n + 1, m_images[n], text);
     }
     else
     {
         if (m_images[n].IsEmpty())
-            return wxString::Format(m_outFormat, color.wx_str(), text.wx_str());
+            return wxString::Format(m_outFormat, color, text);
         else
-            return wxString::Format(m_outFormatImage, color.wx_str(), m_images[n].wx_str(), text.wx_str());
+            return wxString::Format(m_outFormatImage, color, m_images[n], text);
     }
 }
 
-void QSPListBox::OnMouseMove(wxMouseEvent& event)
+void QSPListBox::OnMouseMove(wxMouseEvent &event)
 {
-    int item;
     event.Skip();
-    if (m_type == LB_EXTENDED)
+    if (m_type == ListBoxType::Extended)
     {
-        item = VirtualHitTest(event.GetY());
-        if (item != wxNOT_FOUND) DoHandleItemClick(item, 0);
+        if (
+            const int item = VirtualHitTest(event.GetY());
+            item != wxNOT_FOUND
+        )
+            DoHandleItemClick(item, 0);
     }
 }
 
-void QSPListBox::OnMouseClick(wxMouseEvent& event)
+void QSPListBox::OnMouseClick(wxMouseEvent &event)
 {
     event.Skip();
     event.ResumePropagation(wxEVENT_PROPAGATE_MAX);
-    if (m_type == LB_EXTENDED) OnLeftDClick(event);
+    if (m_type == ListBoxType::Extended) OnLeftDClick(event);
 }
 
-void QSPListBox::OnChar(wxKeyEvent& event)
+void QSPListBox::OnChar(wxKeyEvent &event)
 {
     event.Skip();
-    if (m_type == LB_EXTENDED && event.GetKeyCode() == WXK_RETURN && GetSelection() != wxNOT_FOUND)
+    if (m_type == ListBoxType::Extended && event.GetKeyCode() == WXK_RETURN && GetSelection() != wxNOT_FOUND)
     {
         wxCommandEvent clickEvent(wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, GetId());
         clickEvent.SetEventObject(this);
@@ -210,13 +218,13 @@ void QSPListBox::OnChar(wxKeyEvent& event)
     }
 }
 
-void QSPListBox::OnKeyUp(wxKeyEvent& event)
+void QSPListBox::OnKeyUp(wxKeyEvent &event)
 {
     event.Skip();
     event.ResumePropagation(wxEVENT_PROPAGATE_MAX);
 }
 
-void QSPListBox::OnMouseWheel(wxMouseEvent& event)
+void QSPListBox::OnMouseWheel(wxMouseEvent &event)
 {
     event.Skip();
     if (wxFindWindowAtPoint(wxGetMousePosition()) != this)

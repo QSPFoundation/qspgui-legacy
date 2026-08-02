@@ -18,7 +18,7 @@
 #include "app.h"
 #include "comtools.h"
 
-wxIMPLEMENT_APP(QSPApp);
+wxIMPLEMENT_APP(QSPApp); // NOLINT
 
 bool QSPApp::OnInit()
 {
@@ -38,7 +38,6 @@ int QSPApp::OnExit()
 {
     QSPTerminate();
     QSPCallbacks::DeInit();
-    delete m_transHelper;
     wxTheClipboard->Flush();
     return wxApp::OnExit();
 }
@@ -59,6 +58,7 @@ bool QSPApp::OnCmdLineParsed(wxCmdLineParser &parser)
 
     if (parser.GetParamCount() > 0)
         m_gameFile = parser.GetParam();
+
     return true;
 }
 
@@ -69,16 +69,14 @@ void QSPApp::InitUI()
         configPath = QSPTools::GetConfigPath(wxEmptyString, QSP_CONFIG);
 
     wxString langsPath = QSPTools::GetResourcePath(QSP_TRANSLATIONS);
-    m_transHelper = new QSPTranslationHelper(QSP_APPNAME, langsPath);
+    m_transHelper = std::make_unique<QSPTranslationHelper>(QSP_APPNAME, langsPath);
 
-    // ----------------------
-    QSPFrame * frame = new QSPFrame(configPath, m_transHelper);
+    auto * frame = new QSPFrame(configPath, m_transHelper.get());
     QSPCallbacks::Init(frame);
-    frame->LoadSettings(); // load settings after initialization to properly restore everything
+    frame->LoadSettings();
     frame->EnableControls(false);
-    // ----------------------
-    wxInitEvent initEvent;
-    if (GetAutoRunEvent(initEvent))
+
+    if (wxInitEvent initEvent; GetAutoRunEvent(initEvent))
         wxPostEvent(frame, initEvent);
     else
     {
@@ -100,12 +98,15 @@ bool QSPApp::GetAutoRunEvent(wxInitEvent& initEvent)
     {
         wxFileName autoPath(wxT("auto.qsp"));
         autoPath.MakeAbsolute();
-        wxString autoPathString(autoPath.GetFullPath());
-        if (wxFileExists(autoPathString))
+        if (
+            wxString autoPathString(autoPath.GetFullPath());
+            wxFileExists(autoPathString)
+        )
         {
             initEvent.SetInitString(autoPathString);
             return true;
         }
     }
+
     return false;
 }

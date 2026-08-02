@@ -15,44 +15,35 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-#ifndef IMGCANVAS_H
-    #define IMGCANVAS_H
+#pragma once
 
-    #include <wx/wx.h>
-    #include <wx/filename.h>
-    #include "animwin.h"
+#include <wx/wx.h>
+#include <wx/filename.h>
+#include "animwin.h"
 
-    class QSPImgCanvas : public wxWindow
-    {
-        DECLARE_CLASS(QSPImgCanvas)
-        DECLARE_EVENT_TABLE()
-    public:
-        // C-tors / D-tor
-        QSPImgCanvas(wxWindow *parent, wxWindowID id);
-        virtual ~QSPImgCanvas();
+class QSPImgCanvas : public wxWindow
+{
+public:
+    QSPImgCanvas(wxWindow *parent, wxWindowID id);
+    ~QSPImgCanvas() override = default;
 
-        // Methods
-        bool OpenFile(const wxString& fullPath);
-        void RefreshUI();
+    bool OpenFile(const wxString& fullPath);
+    void RefreshUI();
 
-        // Overloaded methods
-        virtual bool SetBackgroundColour(const wxColour& color);
-    protected:
-        // Events
-        void OnSize(wxSizeEvent& event);
-        void OnPaint(wxPaintEvent &event);
-        void OnKeyUp(wxKeyEvent& event);
-        void OnMouseWheel(wxMouseEvent& event);
-        void OnMouseClick(wxMouseEvent& event);
+    bool SetBackgroundColour(const wxColour& color) override;
 
-        // Fields
-        bool m_isAnim;
-        wxImage m_image;
-        wxBitmap m_cachedBitmap;
-        QSPAnimWin *m_animation;
-        wxString m_path;
-        int m_posX;
-        int m_posY;
-    };
+protected:
+    void OnSize(wxSizeEvent& event);
+    void OnPaintEvent(wxPaintEvent &event);
 
-#endif
+private:
+    bool m_isAnim{false};
+    wxImage m_image{};
+    wxBitmap m_cachedBitmap{};
+    QSPAnimWin* m_animation{nullptr};
+    wxString m_path{};
+    int m_posX{0};
+    int m_posY{0};
+
+    DECLARE_CLASS(QSPImgCanvas)
+};
