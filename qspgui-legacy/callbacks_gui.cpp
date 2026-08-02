@@ -130,7 +130,7 @@ int QSPCallbacks::RefreshInt(QSP_BOOL isForced, QSP_BOOL isNewDesc)
     {
         std::vector<QSPListItem> items(MAX_LIST_ITEMS);
 
-        const int objectsCount = QSPGetActions(items.data(), MAX_LIST_ITEMS);
+        const int objectsCount = QSPGetObjects(items.data(), MAX_LIST_ITEMS);
 
         m_frame->GetObjects()->BeginItems();
         for (int i = 0; i < objectsCount; ++i) {
