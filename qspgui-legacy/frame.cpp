@@ -451,7 +451,9 @@ void QSPFrame::ApplyParams()
     )
     {
         if (ApplyFontName(setFontName))
+        {
             toRefreshUI = true;
+        }
         else if (!m_fontName.IsSameAs(m_desc->GetTextFont().GetFaceName(), false))
         {
             if (ApplyFontName(m_fontName)) toRefreshUI = true;
@@ -581,7 +583,7 @@ void QSPFrame::ShowError()
     m_toProcessEvents = false;
     dialog.ShowModal();
     m_toProcessEvents = oldToProcessEvents;
-    if (m_isGameOpened) QSPCallbacks::RefreshInt(QSP_FALSE, QSP_FALSE);
+    if (m_isGameOpened) QSPCallbacks::RefreshInt(QSP_FALSE);
 }
 
 void QSPFrame::UpdateTitle()
@@ -1163,7 +1165,7 @@ void QSPFrame::OnToggleCaptions([[maybe_unused]] wxCommandEvent& event)
 void QSPFrame::OnToggleHotkeys([[maybe_unused]] wxCommandEvent& event)
 {
     m_toShowHotkeys = !m_toShowHotkeys;
-    if (m_toProcessEvents) QSPCallbacks::RefreshInt(QSP_FALSE, QSP_FALSE);
+    if (m_toProcessEvents) QSPCallbacks::RefreshInt(QSP_FALSE);
 }
 
 void QSPFrame::OnCheckUpdates([[maybe_unused]] wxCommandEvent& event)

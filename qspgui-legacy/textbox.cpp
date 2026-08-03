@@ -44,7 +44,7 @@ QSPTextBox::QSPTextBox(wxWindow *parent, const wxWindowID id) : wxHtmlWindow(par
     Bind(wxEVT_MOUSEWHEEL, &QSPTextBox::OnMouseWheel, this);
     Bind(wxEVT_LEFT_DOWN, &QSPTextBox::OnMouseClick, this);
 
-    SetBorders(5);
+    SetBorders(FromDIP(5));
 
     m_outFormat = wxString::Format(
         "<HTML><META HTTP-EQUIV = \"Content-Type\" CONTENT = \"text/html; charset=%s\">"

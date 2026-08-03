@@ -82,7 +82,7 @@ int QSPCallbacks::SetTimer(const int msecs)
     return 0;
 }
 
-int QSPCallbacks::RefreshInt(QSP_BOOL isForced, QSP_BOOL isNewDesc)
+int QSPCallbacks::RefreshInt(const QSP_BOOL isRedraw)
 {
     int numVal;
     QSP_CHAR *strVal;
@@ -97,8 +97,8 @@ int QSPCallbacks::RefreshInt(QSP_BOOL isForced, QSP_BOOL isNewDesc)
     if (QSPIsMainDescChanged())
     {
         const auto *mainDesc = const_cast<QSP_CHAR *>(QSPGetMainDesc());
-        // we don't scroll main description if it's completely updated (isNewDesc is true)
-        m_frame->GetDesc()->SetText(qspToWxString(mainDesc), !isNewDesc && toScroll);
+        // we don't scroll main description if it's completely updated
+        m_frame->GetDesc()->SetText(qspToWxString(mainDesc), toScroll);
     }
 
     m_frame->GetVars()->SetIsHtml(m_isHtml);
@@ -146,7 +146,7 @@ int QSPCallbacks::RefreshInt(QSP_BOOL isForced, QSP_BOOL isNewDesc)
         m_frame->GetDesc()->LoadBackImage(wxEmptyString);
 
     m_frame->ApplyParams();
-    if (isForced)
+    if (isRedraw)
     {
         m_frame->EnableControls(false, true);
         m_frame->Update();

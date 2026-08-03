@@ -126,7 +126,7 @@ public:
     static void DeInit();
     static void SetOverallVolume(float coeff);
 
-    static int RefreshInt(QSP_BOOL isForced, QSP_BOOL isNewDesc);
+    static int RefreshInt(QSP_BOOL isRedraw);
     static int SetTimer(int msecs);
     static int SetInputStrText(QSP_CHAR *text);
     static int IsPlay(const QSP_CHAR *file);
