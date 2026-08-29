@@ -20,11 +20,12 @@
 #include <wx/wx.h>
 #include <wx/stdpaths.h>
 #include <wx/clipbrd.h>
+#include <optional>
 #include "frame.h"
 #include "callbacks_gui.h"
 #include "transhelper.h"
 
-class QSPApp : public wxApp
+class QSPLegacyApp : public wxApp
 {
 public:
     bool OnInit() override;
@@ -34,7 +35,7 @@ public:
 
 protected:
     void InitUI();
-    bool GetAutoRunEvent(wxInitEvent& initEvent);
+    [[nodiscard]] std::optional<wxString> GetAutoRunPath() const;
 
 private:
     std::unique_ptr<QSPTranslationHelper> m_transHelper{nullptr};

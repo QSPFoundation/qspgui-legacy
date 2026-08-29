@@ -18,9 +18,9 @@
 #include "app.h"
 #include "comtools.h"
 
-wxIMPLEMENT_APP(QSPApp); // NOLINT
+wxIMPLEMENT_APP(QSPLegacyApp); // NOLINT
 
-bool QSPApp::OnInit()
+bool QSPLegacyApp::OnInit()
 {
     if (!wxApp::OnInit())
         return false;
@@ -34,7 +34,7 @@ bool QSPApp::OnInit()
     return true;
 }
 
-int QSPApp::OnExit()
+int QSPLegacyApp::OnExit()
 {
     QSPTerminate();
     QSPCallbacks::DeInit();
@@ -42,7 +42,7 @@ int QSPApp::OnExit()
     return wxApp::OnExit();
 }
 
-void QSPApp::OnInitCmdLine(wxCmdLineParser &parser)
+void QSPLegacyApp::OnInitCmdLine(wxCmdLineParser &parser)
 {
     wxApp::OnInitCmdLine(parser);
 
@@ -51,7 +51,7 @@ void QSPApp::OnInitCmdLine(wxCmdLineParser &parser)
                     wxCMD_LINE_PARAM_OPTIONAL);
 }
 
-bool QSPApp::OnCmdLineParsed(wxCmdLineParser &parser)
+bool QSPLegacyApp::OnCmdLineParsed(wxCmdLineParser &parser)
 {
     if (!wxApp::OnCmdLineParsed(parser))
         return false;
@@ -62,7 +62,7 @@ bool QSPApp::OnCmdLineParsed(wxCmdLineParser &parser)
     return true;
 }
 
-void QSPApp::InitUI()
+void QSPLegacyApp::InitUI()
 {
     wxString configPath = QSPTools::GetAppPath(wxEmptyString, QSP_CONFIG);
     if (!wxFileExists(configPath) && !wxFileName::IsDirWritable(QSPTools::GetAppPath()))
@@ -76,8 +76,10 @@ void QSPApp::InitUI()
     frame->LoadSettings();
     frame->EnableControls(false);
 
-    if (wxInitEvent initEvent; GetAutoRunEvent(initEvent))
-        wxPostEvent(frame, initEvent);
+    if (auto bootFile = GetAutoRunPath(); bootFile.has_value())
+    {
+        frame->CallAfter(&QSPFrame::OnInit, bootFile.value());
+    }
     else
     {
         if (frame->ToCheckUpdates())
@@ -85,28 +87,22 @@ void QSPApp::InitUI()
     }
 }
 
-bool QSPApp::GetAutoRunEvent(wxInitEvent& initEvent)
+std::optional<wxString> QSPLegacyApp::GetAutoRunPath() const
 {
     if (!m_gameFile.IsEmpty())
     {
-        wxFileName path(m_gameFile);
+        wxFileName path{m_gameFile};
         path.MakeAbsolute();
-        initEvent.SetInitString(path.GetFullPath());
-        return true;
-    }
-    else
-    {
-        wxFileName autoPath(wxT("auto.qsp"));
-        autoPath.MakeAbsolute();
-        if (
-            wxString autoPathString(autoPath.GetFullPath());
-            wxFileExists(autoPathString)
-        )
-        {
-            initEvent.SetInitString(autoPathString);
-            return true;
-        }
+        return path.GetFullPath();
     }
 
-    return false;
+    wxFileName autoPath{"auto.qsp"};
+    autoPath.MakeAbsolute();
+
+    if (wxString autoPathString = autoPath.GetFullPath(); wxFileExists(autoPathString))
+    {
+        return autoPathString;
+    }
+
+    return std::nullopt;
 }

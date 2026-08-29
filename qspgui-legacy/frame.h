@@ -33,7 +33,6 @@
 #include "textbox.h"
 #include "listbox.h"
 #include "imgcanvas.h"
-#include "initevent.h"
 #include "pathprovider.h"
 #include "updateappdialog.h"
 
@@ -126,6 +125,7 @@ public:
     [[nodiscard]] bool ToQuit() const { return m_toQuit; }
     [[nodiscard]] bool IsKeyPressedWhileDisabled() const { return m_keyPressedWhileDisabled; }
 
+    void OnInit(const wxString& path);
     void CheckLatestVersion(int type);
     void ProcessVersionResult(const wxString &versionInfo, int type);
 
@@ -148,7 +148,6 @@ protected:
     void SaveGameState(const wxString& fullPath);
 
     void OnVersionRequestState(const wxWebRequestEvent &event);
-    void OnInit(const wxInitEvent &event);
     void OnClose(wxCloseEvent &event);
     void OnTimer(wxTimerEvent &event);
     void OnMenu(wxCommandEvent &event);

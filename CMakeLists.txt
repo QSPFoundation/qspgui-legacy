@@ -113,7 +113,6 @@ set(QSPGUI_LEGACY_SOURCES
 	qspgui-legacy/comtools.cpp
 	qspgui-legacy/frame.cpp
 	qspgui-legacy/imgcanvas.cpp
-	qspgui-legacy/initevent.cpp
 	qspgui-legacy/inputbox.cpp
 	qspgui-legacy/inputdlg.cpp
 	qspgui-legacy/listbox.cpp

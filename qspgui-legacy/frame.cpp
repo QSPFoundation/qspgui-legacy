@@ -908,9 +908,9 @@ void QSPFrame::ProcessVersionResult(const wxString& versionInfo, int type)
     }
 }
 
-void QSPFrame::OnInit(const wxInitEvent& event)
+void QSPFrame::OnInit(const wxString& path)
 {
-    OpenGameFile(event.GetInitString());
+    OpenGameFile(path);
 }
 
 void QSPFrame::OnClose([[maybe_unused]] wxCloseEvent& event)
