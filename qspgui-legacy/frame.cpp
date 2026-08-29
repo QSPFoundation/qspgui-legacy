@@ -1007,7 +1007,7 @@ void QSPFrame::OnQuickSave(wxCommandEvent& event)
         SaveGameState(m_savedGamePath);
 }
 
-void QSPFrame::OnSelectFont(wxCommandEvent& WXUNUSED(event))
+void QSPFrame::OnSelectFont([[maybe_unused]] wxCommandEvent& event)
 {
     wxFontData data;
     wxFont font(m_desc->GetTextFont());
