@@ -33,8 +33,8 @@ wxIMPLEMENT_CLASS(QSPFrame, wxFrame);
 
 QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper) :
     wxFrame(nullptr, wxID_ANY, wxEmptyString),
-    m_configDefPath(configPath),
     m_configPath(configPath),
+    m_configDefPath(configPath),
     m_transHelper(transHelper)
 {
     wxRegisterId(ID_DUMMY);
