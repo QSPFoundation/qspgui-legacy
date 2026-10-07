@@ -67,7 +67,7 @@ QSPMsgDlg::QSPMsgDlg(wxWindow *parent,
     sizerMain->Add(sizerUp, 1, wxGROW, 0);
     sizerMain->Add(sizerBottom, 0, wxALIGN_RIGHT, 0);
 
-    sizerMain->SetMinSize(MinWidth, MinHeight);
+    sizerMain->SetMinSize(FromDIP(wxSize{MinWidth, MinHeight}));
     SetSizerAndFit(sizerMain);
     btnOk->SetFocus();
 }
@@ -80,8 +80,8 @@ void QSPMsgDlg::OnInitDialog([[maybe_unused]] wxInitDialogEvent &event)
     int height = m_desc->GetInternalRepresentation()->GetHeight() + m_desc->GetCharHeight() + deltaH;
     int width = m_desc->GetInternalRepresentation()->GetWidth() + deltaW;
 
-    height = std::clamp(height, MinHeight, MaxHeight);
-    width = std::clamp(width, MinWidth, MaxWidth);
+    height = std::clamp(height, FromDIP(MinHeight), FromDIP(MaxHeight));
+    width = std::clamp(width, FromDIP(MinWidth), FromDIP(MaxWidth));
 
     SetClientSize(width, height);
     Center();
