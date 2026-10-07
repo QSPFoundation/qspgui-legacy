@@ -70,6 +70,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME100);
     Bind(wxEVT_MENU, &QSPFrame::OnCheckUpdates, this, ID_CHECKUPDATES);
     Bind(wxEVT_MENU, &QSPFrame::OnAbout, this, wxID_ABOUT);
+    Bind(wxEVT_MENU, &QSPFrame::OnMenu, this, ID_BEGOFDYNMENU, ID_ENDOFDYNMENU);
 
     Bind(wxEVT_HTML_LINK_CLICKED, &QSPFrame::OnLinkClicked, this, ID_MAINDESC);
     Bind(wxEVT_HTML_LINK_CLICKED, &QSPFrame::OnLinkClicked, this, ID_VARSDESC);
@@ -474,8 +475,6 @@ void QSPFrame::DeleteMenu()
 
 void QSPFrame::AddMenuItem(const wxString &name, const wxString &imgPath)
 {
-    Connect(m_menuItemId, wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(QSPFrame::OnMenu));
-
     if (name == "-")
     {
         m_menu->AppendSeparator();
