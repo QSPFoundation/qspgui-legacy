@@ -228,15 +228,17 @@ int QSPCallbacks::ShowPane(const int type, const QSP_BOOL toShow)
 {
     if (m_frame->ToQuit()) return 0;
 
-    if (type & QSP_WIN_VARS)
-        m_frame->ShowPane(ID_VARSDESC, toShow != QSP_FALSE);
-    if (type & QSP_WIN_ACTS)
-        m_frame->ShowPane(ID_ACTIONS, toShow != QSP_FALSE);
-    if (type & QSP_WIN_OBJS)
-        m_frame->ShowPane(ID_OBJECTS, toShow != QSP_FALSE);
-    if (type & QSP_WIN_INPUT)
-        m_frame->ShowPane(ID_INPUT, toShow != QSP_FALSE);
+    wxWindowID paneId;
+    switch (type)
+    {
+        case QSP_WIN_ACTS: paneId = ID_ACTIONS; break;
+        case QSP_WIN_OBJS: paneId = ID_OBJECTS; break;
+        case QSP_WIN_VARS: paneId = ID_VARSDESC; break;
+        case QSP_WIN_INPUT: paneId = ID_INPUT; break;
+        default: return 0;
+    }
 
+    m_frame->ShowPane(paneId, toShow != QSP_FALSE);
     return 0;
 }
 
