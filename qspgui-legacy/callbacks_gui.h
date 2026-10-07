@@ -33,7 +33,11 @@ struct QSPSound
 
     bool Play(const wxString& file, const int volume, const float volumeCoeff)
     {
-        Sound = sound_play_file_w(file.c_str());
+#ifdef __WINDOWS__
+        Sound = sound_play_file_w(file.wc_str());
+#else
+        Sound = sound_play_file(file.fn_str());
+#endif
         if (Sound)
         {
             SetVolume(volume, volumeCoeff);

@@ -35,10 +35,12 @@ void QSPCallbacks::Init(QSPFrame *frame)
     else
     {
         const wxString soundFontPath(QSPTools::GetResourcePath(QSP_SOUNDPLUGINS, QSP_MIDISOUNDFONT));
-        if (
-            const int soundFontInitResult = soundfont_init_w(soundFontPath.c_str());
-            soundFontInitResult < 0
-        )
+#ifdef __WINDOWS__
+        const int soundFontInitResult = soundfont_init_w(soundFontPath.wc_str());
+#else
+        const int soundFontInitResult = soundfont_init(soundFontPath.fn_str());
+#endif
+        if (soundFontInitResult < 0)
             wxLogError("Can't load soundfont to play MIDI files");
     }
 
