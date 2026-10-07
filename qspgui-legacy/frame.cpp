@@ -834,7 +834,19 @@ void QSPFrame::SaveGameState(const wxString &fullPath)
 
 void QSPFrame::CheckLatestVersion(int type)
 {
-    wxWebRequest verRequest = wxWebSession::GetDefault().CreateRequest(this, QSP_LATESTVERAPI, type);
+    wxWebSession &session = wxWebSession::GetDefault();
+    if (!session.IsOpened())
+    {
+        ProcessVersionResult(wxEmptyString, type);
+        return;
+    }
+
+    wxWebRequest verRequest = session.CreateRequest(this, QSP_LATESTVERAPI, type);
+    if (!verRequest.IsOk())
+    {
+        ProcessVersionResult(wxEmptyString, type);
+        return;
+    }
 
     verRequest.Start();
 }
