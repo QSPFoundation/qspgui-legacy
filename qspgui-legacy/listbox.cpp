@@ -210,7 +210,7 @@ void QSPListBox::OnChar(wxKeyEvent &event)
     event.Skip();
     if (m_type == ListBoxType::Extended && event.GetKeyCode() == WXK_RETURN && GetSelection() != wxNOT_FOUND)
     {
-        wxCommandEvent clickEvent(wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, GetId());
+        wxCommandEvent clickEvent(wxEVT_LISTBOX_DCLICK, GetId());
         clickEvent.SetEventObject(this);
         clickEvent.SetInt(GetSelection());
         ProcessEvent(clickEvent);
