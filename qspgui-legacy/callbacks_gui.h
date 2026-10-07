@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <cstring>
 #include <qsp_default.h>
 #include "frame.h"
 #include "msgdlg.h"

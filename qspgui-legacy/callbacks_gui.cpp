@@ -18,6 +18,7 @@
 #include "callbacks_gui.h"
 #include "comtools.h"
 #include <vector>
+#include <algorithm>
 
 QSPFrame *QSPCallbacks::m_frame;
 bool QSPCallbacks::m_isHtml;
@@ -117,10 +118,10 @@ int QSPCallbacks::RefreshInt(const QSP_BOOL isRedraw)
     {
         std::vector<QSPListItem> items(MAX_LIST_ITEMS);
 
-        const int actionsCount = QSPGetActions(items.data(), MAX_LIST_ITEMS);
+        const int actCount = QSPGetActions(items.data(), MAX_LIST_ITEMS);
 
         m_frame->GetActions()->BeginItems();
-        for (int i = 0; i < actionsCount; ++i) {
+        for (int i = 0; i < std::min(actCount, MAX_LIST_ITEMS); ++i) {
             m_frame->GetActions()->AddItem(qspToWxString(items[i].Image), qspToWxString(items[i].Name));
         }
         m_frame->GetActions()->EndItems();
@@ -132,10 +133,10 @@ int QSPCallbacks::RefreshInt(const QSP_BOOL isRedraw)
     {
         std::vector<QSPListItem> items(MAX_LIST_ITEMS);
 
-        const int objectsCount = QSPGetObjects(items.data(), MAX_LIST_ITEMS);
+        const int objCount = QSPGetObjects(items.data(), MAX_LIST_ITEMS);
 
         m_frame->GetObjects()->BeginItems();
-        for (int i = 0; i < objectsCount; ++i) {
+        for (int i = 0; i < std::min(objCount, MAX_LIST_ITEMS); ++i) {
             m_frame->GetObjects()->AddItem(qspToWxString(items[i].Image), qspToWxString(items[i].Name));
         }
         m_frame->GetObjects()->EndItems();
