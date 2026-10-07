@@ -47,6 +47,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     Bind(wxEVT_MENU, &QSPFrame::OnNewGame, this, ID_NEWGAME);
     Bind(wxEVT_MENU, &QSPFrame::OnOpenGameStat, this, ID_OPENGAMESTAT);
     Bind(wxEVT_MENU, &QSPFrame::OnSaveGameStat, this, ID_SAVEGAMESTAT);
+    Bind(wxEVT_MENU, &QSPFrame::OnQuickSave, this, ID_QUICKSAVE);
     Bind(wxEVT_MENU, &QSPFrame::OnSelectFont, this, ID_SELECTFONT);
     Bind(wxEVT_MENU, &QSPFrame::OnUseFontSize, this, ID_USEFONTSIZE);
     Bind(wxEVT_MENU, &QSPFrame::OnSelectFontColor, this, ID_SELECTFONTCOLOR);
@@ -60,6 +61,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     Bind(wxEVT_MENU, &QSPFrame::OnToggleDesc, this, ID_TOGGLEDESC);
     Bind(wxEVT_MENU, &QSPFrame::OnToggleInput, this, ID_TOGGLEINPUT);
     Bind(wxEVT_MENU, &QSPFrame::OnToggleCaptions, this, ID_TOGGLECAPTIONS);
+    Bind(wxEVT_MENU, &QSPFrame::OnToggleHotkeys, this, ID_TOGGLEHOTKEYS);
     Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME0);
     Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME20);
     Bind(wxEVT_MENU, &QSPFrame::OnVolume, this, ID_VOLUME40);
@@ -75,7 +77,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     Bind(wxEVT_LISTBOX, &QSPFrame::OnActionChange, this, ID_ACTIONS);
     Bind(wxEVT_LISTBOX_DCLICK, &QSPFrame::OnActionDblClick, this, ID_ACTIONS);
     Bind(wxEVT_TEXT, &QSPFrame::OnInputTextChange, this, ID_INPUT);
-    Bind(wxEVT_TEXT_ENTER, &QSPFrame::OnInputTextEnter, this, ID_INPUT);
+    Bind(wxEVT_ENTER, &QSPFrame::OnInputTextEnter, this, ID_INPUT);
     Bind(wxEVT_KEY_UP, &QSPFrame::OnKey, this);
     Bind(wxEVT_MOUSEWHEEL, &QSPFrame::OnWheel, this);
     Bind(wxEVT_LEFT_DOWN, &QSPFrame::OnMouseClick, this);
