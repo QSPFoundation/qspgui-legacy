@@ -915,12 +915,46 @@ void QSPFrame::OnInit(const wxString& path)
     OpenGameFile(path);
 }
 
+bool QSPFrame::IsInsideNestedLoop()
+{
+    const wxEventLoopBase* loop = wxEventLoopBase::GetActive();
+    const wxAppConsole* app = wxAppConsole::GetInstance();
+    return loop && (loop->IsYielding() || !app || loop != app->GetMainLoop());
+}
+
 void QSPFrame::OnClose([[maybe_unused]] wxCloseEvent& event)
 {
-    SaveSettings();
-    EnableControls(false, true);
+    if (!m_isClosing)
+    {
+        m_isClosing = true;
+        m_toQuit = true;
+        m_timer->Stop();
+        EnableControls(false, true);
+        SaveSettings();
+    }
+
+    if (IsInsideNestedLoop() && event.CanVeto())
+    {
+        event.Veto();
+        if (!m_closePending)
+        {
+            m_closePending = true;
+            Bind(wxEVT_IDLE, &QSPFrame::OnIdle, this);
+        }
+        return;
+    }
+
     Destroy();
-    m_toQuit = true;
+}
+
+void QSPFrame::OnIdle(wxIdleEvent& event)
+{
+    event.Skip();
+    if (!m_closePending || IsInsideNestedLoop()) return;
+
+    m_closePending = false;
+    Unbind(wxEVT_IDLE, &QSPFrame::OnIdle, this);
+    Close(true);
 }
 
 void QSPFrame::OnTimer([[maybe_unused]] wxTimerEvent& event)

@@ -27,6 +27,7 @@
 #include <wx/colordlg.h>
 #include <wx/aboutdlg.h>
 #include <wx/aui/aui.h>
+#include <wx/evtloop.h>
 #include <qsp_default.h>
 #include "transhelper.h"
 #include "inputbox.h"
@@ -146,6 +147,7 @@ protected:
     void OpenGameFile(const wxString& fullPath);
     void OpenGameState(const wxString& fullPath);
     void SaveGameState(const wxString& fullPath);
+    static bool IsInsideNestedLoop();
 
     void OnVersionRequestState(const wxWebRequestEvent &event);
     void OnClose(wxCloseEvent &event);
@@ -185,6 +187,7 @@ protected:
     void OnWheel(const wxMouseEvent &event);
     void OnPaneClose(wxAuiManagerEvent &event);
     void OnDropFiles(const wxDropFilesEvent &event);
+    void OnIdle(wxIdleEvent& event);
 
 private:
     bool m_isGameOpened{false};
@@ -215,6 +218,8 @@ private:
 
     bool m_toUseFontSize{false};
     bool m_toProcessEvents{false};
+    bool m_isClosing{false};
+    bool m_closePending{false};
     bool m_toQuit{false};
     bool m_keyPressedWhileDisabled{false};
     bool m_toShowHotkeys{false};
