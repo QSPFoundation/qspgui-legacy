@@ -19,6 +19,9 @@
 #include "comtools.h"
 #include "callbacks_gui.h"
 #include <wx/wupdlock.h>
+#include <wx/weakref.h>
+#include <algorithm>
+#include <vector>
 #include "icons/logo.xpm"
 #include "icons/logo_big.xpm"
 #include "icons/open.xpm"
@@ -31,6 +34,38 @@
 
 wxIMPLEMENT_CLASS(QSPFrame, wxFrame);
 
+namespace
+{
+    std::vector<unsigned long> ParseVersion(wxString version)
+    {
+        version.Trim(false).Trim(true);
+        if (version.StartsWith("v") || version.StartsWith("V"))
+            version.Remove(0, 1);
+        version = version.BeforeFirst('-').BeforeFirst(' ');
+
+        std::vector<unsigned long> parts;
+        for (const wxString &part : wxSplit(version, '.'))
+        {
+            unsigned long num = 0;
+            if (!part.ToULong(&num)) break;
+            parts.push_back(num);
+        }
+        return parts;
+    }
+
+    bool IsNewerVersion(const wxString &candidate, const wxString &current)
+    {
+        std::vector<unsigned long> candidateParts = ParseVersion(candidate);
+        if (candidateParts.empty()) return false;
+
+        std::vector<unsigned long> currentParts = ParseVersion(current);
+        const size_t count = std::max(candidateParts.size(), currentParts.size());
+        candidateParts.resize(count);
+        currentParts.resize(count);
+        return candidateParts > currentParts;
+    }
+}
+
 QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper) :
     wxFrame(nullptr, wxID_ANY, wxEmptyString),
     m_configPath(configPath),
@@ -39,7 +74,11 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
 {
     wxRegisterId(ID_DUMMY);
 
-    Bind(wxEVT_WEBREQUEST_STATE, &QSPFrame::OnVersionRequestState, this);
+    Bind(wxEVT_WEBREQUEST_STATE, [frame = wxWeakRef(this)](wxWebRequestEvent &event)
+         {
+             if (frame) frame->OnVersionRequestState(event);
+         }
+    );
     Bind(wxEVT_CLOSE_WINDOW, &QSPFrame::OnClose, this);
     Bind(wxEVT_TIMER, &QSPFrame::OnTimer, this, ID_TIMER);
     Bind(wxEVT_MENU, &QSPFrame::OnQuit, this, wxID_EXIT);
@@ -865,7 +904,7 @@ void QSPFrame::ProcessVersionResult(const wxString& versionInfo, int type)
             isSuccess = true;
             if (
                 const wxString latestVersion = versionRegEx.GetMatch(versionInfo, 1);
-                latestVersion > QSP_VER
+                IsNewerVersion(latestVersion, QSP_VER)
             )
             {
                 wxString releaseNotes;
