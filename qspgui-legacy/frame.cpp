@@ -74,10 +74,12 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
 {
     wxRegisterId(ID_DUMMY);
 
-    Bind(wxEVT_WEBREQUEST_STATE, [frame = wxWeakRef(this)](wxWebRequestEvent &event)
-         {
-             if (frame) frame->OnVersionRequestState(event);
-         }
+    wxAppConsole::GetInstance()->Bind(
+        wxEVT_WEBREQUEST_STATE,
+        [frame = wxWeakRef(this)](wxWebRequestEvent &event)
+        {
+            if (frame) frame->OnVersionRequestState(event);
+        }
     );
     Bind(wxEVT_CLOSE_WINDOW, &QSPFrame::OnClose, this);
     Bind(wxEVT_TIMER, &QSPFrame::OnTimer, this, ID_TIMER);
@@ -880,7 +882,9 @@ void QSPFrame::CheckLatestVersion(int type)
         return;
     }
 
-    wxWebRequest verRequest = session.CreateRequest(this, QSP_LATESTVERAPI, type);
+    wxWebRequest verRequest = session.CreateRequest(
+        wxAppConsole::GetInstance(), QSP_LATESTVERAPI, type
+    );
     if (!verRequest.IsOk())
     {
         ProcessVersionResult(wxEmptyString, type);
