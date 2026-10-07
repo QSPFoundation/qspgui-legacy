@@ -226,6 +226,7 @@ private:
     bool m_toCheckUpdates{true};
     int m_volume{100};
     int m_menuIndex{-1};
+    int m_wheelRotation{0};
 
     DECLARE_CLASS(QSPFrame)
 };

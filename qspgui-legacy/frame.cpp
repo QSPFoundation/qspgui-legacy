@@ -1369,8 +1369,24 @@ void QSPFrame::OnKey(wxKeyEvent& event)
 
 void QSPFrame::OnWheel(const wxMouseEvent& event)
 {
-    if (wxWindow *win = wxFindWindowAtPoint(wxGetMousePosition()))
-        win->ScrollLines(-event.GetWheelRotation() / event.GetWheelDelta() * event.GetLinesPerAction());
+    const int delta = event.GetWheelDelta();
+    if (event.GetWheelAxis() != wxMOUSE_WHEEL_VERTICAL || delta <= 0) return;
+
+    wxWindow *win = wxFindWindowAtPoint(wxGetMousePosition());
+    if (!win) return;
+
+    if (event.IsPageScroll())
+    {
+        if (const int pages = -event.GetWheelRotation() / delta)
+            win->ScrollPages(pages);
+        return;
+    }
+
+    m_wheelRotation += event.GetWheelRotation() * event.GetLinesPerAction();
+    const int lines = m_wheelRotation / delta;
+    m_wheelRotation -= lines * delta;
+
+    if (lines) win->ScrollLines(-lines);
 }
 
 void QSPFrame::OnMouseClick(wxMouseEvent& event)
