@@ -598,7 +598,7 @@ void QSPFrame::ShowError()
             _("Location: %s\nArea: %s\nLine %d: %s\nCode: %d\nDesc: %s"),
             locName.wx_str(),
             (errorInfo.ActIndex < 0 ? _("on visit").wx_str() : _("on action").wx_str()),
-            errorInfo.TopLineNum,
+            errorInfo.IntLineNum,
             line.wx_str(),
             errorInfo.ErrorNum,
             wxGetTranslation(errorDesc).wx_str()
