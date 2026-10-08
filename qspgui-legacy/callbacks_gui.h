@@ -131,25 +131,25 @@ public:
     static void DeInit();
     static void SetOverallVolume(float coeff);
 
-    static int RefreshInt(QSP_BOOL isRedraw);
-    static int SetTimer(int msecs);
-    static int SetInputStrText(QSP_CHAR *text);
-    static int IsPlay(const QSP_CHAR *file);
-    static int CloseFile(const QSP_CHAR *file);
-    static int PlayFile(QSP_CHAR *file, int volume);
-    static int ShowPane(int type, QSP_BOOL toShow);
-    static int Sleep(int msecs);
+    static void RefreshInt(QSP_BOOL isRedraw);
+    static void SetTimer(int msecs);
+    static void SetInputStrText(const QSP_CHAR *text);
+    static QSP_BOOL IsPlay(const QSP_CHAR *file);
+    static void CloseFile(const QSP_CHAR *file);
+    static void PlayFile(const QSP_CHAR *file, int volume);
+    static void ShowPane(int type, QSP_BOOL toShow);
+    static void Sleep(int msecs);
     static int GetMSCount();
-    static int Msg(QSP_CHAR *str);
+    static void Msg(const QSP_CHAR *str);
     static int ShowMenu(QSPListItem *items, int count);
-    static int Input(QSP_CHAR *text, QSP_CHAR *buffer, int maxLen);
-    static int ShowImage(QSP_CHAR *file);
-    static int OpenGame(QSP_CHAR *file, QSP_BOOL isAddLocs);
-    static int OpenGameStatus(QSP_CHAR *file);
-    static int SaveGameStatus(QSP_CHAR *file);
+    static void Input(const QSP_CHAR *text, QSP_CHAR *buffer, int maxLen);
+    static void ShowImage(const QSP_CHAR *file);
+    static void OpenGame(const QSP_CHAR *file, QSP_BOOL isAddLocs);
+    static void OpenGameStatus(const QSP_CHAR *file);
+    static void SaveGameStatus(const QSP_CHAR *file);
 
 private:
-    static bool SetVolume(QSP_CHAR *file, int volume);
+    static bool SetVolume(const QSP_CHAR *file, int volume);
     static void UpdateSounds();
 
     static QSPFrame *m_frame;
