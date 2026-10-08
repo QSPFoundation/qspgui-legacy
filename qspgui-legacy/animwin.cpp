@@ -36,7 +36,6 @@ QSPAnimWin::QSPAnimWin(wxWindow *parent) : wxGenericAnimationCtrl(
 
     Bind(wxEVT_KEY_UP, forwardEvent);
     Bind(wxEVT_MOUSEWHEEL, forwardEvent);
-    Bind(wxEVT_LEFT_DOWN, forwardEvent);
 }
 
 void QSPAnimWin::RefreshUI()

@@ -183,6 +183,7 @@ protected:
     void OnInputTextChange(const wxCommandEvent &event);
     void OnInputTextEnter(wxCommandEvent &event);
     void OnKey(wxKeyEvent &event);
+    void BindMouseClick(wxWindow *window);
     void OnMouseClick(wxMouseEvent &event);
     void OnWheel(const wxMouseEvent &event);
     void OnPaneClose(wxAuiManagerEvent &event);

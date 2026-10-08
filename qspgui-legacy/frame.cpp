@@ -260,6 +260,9 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     m_actions->SetPathProvider(this);
     m_vars->SetPathProvider(this);
 
+    for (wxWindow *pane : std::initializer_list<wxWindow *>{m_desc, m_vars, m_objects, m_actions, m_imgView})
+        BindMouseClick(pane);
+
     m_savedGamePath.Clear();
     m_worldPath.Clear();
     m_toQuit = false;
@@ -1430,6 +1433,13 @@ void QSPFrame::OnWheel(const wxMouseEvent& event)
     m_wheelRotation -= lines * delta;
 
     if (lines) win->ScrollLines(-lines);
+}
+
+void QSPFrame::BindMouseClick(wxWindow *window)
+{
+    window->Bind(wxEVT_LEFT_DOWN, &QSPFrame::OnMouseClick, this);
+    for (wxWindow *child : window->GetChildren())
+        BindMouseClick(child);
 }
 
 void QSPFrame::OnMouseClick(wxMouseEvent& event)

@@ -32,7 +32,6 @@ QSPImgCanvas::QSPImgCanvas(wxWindow *parent, const wxWindowID id)
     };
     Bind(wxEVT_KEY_UP, forwardEvent);
     Bind(wxEVT_MOUSEWHEEL, forwardEvent);
-    Bind(wxEVT_LEFT_DOWN, forwardEvent);
 
     m_animation = new QSPAnimWin{this};
     m_animation->Move(0, 0);

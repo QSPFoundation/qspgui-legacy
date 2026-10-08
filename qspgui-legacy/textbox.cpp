@@ -42,7 +42,6 @@ QSPTextBox::QSPTextBox(wxWindow *parent, const wxWindowID id) : wxHtmlWindow(par
     Bind(wxEVT_ERASE_BACKGROUND, &QSPTextBox::OnEraseBackground, this);
     Bind(wxEVT_KEY_UP, &QSPTextBox::OnKeyUp, this);
     Bind(wxEVT_MOUSEWHEEL, &QSPTextBox::OnMouseWheel, this);
-    Bind(wxEVT_LEFT_DOWN, &QSPTextBox::OnMouseClick, this);
 
     SetBorders(FromDIP(5));
 
@@ -146,12 +145,6 @@ void QSPTextBox::OnMouseWheel(wxMouseEvent &event)
     event.Skip();
     if (wxFindWindowAtPoint(wxGetMousePosition()) != this)
         event.ResumePropagation(wxEVENT_PROPAGATE_MAX);
-}
-
-void QSPTextBox::OnMouseClick(wxMouseEvent &event)
-{
-    event.Skip();
-    event.ResumePropagation(wxEVENT_PROPAGATE_MAX);
 }
 
 void QSPTextBox::OnSize(wxSizeEvent &event)

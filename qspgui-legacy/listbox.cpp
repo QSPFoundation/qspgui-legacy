@@ -201,7 +201,6 @@ void QSPListBox::OnMouseMove(wxMouseEvent &event)
 void QSPListBox::OnMouseClick(wxMouseEvent &event)
 {
     event.Skip();
-    event.ResumePropagation(wxEVENT_PROPAGATE_MAX);
     if (m_type == ListBoxType::Extended) OnLeftDClick(event);
 }
 

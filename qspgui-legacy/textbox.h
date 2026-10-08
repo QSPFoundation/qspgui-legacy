@@ -51,7 +51,6 @@ protected:
     void OnEraseBackground(const wxEraseEvent& event);
     void OnKeyUp(wxKeyEvent& event);
     void OnMouseWheel(wxMouseEvent& event);
-    void OnMouseClick(wxMouseEvent& event);
 
 private:
     PathProvider* m_pathProvider{nullptr};
