@@ -550,6 +550,7 @@ void QSPFrame::UpdateGamePath(const wxString &fullPath)
 {
     const wxFileName fileName(fullPath, wxPATH_DOS);
     m_worldPath = fileName.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+    m_savedGamePath.Clear();
 }
 
 wxString QSPFrame::ComposeGamePath(const wxString &relativePath) const
@@ -841,7 +842,6 @@ void QSPFrame::OpenGameFile(const wxString& fullPath)
                 if (m_toQuit) return;
                 UpdateTitle();
                 EnableControls(true);
-                m_savedGamePath.Clear();
             }
         }
     }
