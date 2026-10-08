@@ -388,17 +388,11 @@ int QSPCallbacks::OpenGame(QSP_CHAR *file, QSP_BOOL isAddLocs)
 {
     if (m_frame->ToQuit()) return 0;
 
-    if (
-        const wxString fullPath = m_frame->ComposeGamePath(qspToWxString(file));
-        wxFileExists(fullPath)
-    )
+    const wxString fullPath = m_frame->ComposeGamePath(qspToWxString(file));
+    if (const auto filePath = wxStringToQsp(fullPath))
     {
-        if (const auto file_path = wxStringToQsp(fullPath))
-        {
-            if (QSPLoadGameWorldFromFile(file_path.get(), isAddLocs) && !isAddLocs) {
-                m_frame->UpdateGamePath(fullPath);
-            }
-        }
+        if (QSPLoadGameWorldFromFile(filePath.get(), isAddLocs) && !isAddLocs)
+            m_frame->UpdateGamePath(fullPath);
     }
 
     return 0;
