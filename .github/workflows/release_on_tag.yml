@@ -54,17 +54,28 @@ jobs:
           retention-days: 1
 
   build_linux:
-    name: Build ${{ github.ref_name }} (Linux)
+    name: Build ${{ github.ref_name }} (Linux ${{ matrix.kind }})
     runs-on: ubuntu-latest
     needs: get_tag_metadata
+    strategy:
+      matrix:
+        include:
+          - kind: packages
+            script: ./build_packages/pack_linux64.sh
+          - kind: appimage
+            script: ./build_packages/pack_linux64_AppImage.sh
     steps:
       - uses: actions/checkout@v4
       - name: Build release
-        run: ./build_release_linux.sh "${{ needs.get_tag_metadata.outputs.clean_tag }}"
+        env:
+          RELEASE_VER: ${{ needs.get_tag_metadata.outputs.clean_tag }}
+        run: |
+          mkdir -p dist
+          ${{ matrix.script }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-standard-artifacts
+          name: linux-${{ matrix.kind }}-artifacts
           path: dist/*
           retention-days: 1
 
