@@ -17,8 +17,36 @@
 
 #include "app.h"
 #include "comtools.h"
+#include <wx/animate.h>
+#if wxUSE_LIBWEBP
+    #include <wx/imagwebp.h>
+#endif
 
 wxIMPLEMENT_APP(QSPLegacyApp); // NOLINT
+
+namespace
+{
+    void InitImageHandlers()
+    {
+        wxImage::AddHandler(new wxPNGHandler);
+        wxImage::AddHandler(new wxJPEGHandler);
+        wxImage::AddHandler(new wxGIFHandler);
+#if wxUSE_LIBWEBP
+        wxImage::AddHandler(new wxWEBPHandler);
+#endif
+
+        wxAnimationDecoderList &decoders = wxAnimation::GetHandlers();
+        for (auto node = decoders.GetFirst(); node; node = node->GetNext())
+        {
+            if (wxAnimationDecoder *decoder = node->GetData(); decoder->GetType() == wxANIMATION_TYPE_ANI)
+            {
+                decoders.Erase(node);
+                delete decoder;
+                break;
+            }
+        }
+    }
+}
 
 bool QSPLegacyApp::OnInit()
 {
@@ -28,7 +56,7 @@ bool QSPLegacyApp::OnInit()
     wxLog::EnableLogging(true);
     delete wxLog::SetActiveTarget(new wxLogStderr());
 
-    wxInitAllImageHandlers();
+    InitImageHandlers();
     QSPInit();
     InitUI();
     return true;
