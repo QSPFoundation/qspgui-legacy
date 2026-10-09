@@ -231,10 +231,12 @@ namespace
 
     wxString ResolveVideoPath(const wxHtmlWindowInterface *windowIface, const wxString &src)
     {
-        // Same rules as for images: the window keeps the game inside its folder
         wxString path = src;
+#ifndef __WINDOWS__
+        path.Replace("\\", "/");
+#endif
         wxString redirect;
-        switch (windowIface->OnHTMLOpeningURL(wxHTML_URL_OTHER, src, &redirect))
+        switch (windowIface->OnHTMLOpeningURL(wxHTML_URL_OTHER, path, &redirect))
         {
         case wxHTML_OPEN: break;
         case wxHTML_REDIRECT: path = redirect; break;
