@@ -30,11 +30,11 @@ QSPVersionInfoValues QSPCallbacks::m_versionInfo;
 
 namespace
 {
-    template <typename Signature, auto Func, auto Fallback>
+    template <typename CallBack, auto Func, auto Fallback>
     struct CallBackThunk;
 
     template <typename Result, typename... Args, auto Func, auto Fallback>
-    struct CallBackThunk<Result(Args...), Func, Fallback>
+    struct CallBackThunk<Result (*)(Args...), Func, Fallback>
     {
         static Result Call(Args... args) noexcept
         {
@@ -56,13 +56,13 @@ namespace
         }
     };
 
-    template <typename Signature, auto Func, auto Fallback = 0>
+    template <typename CallBack, auto Func, auto Fallback = 0>
     void RegisterCallBack(const int type)
     {
-        static_assert(std::is_same_v<decltype(Func), Signature *>,
-                      "The callback must have exactly the signature qsp-legacy calls it with");
+        static_assert(std::is_same_v<decltype(Func), CallBack>,
+                      "The callback must have exactly the type qsp-legacy calls it through");
 
-        Signature *thunk = &CallBackThunk<Signature, Func, Fallback>::Call;
+        const CallBack thunk = &CallBackThunk<CallBack, Func, Fallback>::Call;
         QSPSetCallBack(type, reinterpret_cast<QSP_CALLBACK>(reinterpret_cast<void (*)()>(thunk)));
     }
 }
@@ -86,22 +86,22 @@ void QSPCallbacks::Init(QSPFrame *frame)
             wxLogError("Can't load soundfont to play MIDI files");
     }
 
-    RegisterCallBack<void(int), &SetTimer>(QSP_CALL_SETTIMER);
-    RegisterCallBack<void(QSP_BOOL), &RefreshInt>(QSP_CALL_REFRESHINT);
-    RegisterCallBack<void(const QSP_CHAR *), &SetInputStrText>(QSP_CALL_SETINPUTSTRTEXT);
-    RegisterCallBack<QSP_BOOL(const QSP_CHAR *), &IsPlay>(QSP_CALL_ISPLAYINGFILE);
-    RegisterCallBack<void(const QSP_CHAR *, int), &PlayFile>(QSP_CALL_PLAYFILE);
-    RegisterCallBack<void(const QSP_CHAR *), &CloseFile>(QSP_CALL_CLOSEFILE);
-    RegisterCallBack<void(const QSP_CHAR *), &Msg>(QSP_CALL_SHOWMSGSTR);
-    RegisterCallBack<void(int), &Sleep>(QSP_CALL_SLEEP);
-    RegisterCallBack<int(), &GetMSCount>(QSP_CALL_GETMSCOUNT);
-    RegisterCallBack<int(QSPListItem *, int), &ShowMenu, -1>(QSP_CALL_SHOWMENU);
-    RegisterCallBack<void(const QSP_CHAR *, QSP_CHAR *, int), &Input>(QSP_CALL_INPUTBOX);
-    RegisterCallBack<void(const QSP_CHAR *), &ShowImage>(QSP_CALL_SHOWIMAGE);
-    RegisterCallBack<void(int, QSP_BOOL), &ShowPane>(QSP_CALL_SHOWWINDOW);
-    RegisterCallBack<void(const QSP_CHAR *, QSP_BOOL), &OpenGame>(QSP_CALL_OPENGAME);
-    RegisterCallBack<void(const QSP_CHAR *), &OpenGameStatus>(QSP_CALL_OPENGAMESTATUS);
-    RegisterCallBack<void(const QSP_CHAR *), &SaveGameStatus>(QSP_CALL_SAVEGAMESTATUS);
+    RegisterCallBack<QSP_INT_CALLBACK, &SetTimer>(QSP_CALL_SETTIMER);
+    RegisterCallBack<QSP_BOOL_CALLBACK, &RefreshInt>(QSP_CALL_REFRESHINT);
+    RegisterCallBack<QSP_STR_CALLBACK, &SetInputStrText>(QSP_CALL_SETINPUTSTRTEXT);
+    RegisterCallBack<QSP_ISPLAYINGFILE_CALLBACK, &IsPlay>(QSP_CALL_ISPLAYINGFILE);
+    RegisterCallBack<QSP_STR_INT_CALLBACK, &PlayFile>(QSP_CALL_PLAYFILE);
+    RegisterCallBack<QSP_STR_CALLBACK, &CloseFile>(QSP_CALL_CLOSEFILE);
+    RegisterCallBack<QSP_STR_CALLBACK, &Msg>(QSP_CALL_SHOWMSGSTR);
+    RegisterCallBack<QSP_INT_CALLBACK, &Sleep>(QSP_CALL_SLEEP);
+    RegisterCallBack<QSP_GETMSCOUNT_CALLBACK, &GetMSCount>(QSP_CALL_GETMSCOUNT);
+    RegisterCallBack<QSP_SHOWMENU_CALLBACK, &ShowMenu, -1>(QSP_CALL_SHOWMENU);
+    RegisterCallBack<QSP_INPUTBOX_CALLBACK, &Input>(QSP_CALL_INPUTBOX);
+    RegisterCallBack<QSP_STR_CALLBACK, &ShowImage>(QSP_CALL_SHOWIMAGE);
+    RegisterCallBack<QSP_INT_BOOL_CALLBACK, &ShowPane>(QSP_CALL_SHOWWINDOW);
+    RegisterCallBack<QSP_STR_BOOL_CALLBACK, &OpenGame>(QSP_CALL_OPENGAME);
+    RegisterCallBack<QSP_STR_CALLBACK, &OpenGameStatus>(QSP_CALL_OPENGAMESTATUS);
+    RegisterCallBack<QSP_STR_CALLBACK, &SaveGameStatus>(QSP_CALL_SAVEGAMESTATUS);
 
     /* Prepare version values */
     m_versionInfo["player"] = "Classic";
