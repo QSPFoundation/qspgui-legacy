@@ -106,6 +106,41 @@ endif()
 
 configure_file(qspgui_legacy_config.h.cmakein qspgui_legacy_config.h @ONLY)
 
+set(AUDIO_THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/qspgui-legacy/sound/thirdparty")
+set(AUDIO_PATCHED_DIR "${CMAKE_CURRENT_BINARY_DIR}/audio-patched")
+file(GLOB AUDIO_THIRDPARTY_FILES "${AUDIO_THIRDPARTY_DIR}/*")
+file(GLOB AUDIO_PATCHES "${CMAKE_CURRENT_SOURCE_DIR}/build_audio/*.diff")
+list(SORT AUDIO_PATCHES)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${AUDIO_THIRDPARTY_FILES} ${AUDIO_PATCHES})
+
+set(AUDIO_PATCH_STAMP "")
+foreach(AUDIO_FILE IN LISTS AUDIO_THIRDPARTY_FILES AUDIO_PATCHES)
+	file(SHA256 "${AUDIO_FILE}" AUDIO_FILE_HASH)
+	string(APPEND AUDIO_PATCH_STAMP "${AUDIO_FILE} ${AUDIO_FILE_HASH}\n")
+endforeach()
+set(AUDIO_OLD_PATCH_STAMP "")
+if (EXISTS "${AUDIO_PATCHED_DIR}/.stamp")
+	file(READ "${AUDIO_PATCHED_DIR}/.stamp" AUDIO_OLD_PATCH_STAMP)
+endif()
+if (NOT AUDIO_PATCH_STAMP STREQUAL AUDIO_OLD_PATCH_STAMP)
+	find_package(Git REQUIRED)
+	file(REMOVE_RECURSE "${AUDIO_PATCHED_DIR}")
+	file(COPY ${AUDIO_THIRDPARTY_FILES} DESTINATION "${AUDIO_PATCHED_DIR}")
+	foreach(AUDIO_PATCH IN LISTS AUDIO_PATCHES)
+		message(STATUS "Applying ${AUDIO_PATCH}")
+		execute_process(
+			COMMAND "${CMAKE_COMMAND}" -E env "GIT_CEILING_DIRECTORIES=${CMAKE_CURRENT_BINARY_DIR}"
+				"${GIT_EXECUTABLE}" apply --whitespace=nowarn "${AUDIO_PATCH}"
+			WORKING_DIRECTORY "${AUDIO_PATCHED_DIR}"
+			RESULT_VARIABLE AUDIO_PATCH_RESULT
+		)
+		if (NOT AUDIO_PATCH_RESULT EQUAL 0)
+			message(FATAL_ERROR "Can't apply ${AUDIO_PATCH}")
+		endif()
+	endforeach()
+	file(WRITE "${AUDIO_PATCHED_DIR}/.stamp" "${AUDIO_PATCH_STAMP}")
+endif()
+
 set(QSPGUI_LEGACY_SOURCES
 	qspgui-legacy/animwin.cpp
 	qspgui-legacy/app.cpp
@@ -154,6 +189,7 @@ else()
 endif()
 
 target_compile_definitions(qspgui-legacy PRIVATE _UNICODE)
+target_include_directories(qspgui-legacy PRIVATE "${AUDIO_PATCHED_DIR}")
 target_link_libraries(qspgui-legacy PRIVATE qsp-legacy wxbase wxcore wxadv wxaui wxnet wxhtml)
 
 # Installation

@@ -424,5 +424,5 @@ void sound_set_volume(ma_sound_file sound, float volume)
 
 int sound_is_playing(ma_sound_file sound)
 {
-    return (ma_sound_is_playing(sound) == MA_TRUE);
+    return ma_sound_is_playing(sound) == MA_TRUE;
 }
