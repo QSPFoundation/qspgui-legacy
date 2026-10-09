@@ -17,6 +17,9 @@
 
 #include "callbacks_gui.h"
 #include "comtools.h"
+#if QSP_VIDEO
+    #include "video/html_video.h"
+#endif
 #include <vector>
 #include <algorithm>
 #include <exception>
@@ -111,6 +114,9 @@ void QSPCallbacks::Init(QSPFrame *frame)
 void QSPCallbacks::DeInit()
 {
     CloseFile(nullptr);
+#if QSP_VIDEO
+    QSPVideo::ReleasePlayers();
+#endif
     sound_free_engine();
 }
 
@@ -505,6 +511,9 @@ bool QSPCallbacks::SetVolume(const QSP_CHAR *file, const int volume)
 void QSPCallbacks::SetOverallVolume(const float coeff)
 {
     m_volumeCoeff = std::clamp(coeff, 0.0f, 1.0f);
+#if QSP_VIDEO
+    QSPVideo::SetOverallVolume(m_volumeCoeff);
+#endif
 
     for (auto& [name, sound] : m_sounds)
     {

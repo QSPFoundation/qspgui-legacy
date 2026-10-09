@@ -55,7 +55,18 @@ typedef struct
     tsf *sf;
 } tsf_soundfont;
 
+typedef struct sound_stream
+{
+    ma_data_source_base ds;
+    ma_pcm_rb buffer;
+    ma_sound sound;
+    ma_uint32 channels;
+    ma_uint32 sampleRate;
+    MA_ATOMIC(8, ma_uint64) played;
+} sound_stream;
+
 static tsf_soundfont ma_current_soundfont;
+static ma_bool32 ma_engine_ready = MA_FALSE;
 static ma_mutex ma_soundfont_lock;
 static ma_engine ma_current_engine;
 static ma_resource_manager ma_current_resource_manager;
@@ -68,6 +79,19 @@ static int stream_callback_read(void *pDataSource, void *ptr, unsigned int size)
 static tml_message *tml_load_by_callback(ma_libtsf *tsf);
 static ma_result ma_decoding_backend_init_midi(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData, const ma_decoding_backend_config *pConfig, const ma_allocation_callbacks *pAllocationCallbacks, ma_data_source **ppBackend);
 static void ma_decoding_backend_uninit_midi(void *pUserData, ma_data_source *pBackend, const ma_allocation_callbacks *pAllocationCallbacks);
+
+static ma_result ma_stream_ds_read(ma_data_source *pDataSource, void *pFramesOut, ma_uint64 frameCount, ma_uint64 *pFramesRead);
+static ma_result ma_stream_ds_get_data_format(ma_data_source *pDataSource, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate, ma_channel *pChannelMap, size_t channelMapCap);
+
+static ma_data_source_vtable g_ma_stream_ds_vtable =
+{
+    ma_stream_ds_read,
+    NULL,
+    ma_stream_ds_get_data_format,
+    NULL,
+    NULL,
+    NULL
+};
 
 static ma_data_source_vtable g_ma_midi_ds_vtable =
 {
@@ -371,11 +395,13 @@ int sound_init_engine()
         return -1;
     }
 
+    ma_engine_ready = MA_TRUE;
     return 0;
 }
 
 void sound_free_engine()
 {
+    ma_engine_ready = MA_FALSE;
     ma_engine_uninit(&ma_current_engine);
     ma_resource_manager_uninit(&ma_current_resource_manager);
     soundfont_free(&ma_current_soundfont);
@@ -469,4 +495,130 @@ void sound_set_volume(ma_sound_file sound, float volume)
 int sound_is_playing(ma_sound_file sound)
 {
     return ma_sound_is_playing(sound) == MA_TRUE;
+}
+
+static ma_result ma_stream_ds_read(ma_data_source *pDataSource, void *pFramesOut, ma_uint64 frameCount, ma_uint64 *pFramesRead)
+{
+    sound_stream *stream = (sound_stream *)pDataSource;
+    float *out = (float *)pFramesOut;
+    ma_uint64 framesLeft = frameCount;
+    ma_uint64 framesCopied = 0;
+    while (framesLeft > 0)
+    {
+        void *pReadBuffer;
+        ma_uint32 framesToRead = (ma_uint32)(framesLeft > 0xFFFFFFFF ? 0xFFFFFFFF : framesLeft);
+        if (ma_pcm_rb_acquire_read(&stream->buffer, &framesToRead, &pReadBuffer) != MA_SUCCESS || framesToRead == 0)
+            break;
+        MA_COPY_MEMORY(out, pReadBuffer, (size_t)framesToRead * stream->channels * sizeof(float));
+        ma_pcm_rb_commit_read(&stream->buffer, framesToRead);
+        out += (size_t)framesToRead * stream->channels;
+        framesLeft -= framesToRead;
+        framesCopied += framesToRead;
+    }
+    /* Keep the sound alive while the producer is behind */
+    if (framesLeft > 0)
+        MA_ZERO_MEMORY(out, (size_t)framesLeft * stream->channels * sizeof(float));
+    ma_atomic_fetch_add_64(&stream->played, framesCopied);
+    if (pFramesRead != NULL)
+        *pFramesRead = frameCount;
+    return MA_SUCCESS;
+}
+
+static ma_result ma_stream_ds_get_data_format(ma_data_source *pDataSource, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate, ma_channel *pChannelMap, size_t channelMapCap)
+{
+    sound_stream *stream = (sound_stream *)pDataSource;
+    *pFormat = ma_format_f32;
+    *pChannels = stream->channels;
+    *pSampleRate = stream->sampleRate;
+    if (pChannelMap != NULL)
+        ma_channel_map_init_standard(ma_standard_channel_map_default, pChannelMap, channelMapCap, stream->channels);
+    return MA_SUCCESS;
+}
+
+sound_stream *sound_stream_create(unsigned int channels, unsigned int sampleRate, unsigned int capacityFrames)
+{
+    ma_data_source_config dataSourceConfig;
+    sound_stream *stream;
+    if (!ma_engine_ready || channels == 0 || channels > MA_MAX_CHANNELS || sampleRate == 0 || capacityFrames == 0)
+        return NULL;
+    stream = (sound_stream *)malloc(sizeof(sound_stream));
+    if (stream == NULL)
+        return NULL;
+    MA_ZERO_MEMORY(stream, sizeof(sound_stream));
+    stream->channels = channels;
+    stream->sampleRate = sampleRate;
+
+    dataSourceConfig = ma_data_source_config_init();
+    dataSourceConfig.vtable = &g_ma_stream_ds_vtable;
+    if (ma_data_source_init(&dataSourceConfig, &stream->ds) != MA_SUCCESS)
+    {
+        free(stream);
+        return NULL;
+    }
+    if (ma_pcm_rb_init(ma_format_f32, channels, capacityFrames, NULL, NULL, &stream->buffer) != MA_SUCCESS)
+    {
+        ma_data_source_uninit(&stream->ds);
+        free(stream);
+        return NULL;
+    }
+    if (ma_sound_init_from_data_source(&ma_current_engine, &stream->ds, MA_SOUND_FLAG_NO_SPATIALIZATION, NULL, &stream->sound) != MA_SUCCESS)
+    {
+        ma_pcm_rb_uninit(&stream->buffer);
+        ma_data_source_uninit(&stream->ds);
+        free(stream);
+        return NULL;
+    }
+    return stream;
+}
+
+void sound_stream_free(sound_stream *stream)
+{
+    if (stream == NULL)
+        return;
+    ma_sound_stop(&stream->sound);
+    ma_sound_uninit(&stream->sound);
+    ma_pcm_rb_uninit(&stream->buffer);
+    ma_data_source_uninit(&stream->ds);
+    free(stream);
+}
+
+unsigned int sound_stream_write(sound_stream *stream, const float *samples, unsigned int frameCount)
+{
+    unsigned int framesWritten = 0;
+    while (framesWritten < frameCount)
+    {
+        void *pWriteBuffer;
+        ma_uint32 framesToWrite = frameCount - framesWritten;
+        if (ma_pcm_rb_acquire_write(&stream->buffer, &framesToWrite, &pWriteBuffer) != MA_SUCCESS || framesToWrite == 0)
+            break;
+        MA_COPY_MEMORY(pWriteBuffer, samples + (size_t)framesWritten * stream->channels, (size_t)framesToWrite * stream->channels * sizeof(float));
+        ma_pcm_rb_commit_write(&stream->buffer, framesToWrite);
+        framesWritten += framesToWrite;
+    }
+    return framesWritten;
+}
+
+unsigned int sound_stream_get_queued(sound_stream *stream)
+{
+    return ma_pcm_rb_available_read(&stream->buffer);
+}
+
+unsigned long long sound_stream_get_played(sound_stream *stream)
+{
+    return ma_atomic_load_64(&stream->played);
+}
+
+void sound_stream_start(sound_stream *stream)
+{
+    ma_sound_start(&stream->sound);
+}
+
+void sound_stream_stop(sound_stream *stream)
+{
+    ma_sound_stop(&stream->sound);
+}
+
+void sound_stream_set_volume(sound_stream *stream, float volume)
+{
+    ma_sound_set_volume(&stream->sound, volume);
 }
