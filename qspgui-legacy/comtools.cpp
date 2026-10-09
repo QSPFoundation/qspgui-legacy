@@ -191,6 +191,33 @@ wxString QSPTools::GetConfigPath(const wxString &path, const wxString &file)
     return configPath.GetFullPath();
 }
 
+wxString QSPTools::GetGameFolder(const wxString &gameFile)
+{
+    const wxFileName fileName(gameFile);
+    return fileName.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+}
+
+wxString QSPTools::ResolveGamePath(const wxString &gameFolder, const wxString &relativePath)
+{
+    if (gameFolder.IsEmpty() || relativePath.IsEmpty())
+        return wxEmptyString;
+
+    wxString path(relativePath);
+#ifndef __WINDOWS__
+    path.Replace("\\", "/");
+#endif
+
+    wxFileName fullPath(gameFolder + path);
+    fullPath.MakeAbsolute();
+    if (
+        wxString normalizedPath(fullPath.GetFullPath());
+        normalizedPath.StartsWith(gameFolder)
+    )
+        return normalizedPath;
+
+    return wxEmptyString;
+}
+
 wxString QSPTools::GetPlatform()
 {
     const wxOperatingSystemId osId = wxPlatformInfo::Get().GetOperatingSystemId();

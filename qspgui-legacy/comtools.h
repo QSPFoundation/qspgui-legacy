@@ -46,6 +46,9 @@ public:
     static wxString GetResourcePath(const wxString &path = wxEmptyString, const wxString &file = wxEmptyString);
     static wxString GetConfigPath(const wxString &path = wxEmptyString, const wxString &file = wxEmptyString);
 
+    static wxString GetGameFolder(const wxString &gameFile);
+    static wxString ResolveGamePath(const wxString &gameFolder, const wxString &relativePath);
+
     static wxString GetPlatform();
     static wxString GetVersion(const wxString &libVersion);
 };

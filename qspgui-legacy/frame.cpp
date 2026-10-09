@@ -551,25 +551,13 @@ int QSPFrame::ShowMenu()
 
 void QSPFrame::UpdateGamePath(const wxString &fullPath)
 {
-    const wxFileName fileName(fullPath, wxPATH_DOS);
-    m_worldPath = fileName.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+    m_worldPath = QSPTools::GetGameFolder(fullPath);
     m_savedGamePath.Clear();
 }
 
 wxString QSPFrame::ComposeGamePath(const wxString &relativePath) const
 {
-    if (relativePath.IsEmpty())
-        return wxEmptyString;
-
-    wxFileName fullPath(m_worldPath + relativePath, wxPATH_DOS);
-    fullPath.MakeAbsolute();
-    if (
-        wxString normalizedPath(fullPath.GetFullPath());
-        normalizedPath.StartsWith(m_worldPath)
-    )
-        return normalizedPath;
-
-    return wxEmptyString;
+    return QSPTools::ResolveGamePath(m_worldPath, relativePath);
 }
 
 bool QSPFrame::IsValidFullPath(const wxString &path) const
