@@ -93,20 +93,22 @@ namespace
                 return false;
             }
 
-            ComPtr<IMFAttributes> attributes;
-            if (FAILED(MFCreateAttributes(&attributes, 1)) ||
-                FAILED(attributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE)) ||
-                FAILED(MFCreateSourceReaderFromURL(path.wc_str(), attributes.Get(), &m_reader)))
+            bool isOpened = false;
+            for (const bool isAdvanced : {true, false})
             {
-                error = "Media Foundation can't open the file";
-                return false;
-            }
-
-            if (!SelectStreams() || !ConfigureVideo())
-            {
+                if (!CreateReader(path, isAdvanced))
+                {
+                    error = "Media Foundation can't open the file";
+                    continue;
+                }
+                if (SelectStreams() && ConfigureVideo())
+                {
+                    isOpened = true;
+                    break;
+                }
                 error = "Media Foundation can't decode the video";
-                return false;
             }
+            if (!isOpened) return false;
             if (m_audioStream != NO_STREAM && !ConfigureAudio())
             {
                 m_reader->SetStreamSelection(m_audioStream, FALSE);
@@ -158,6 +160,19 @@ namespace
     private:
         static constexpr DWORD NO_STREAM = (DWORD)-1;
 
+        bool CreateReader(const wxString &path, const bool isAdvanced)
+        {
+            static const GUID advancedVideoProcessing =
+                {0x0f81da2c, 0xb537, 0x4672, {0xa8, 0xb2, 0xa6, 0x81, 0xb1, 0x73, 0x07, 0xa3}};
+
+            m_reader.Reset();
+            m_videoStream = m_audioStream = NO_STREAM;
+            ComPtr<IMFAttributes> attributes;
+            return SUCCEEDED(MFCreateAttributes(&attributes, 1)) &&
+                SUCCEEDED(attributes->SetUINT32(isAdvanced ? advancedVideoProcessing : MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE)) &&
+                SUCCEEDED(MFCreateSourceReaderFromURL(path.wc_str(), attributes.Get(), &m_reader));
+        }
+
         bool SelectStreams()
         {
             m_reader->SetStreamSelection((DWORD)MF_SOURCE_READER_ALL_STREAMS, FALSE);
@@ -193,8 +208,10 @@ namespace
         bool ReadVideoFormat()
         {
             ComPtr<IMFMediaType> type;
+            GUID subtype;
             UINT64 frameSize = 0;
             if (FAILED(m_reader->GetCurrentMediaType(m_videoStream, &type)) ||
+                FAILED(type->GetGUID(MF_MT_SUBTYPE, &subtype)) || subtype != MFVideoFormat_RGB32 ||
                 FAILED(type->GetUINT64(MF_MT_FRAME_SIZE, &frameSize)))
             {
                 return false;
@@ -254,21 +271,26 @@ namespace
             BYTE *scanline0 = nullptr;
             LONG pitch = 0;
             ComPtr<IMF2DBuffer> buffer2D;
-            bool is2D = SUCCEEDED(buffer->QueryInterface(IID_PPV_ARGS(&buffer2D))) &&
-                SUCCEEDED(buffer2D->Lock2D(&scanline0, &pitch));
             BYTE *data = nullptr;
             DWORD length = 0;
+            const bool is2D = SUCCEEDED(buffer->QueryInterface(IID_PPV_ARGS(&buffer2D))) &&
+                SUCCEEDED(buffer2D->GetContiguousLength(&length)) &&
+                SUCCEEDED(buffer2D->Lock2D(&scanline0, &pitch));
             if (!is2D)
             {
                 if (FAILED(buffer->Lock(&data, nullptr, &length))) return false;
                 // Bottom-up images have a negative stride
                 pitch = m_stride;
                 scanline0 = pitch >= 0 ? data : data + (ptrdiff_t)(-pitch) * (m_frameHeight - 1);
-                if ((size_t)length < (size_t)std::abs(pitch) * m_frameHeight || std::abs(pitch) < m_frameWidth * 4)
-                {
+            }
+            // Never trust the buffer to match the format
+            if ((size_t)length < (size_t)std::abs(pitch) * m_frameHeight || std::abs(pitch) < m_frameWidth * 4)
+            {
+                if (is2D)
+                    buffer2D->Unlock2D();
+                else
                     buffer->Unlock();
-                    return false;
-                }
+                return false;
             }
 
             VideoFrame frame;
