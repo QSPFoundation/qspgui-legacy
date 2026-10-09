@@ -34,6 +34,7 @@
 #include "tml.h"
 
 #include <stdio.h>
+#include <limits.h>
 
 typedef struct
 {
@@ -51,11 +52,11 @@ typedef struct
 
 typedef struct
 {
-    void *buf;
-    int size;
+    tsf *sf;
 } tsf_soundfont;
 
 static tsf_soundfont ma_current_soundfont;
+static ma_mutex ma_soundfont_lock;
 static ma_engine ma_current_engine;
 static ma_resource_manager ma_current_resource_manager;
 
@@ -89,22 +90,36 @@ static ma_decoding_backend_vtable g_ma_decoding_backend_vtable_midi =
 
 static int soundfont_load(FILE *file, tsf_soundfont *sf)
 {
-    int len;
+    long len;
     void *data;
-    fseek(file, 0, SEEK_END);
+    tsf *font;
+    if (fseek(file, 0, SEEK_END) != 0) return -1;
     len = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    data = malloc(len);
+    if (len <= 0 || len > INT_MAX || fseek(file, 0, SEEK_SET) != 0) return -1;
+    data = malloc((size_t)len);
     if (data == NULL) return -1;
-    len = fread(data, 1, len, file);
-    sf->buf = data;
-    sf->size = len;
+    if (fread(data, 1, (size_t)len, file) != (size_t)len)
+    {
+        free(data);
+        return -1;
+    }
+    font = tsf_load_memory(data, (int)len);
+    free(data);
+    if (font == NULL) return -1;
+    soundfont_free(sf);
+    sf->sf = font;
     return 0;
 }
 
 static void soundfont_free(tsf_soundfont *sf)
 {
-    if (sf->buf) free(sf->buf);
+    if (sf->sf != NULL)
+    {
+        ma_mutex_lock(&ma_soundfont_lock);
+        tsf_close(sf->sf);
+        ma_mutex_unlock(&ma_soundfont_lock);
+        sf->sf = NULL;
+    }
 }
 
 static ma_result ma_midi_ds_read(ma_data_source *pDataSource, void *pFramesOut, ma_uint64 frameCount, ma_uint64 *pFramesRead)
@@ -112,13 +127,18 @@ static ma_result ma_midi_ds_read(ma_data_source *pDataSource, void *pFramesOut, 
     ma_uint64 samplesRead = 0;
     ma_libtsf *tsf = (ma_libtsf *)pDataSource;
     unsigned char *outputStream = (unsigned char *)pFramesOut;
-    double msecs = tsf->msecs;
-    int channels = (tsf->sf->outputmode == TSF_MONO) ? 1 : 2;
-    float sampleRate = tsf->sf->outSampleRate;
-    tml_message *midiMessage = tsf->midi_message;
+    double msecs;
+    int channels;
+    float sampleRate;
+    tml_message *midiMessage;
 
     if (tsf->sf == NULL)
         return MA_ERROR;
+
+    msecs = tsf->msecs;
+    channels = (tsf->sf->outputmode == TSF_MONO) ? 1 : 2;
+    sampleRate = tsf->sf->outSampleRate;
+    midiMessage = tsf->midi_message;
 
     while (frameCount > 0 && midiMessage)
     {
@@ -252,21 +272,35 @@ static ma_result ma_decoding_backend_init_midi(void *pUserData, ma_read_proc onR
     tsf->midi_message = NULL;
     tsf->msecs = 0.0;
 
-    if (ma_current_soundfont.buf != NULL)
+    /* MIDI files can't be played without a soundfont */
+    if (ma_current_soundfont.sf == NULL)
     {
-        tsf->sf = tsf_load_memory(ma_current_soundfont.buf, ma_current_soundfont.size);
-        if (tsf->sf == NULL)
-        {
-            ma_data_source_uninit(&tsf->ds);
-            ma_free(tsf, pAllocationCallbacks);
-            return MA_ERROR;
-        }
-
-        tsf_set_output(tsf->sf, TSF_STEREO_INTERLEAVED, ma_current_engine.sampleRate, 0.0f);
-
-        tsf->midi_init_message = tml_load_by_callback(tsf);
-        tsf->midi_message = tsf->midi_init_message;
+        ma_data_source_uninit(&tsf->ds);
+        ma_free(tsf, pAllocationCallbacks);
+        return MA_ERROR;
     }
+
+    tsf->midi_init_message = tml_load_by_callback(tsf);
+    if (tsf->midi_init_message == NULL)
+    {
+        ma_data_source_uninit(&tsf->ds);
+        ma_free(tsf, pAllocationCallbacks);
+        return MA_INVALID_FILE;
+    }
+    tsf->midi_message = tsf->midi_init_message;
+
+    ma_mutex_lock(&ma_soundfont_lock);
+    tsf->sf = tsf_copy(ma_current_soundfont.sf);
+    ma_mutex_unlock(&ma_soundfont_lock);
+    if (tsf->sf == NULL)
+    {
+        tml_free(tsf->midi_init_message);
+        ma_data_source_uninit(&tsf->ds);
+        ma_free(tsf, pAllocationCallbacks);
+        return MA_OUT_OF_MEMORY;
+    }
+
+    tsf_set_output(tsf->sf, TSF_STEREO_INTERLEAVED, ma_current_engine.sampleRate, 0.0f);
 
     *ppBackend = tsf;
 
@@ -285,7 +319,9 @@ static void ma_decoding_backend_uninit_midi(void *pUserData, ma_data_source *pBa
     if (tsf->sf != NULL)
     {
         tsf_reset(tsf->sf);
+        ma_mutex_lock(&ma_soundfont_lock);
         tsf_close(tsf->sf);
+        ma_mutex_unlock(&ma_soundfont_lock);
     }
 
     ma_data_source_uninit(&tsf->ds);
@@ -307,6 +343,9 @@ int sound_init_engine()
     MA_ZERO_MEMORY(&ma_current_resource_manager, sizeof(ma_resource_manager));
     MA_ZERO_MEMORY(&ma_current_soundfont, sizeof(tsf_soundfont));
 
+    if (ma_mutex_init(&ma_soundfont_lock) != MA_SUCCESS)
+        return -1;
+
     resourceManagerConfig = ma_resource_manager_config_init();
     resourceManagerConfig.decodedFormat = ma_format_f32;
     resourceManagerConfig.ppCustomDecodingBackendVTables = pCustomBackendVTables;
@@ -315,7 +354,10 @@ int sound_init_engine()
 
     result = ma_resource_manager_init(&resourceManagerConfig, &ma_current_resource_manager);
     if (result != MA_SUCCESS)
+    {
+        ma_mutex_uninit(&ma_soundfont_lock);
         return -1;
+    }
 
     engineConfig = ma_engine_config_init();
     engineConfig.defaultVolumeSmoothTimeInPCMFrames = 4096;
@@ -325,6 +367,7 @@ int sound_init_engine()
     if (result != MA_SUCCESS)
     {
         ma_resource_manager_uninit(&ma_current_resource_manager);
+        ma_mutex_uninit(&ma_soundfont_lock);
         return -1;
     }
 
@@ -336,6 +379,7 @@ void sound_free_engine()
     ma_engine_uninit(&ma_current_engine);
     ma_resource_manager_uninit(&ma_current_resource_manager);
     soundfont_free(&ma_current_soundfont);
+    ma_mutex_uninit(&ma_soundfont_lock);
 }
 
 int soundfont_init(const char *filePath)
