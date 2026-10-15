@@ -29,10 +29,11 @@ wxHtmlOpeningStatus QSPListBox::OnHTMLOpeningURL(
 {
     if (!m_pathProvider) return wxHTML_OPEN;
 
-    if (m_pathProvider->IsValidFullPath(url)) return wxHTML_OPEN;
+    const wxString resourceUrl = QSPTools::GetGameResourceURL(*m_pathProvider, url);
+    if (resourceUrl.IsEmpty()) return wxHTML_BLOCK;
+    if (resourceUrl == url) return wxHTML_OPEN;
 
-    *redirect = m_pathProvider->ComposeGamePath(url);
-
+    *redirect = resourceUrl;
     return wxHTML_REDIRECT;
 }
 

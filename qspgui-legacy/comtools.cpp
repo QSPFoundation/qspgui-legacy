@@ -16,17 +16,30 @@
 */
 
 #include "comtools.h"
+#include <wx/filesys.h>
+
+wxString QSPTools::GetBrowserURL(const wxString &url)
+{
+    // Only web and mail links. Anything else could open a local file or, on Windows,
+    // connect to a network share and send the user's credentials to it.
+    // Even checking whether such a path exists connects to the share, so don't.
+    wxString target = url;
+    if (!wxURI{url}.HasScheme())
+    {
+        // Browsers open "www.example.com" as a web site, keep that working
+        if (url.empty() || url.Contains("\\") || url.StartsWith("/")) return wxEmptyString;
+        target = "http://" + url;
+    }
+
+    const wxString scheme = wxURI{target}.GetScheme().Lower();
+    if (scheme == "http" || scheme == "https" || scheme == "mailto") return target;
+    return wxEmptyString;
+}
 
 void QSPTools::LaunchDefaultBrowser(const wxString &url)
 {
-    const wxURI uri{url};
-
-    const bool canOpen = uri.HasScheme()
-                             ? uri.GetScheme() == "http" || uri.GetScheme() == "https" || uri.GetScheme() == "mailto"
-                             : !wxFileExists(url) && !wxDirExists(url);
-
-    if (canOpen)
-        wxLaunchDefaultBrowser(url);
+    if (const wxString target = GetBrowserURL(url); !target.IsEmpty())
+        wxLaunchDefaultBrowser(target);
 }
 
 wxString QSPTools::GetHexColor(const wxColour &color)
@@ -216,6 +229,43 @@ wxString QSPTools::ResolveGamePath(const wxString &gameFolder, const wxString &r
         return normalizedPath;
 
     return wxEmptyString;
+}
+
+wxString QSPTools::GetGameResourceURL(const PathProvider &pathProvider, const wxString &url)
+{
+    const wxString gameFolder = pathProvider.GetGamePath();
+    if (gameFolder.IsEmpty() || url.IsEmpty()) return wxEmptyString;
+
+    const auto isAllowed = [&pathProvider, &gameFolder](const wxString &path) {
+        if (path.IsEmpty() || !pathProvider.IsValidFullPath(path)) return false;
+        const wxString inner = path.Mid(gameFolder.length());
+        return !inner.Contains("#") && !inner.Contains("%");
+    };
+
+    if (url.StartsWith("file:"))
+    {
+        const wxFileName file = wxFileSystem::URLToFileName(url);
+        if (!isAllowed(file.GetFullPath()) || wxFileSystem::FileNameToURL(file) != url) return wxEmptyString;
+        return url;
+    }
+
+    wxString path = url;
+#ifndef __WINDOWS__
+    path.Replace("\\", "/");
+#endif
+    if (wxIsAbsolutePath(path))
+    {
+        wxFileName fullPath(path);
+        fullPath.MakeAbsolute();
+        path = fullPath.GetFullPath();
+    }
+    else
+    {
+        path = pathProvider.ComposeGamePath(path);
+    }
+
+    if (!isAllowed(path)) return wxEmptyString;
+    return wxFileSystem::FileNameToURL(wxFileName(path));
 }
 
 wxString QSPTools::GetPlatform()
