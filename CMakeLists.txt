@@ -104,6 +104,14 @@ else()
 	FetchContent_MakeAvailable(wxWidgets-custom)
 endif()
 
+option(QSP_VIDEO "Support the <video> tag (built-in WebM decoder plus the system decoders)" ON)
+if (QSP_VIDEO)
+	if (APPLE)
+		enable_language(OBJCXX)
+	endif()
+	include(build_video/video_libs.cmake)
+endif()
+
 configure_file(qspgui_legacy_config.h.cmakein qspgui_legacy_config.h @ONLY)
 
 set(AUDIO_THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/qspgui-legacy/sound/thirdparty")
@@ -157,6 +165,23 @@ set(QSPGUI_LEGACY_SOURCES
 	qspgui-legacy/updateappdialog.cpp
 	qspgui-legacy/sound/sound_engine.c
 )
+if (QSP_VIDEO)
+	list(APPEND QSPGUI_LEGACY_SOURCES
+		qspgui-legacy/video/html_video.cpp
+		qspgui-legacy/video/video_decoder.cpp
+		qspgui-legacy/video/video_player.cpp
+		qspgui-legacy/video/webm_decoder.cpp
+		qspgui-legacy/video/yuv.cpp
+	)
+	if (WIN32)
+		list(APPEND QSPGUI_LEGACY_SOURCES qspgui-legacy/video/mf_decoder.cpp)
+	elseif (APPLE)
+		list(APPEND QSPGUI_LEGACY_SOURCES qspgui-legacy/video/avf_decoder.mm)
+		set_source_files_properties(qspgui-legacy/video/avf_decoder.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+	else()
+		list(APPEND QSPGUI_LEGACY_SOURCES qspgui-legacy/video/gst_decoder.cpp)
+	endif()
+endif()
 if (WIN32)
 	list(APPEND QSPGUI_LEGACY_SOURCES qspgui-legacy/rsc/res.rc)
 	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/misc/common/icons/logo.ico" "${CMAKE_BINARY_DIR}/misc/icons/logo.ico" COPYONLY)
@@ -191,6 +216,17 @@ endif()
 target_compile_definitions(qspgui-legacy PRIVATE _UNICODE)
 target_include_directories(qspgui-legacy PRIVATE "${AUDIO_PATCHED_DIR}")
 target_link_libraries(qspgui-legacy PRIVATE qsp-legacy wxbase wxcore wxadv wxaui wxnet wxhtml)
+if (QSP_VIDEO)
+	target_compile_definitions(qspgui-legacy PRIVATE QSP_VIDEO=1)
+	target_link_libraries(qspgui-legacy PRIVATE qsp_vpx qsp_nestegg opus)
+	if (WIN32)
+		target_link_libraries(qspgui-legacy PRIVATE mfplat mfreadwrite mfuuid ole32)
+	elseif (APPLE)
+		target_link_libraries(qspgui-legacy PRIVATE "-framework AVFoundation" "-framework CoreMedia" "-framework CoreVideo" "-framework Foundation")
+	else()
+		target_link_libraries(qspgui-legacy PRIVATE ${CMAKE_DL_LIBS})
+	endif()
+endif()
 
 # Installation
 
@@ -286,6 +322,11 @@ set(CPACK_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS
 )
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+if (QSP_VIDEO AND UNIX AND NOT APPLE)
+	# GStreamer is loaded at runtime to play the videos the built-in decoder can't handle
+	set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, gstreamer1.0-libav")
+	set(CPACK_RPM_PACKAGE_SUGGESTS "gstreamer1-plugins-base, gstreamer1-plugins-good, gstreamer1-libav")
+endif()
 
 set(CPACK_PACKAGE_EXECUTABLES qspgui-legacy "QSP Legacy Classic")
 set(CPACK_CREATE_DESKTOP_LINKS qspgui-legacy)

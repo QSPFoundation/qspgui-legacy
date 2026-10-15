@@ -21,6 +21,7 @@
     #include <stddef.h>
 
     typedef void *ma_sound_file;
+    typedef struct sound_stream sound_stream;
 
     #ifdef __cplusplus
     extern "C"
@@ -38,6 +39,17 @@
     void sound_close_file(ma_sound_file sound);
     void sound_set_volume(ma_sound_file sound, float volume);
     int sound_is_playing(ma_sound_file sound);
+
+    /* A stream of interleaved float samples pushed by the application (e.g. video soundtracks).
+       One thread writes, the audio thread reads; the stream plays silence when it runs dry. */
+    sound_stream *sound_stream_create(unsigned int channels, unsigned int sampleRate, unsigned int capacityFrames);
+    void sound_stream_free(sound_stream *stream);
+    unsigned int sound_stream_write(sound_stream *stream, const float *samples, unsigned int frameCount);
+    unsigned int sound_stream_get_queued(sound_stream *stream);
+    unsigned long long sound_stream_get_played(sound_stream *stream); /* frames played, without the silence */
+    void sound_stream_start(sound_stream *stream);
+    void sound_stream_stop(sound_stream *stream);
+    void sound_stream_set_volume(sound_stream *stream, float volume);
 
     #ifdef __cplusplus
     }
