@@ -328,10 +328,10 @@ void QSPFrame::LoadSettings()
     cfg.Read(wxT("Font/UseFontSize"), &m_toUseFontSize, false);
     cfg.Read(wxT("General/ShowHotkeys"), &m_toShowHotkeys, false);
     cfg.Read(wxT("General/Volume"), &m_volume, 100);
-    cfg.Read(wxT("Pos/Left"), &x, 10);
-    cfg.Read(wxT("Pos/Top"), &y, 10);
-    cfg.Read(wxT("Pos/Width"), &w, 850);
-    cfg.Read(wxT("Pos/Height"), &h, 650);
+    cfg.Read(wxT("Pos/Left"), &x, FromDIP(10));
+    cfg.Read(wxT("Pos/Top"), &y, FromDIP(10));
+    cfg.Read(wxT("Pos/Width"), &w, FromDIP(850));
+    cfg.Read(wxT("Pos/Height"), &h, FromDIP(650));
     cfg.Read(wxT("Pos/Maximize"), &toMaximize, false);
     wxString panels(wxT("layout2|") \
         wxT("name=imgview;state=1080035327;dir=1;layer=0;row=0;pos=0;prop=100000;bestw=832;besth=150;minw=50;minh=50;maxw=-1;maxh=-1;floatx=175;floaty=148;floatw=518;floath=372|") \
@@ -578,31 +578,37 @@ void QSPFrame::ShowError()
     if (m_toQuit) return;
     QSPErrorInfo errorInfo = QSPGetLastErrorData();
     if (!errorInfo.ErrorNum) return; // error is undefined
-    wxString locName(qspToWxString(errorInfo.LocName));
-    wxString errorDesc(qspToWxString(errorInfo.ErrorDesc));
-    wxString line(qspToWxString(errorInfo.IntLine));
-    if (line.IsEmpty())
-        line = _("Unknown");
+    const wxString locName(qspToWxString(errorInfo.LocName));
+    const wxString errorDesc(wxGetTranslation(qspToWxString(errorInfo.ErrorDesc)));
+    const wxString line(qspToWxString(errorInfo.IntLine));
+    const int lineNum = errorInfo.IntLineNum;
 
     wxString wxMessage;
     if (!locName.IsEmpty())
-        wxMessage = wxString::Format(
-            _("Location: %s\nArea: %s\nLine %d: %s\nCode: %d\nDesc: %s"),
-            locName.wx_str(),
-            (errorInfo.ActIndex < 0 ? _("on visit").wx_str() : _("on action").wx_str()),
-            errorInfo.IntLineNum,
-            line.wx_str(),
-            errorInfo.ErrorNum,
-            wxGetTranslation(errorDesc).wx_str()
-        );
+    {
+        const wxString area = errorInfo.ActIndex < 0 ? _("on visit") : _("on action");
+        if (!line.IsEmpty())
+            wxMessage = wxString::Format(_("Location: %s\nArea: %s\nLine %d: %s\nCode: %d\nDesc: %s"),
+                                         locName, area, lineNum, line, errorInfo.ErrorNum, errorDesc);
+        else if (lineNum > 0)
+            wxMessage = wxString::Format(_("Location: %s\nArea: %s\nLine %d\nCode: %d\nDesc: %s"),
+                                         locName, area, lineNum, errorInfo.ErrorNum, errorDesc);
+        else
+            wxMessage = wxString::Format(_("Location: %s\nArea: %s\nCode: %d\nDesc: %s"),
+                                         locName, area, errorInfo.ErrorNum, errorDesc);
+    }
     else
-        wxMessage = wxString::Format(
-            _("Line %d: %s\nCode: %d\nDesc: %s"),
-            errorInfo.IntLineNum,
-            line.wx_str(),
-            errorInfo.ErrorNum,
-            wxGetTranslation(errorDesc).wx_str()
-        );
+    {
+        if (!line.IsEmpty())
+            wxMessage = wxString::Format(_("Line %d: %s\nCode: %d\nDesc: %s"),
+                                         lineNum, line, errorInfo.ErrorNum, errorDesc);
+        else if (lineNum > 0)
+            wxMessage = wxString::Format(_("Line %d\nCode: %d\nDesc: %s"),
+                                         lineNum, errorInfo.ErrorNum, errorDesc);
+        else
+            wxMessage = wxString::Format(_("Code: %d\nDesc: %s"),
+                                         errorInfo.ErrorNum, errorDesc);
+    }
     QSPMsgDlg dialog(this,
                      wxID_ANY,
                      m_desc->GetBackgroundColour(),

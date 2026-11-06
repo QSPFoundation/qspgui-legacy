@@ -37,13 +37,13 @@ QSPMsgDlg::QSPMsgDlg(wxWindow *parent,
     }
 
     Bind(wxEVT_INIT_DIALOG, &QSPMsgDlg::OnInitDialog, this);
-    Bind(wxEVT_HTML_LINK_CLICKED, &QSPMsgDlg::OnLinkClicked, this, ID_MSG_DESC);
 
     wxWindowBase::SetBackgroundColour(backColor);
 
     auto *sizerUp = new wxBoxSizer{wxVERTICAL};
 
-    m_desc = new QSPTextBox(this, ID_MSG_DESC);
+    m_desc = new QSPTextBox(this, wxID_ANY);
+    m_desc->Bind(wxEVT_HTML_LINK_CLICKED, &QSPMsgDlg::OnLinkClicked, this);
     m_desc->SetPathProvider(pathProvider);
     m_desc->SetIsHtml(isHtml);
     m_desc->SetBackgroundColour(backColor);

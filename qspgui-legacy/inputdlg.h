@@ -23,8 +23,6 @@
 #include "textbox.h"
 #include "pathprovider.h"
 
-constexpr int ID_INPUT_DESC = wxID_HIGHEST + 20;
-
 class QSPInputDlg : public wxDialog
 {
 public:
@@ -45,7 +43,6 @@ protected:
     void OnLinkClicked(wxHtmlLinkEvent& event);
 
 private:
-    // Константы делаем static constexpr
     static constexpr int MinWidth = 420;
     static constexpr int MaxWidth = 550;
     static constexpr int MinHeight = 150;
@@ -56,4 +53,3 @@ private:
 
     DECLARE_CLASS(QSPInputDlg)
 };
-

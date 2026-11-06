@@ -230,20 +230,10 @@ void QSPCallbacks::CloseFile(const QSP_CHAR *file)
     if (file)
     {
         const wxString fileName = qspToWxString(file);
-        if (
-            const auto elem = m_sounds.find(fileName.Upper());
-            elem != m_sounds.end()
-        )
-        {
-            elem->second.Close();
-            m_sounds.erase(elem);
-        }
+        m_sounds.erase(fileName.Upper());
     }
     else
     {
-        for (auto& [name, sound] : m_sounds) {
-            sound.Close();
-        }
         m_sounds.clear();
     }
 }
@@ -260,7 +250,7 @@ void QSPCallbacks::PlayFile(const QSP_CHAR *file, const int volume)
     )
         return;
     UpdateSounds();
-    m_sounds.insert(QSPSounds::value_type(fileName.Upper(), snd));
+    m_sounds.insert_or_assign(fileName.Upper(), std::move(snd));
 }
 
 void QSPCallbacks::ShowPane(const int type, const QSP_BOOL toShow)
@@ -518,20 +508,12 @@ void QSPCallbacks::SetOverallVolume(const float coeff)
     for (auto& [name, sound] : m_sounds)
     {
         if (sound.IsPlaying()) {
-            sound.SetVolume(sound.Volume, m_volumeCoeff);
+            sound.SetVolume(sound.GetVolume(), m_volumeCoeff);
         }
     }
 }
 
 void QSPCallbacks::UpdateSounds()
 {
-    std::erase_if(m_sounds, [](auto& pair) {
-        if (auto& sound = pair.second;
-            !sound.IsPlaying()
-        ) {
-            sound.Close();
-            return true;
-        }
-        return false;
-    });
+    std::erase_if(m_sounds, [](const auto& pair) { return !pair.second.IsPlaying(); });
 }

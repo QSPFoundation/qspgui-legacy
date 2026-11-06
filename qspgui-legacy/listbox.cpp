@@ -48,6 +48,7 @@ QSPListBox::QSPListBox(
     Bind(wxEVT_CHAR, &QSPListBox::OnChar, this);
     Bind(wxEVT_KEY_UP, &QSPListBox::OnKeyUp, this);
     Bind(wxEVT_MOUSEWHEEL, &QSPListBox::OnMouseWheel, this);
+    Bind(wxEVT_DPI_CHANGED, &QSPListBox::OnDPIChanged, this);
 
     const wxString commonPart = wxString::Format(
         "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=%s\">"
@@ -56,9 +57,9 @@ QSPListBox::QSPListBox(
     );
 
     m_outFormat = wxString::Format(commonPart, "<TD WIDTH=100%%>%s</TD>");
-    m_outFormatNums = wxString::Format(commonPart, "<TD>[%ld]</TD><TD WIDTH=100%%>%s</TD>");
+    m_outFormatNums = wxString::Format(commonPart, "<TD>[%d]</TD><TD WIDTH=100%%>%s</TD>");
     m_outFormatImage = wxString::Format(commonPart, "<TD><IMG SRC=\"%s\"></TD><TD WIDTH=100%%>%s</TD>");
-    m_outFormatImageNums = wxString::Format(commonPart, "<TD>[%ld]</TD><TD><IMG SRC=\"%s\"></TD><TD WIDTH=100%%>%s</TD>");
+    m_outFormatImageNums = wxString::Format(commonPart, "<TD>[%d]</TD><TD><IMG SRC=\"%s\"></TD><TD WIDTH=100%%>%s</TD>");
 
     const wxString fontName = m_font.GetFaceName();
     SetStandardFonts(m_font.GetPointSize(), fontName, fontName);
@@ -159,10 +160,30 @@ void QSPListBox::CreateHTMLParser() const
     {
         auto *self = const_cast<QSPListBox*>(this);
         self->m_htmlParser = new wxHtmlWinParser(self);
-        m_htmlParser->SetDC(new wxClientDC(self));
+        m_htmlParser->SetDC(new wxClientDC(self), GetPixelScale(), 1.0);
         m_htmlParser->SetFS(&self->m_filesystem);
         m_htmlParser->SetStandardFonts();
     }
+}
+
+double QSPListBox::GetPixelScale() const
+{
+#ifdef wxHAS_DPI_INDEPENDENT_PIXELS
+    return 1.0;
+#else
+    return GetDPIScaleFactor();
+#endif
+}
+
+void QSPListBox::OnDPIChanged(wxDPIChangedEvent &event)
+{
+    event.Skip();
+    if (m_htmlParser)
+    {
+        wxDC *dc = m_htmlParser->GetDC();
+        m_htmlParser->SetDC(dc, GetPixelScale(), 1.0);
+    }
+    RefreshUI();
 }
 
 wxString QSPListBox::OnGetItem(const size_t n) const
@@ -173,9 +194,9 @@ wxString QSPListBox::OnGetItem(const size_t n) const
     if (m_toShowNums && n < 9)
     {
         if (m_images[n].IsEmpty())
-            return wxString::Format(m_outFormatNums, color, n + 1, text);
+            return wxString::Format(m_outFormatNums, color, static_cast<int>(n + 1), text);
         else
-            return wxString::Format(m_outFormatImageNums, color, n + 1, m_images[n], text);
+            return wxString::Format(m_outFormatImageNums, color, static_cast<int>(n + 1), m_images[n], text);
     }
     else
     {

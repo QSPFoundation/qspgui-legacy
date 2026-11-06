@@ -22,8 +22,6 @@
 #include "textbox.h"
 #include "pathprovider.h"
 
-constexpr int ID_MSG_DESC = wxID_HIGHEST + 1;
-
 class QSPMsgDlg : public wxDialog
 {
 public:

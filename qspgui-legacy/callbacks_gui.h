@@ -21,54 +21,79 @@
 #include <vector>
 #include <memory>
 #include <cstring>
+#include <utility>
 #include <qsp_default.h>
 #include "frame.h"
 #include "msgdlg.h"
 #include "inputdlg.h"
 #include "sound/sound_engine.h"
 
-struct QSPSound
+class QSPSound
 {
-    ma_sound_file Sound{nullptr};
-    int Volume{0};
+public:
+    QSPSound() = default;
+    QSPSound(const QSPSound &) = delete;
+    QSPSound &operator=(const QSPSound &) = delete;
+
+    QSPSound(QSPSound &&other) noexcept :
+        m_sound(std::exchange(other.m_sound, nullptr)), m_volume(other.m_volume)
+    {
+    }
+
+    QSPSound &operator=(QSPSound &&other) noexcept
+    {
+        if (this != &other)
+        {
+            Close();
+            m_sound = std::exchange(other.m_sound, nullptr);
+            m_volume = other.m_volume;
+        }
+        return *this;
+    }
+
+    ~QSPSound() { Close(); }
 
     bool Play(const wxString& file, const int volume, const float volumeCoeff)
     {
+        Close();
 #ifdef __WINDOWS__
-        Sound = sound_play_file_w(file.wc_str());
+        m_sound = sound_play_file_w(file.wc_str());
 #else
-        Sound = sound_play_file(file.fn_str());
+        m_sound = sound_play_file(file.fn_str());
 #endif
-        if (Sound)
-        {
-            SetVolume(volume, volumeCoeff);
-            return true;
-        }
-        return false;
+        if (!m_sound) return false;
+        SetVolume(volume, volumeCoeff);
+        return true;
     }
 
     void SetVolume(const int volume, const float volumeCoeff)
     {
-        if (Sound)
+        if (m_sound)
         {
-            Volume = volume;
-            sound_set_volume(Sound, volumeCoeff * volume / 100.0f);
+            m_volume = volume;
+            sound_set_volume(m_sound, volumeCoeff * volume / 100.0f);
         }
     }
+
+    [[nodiscard]] int GetVolume() const { return m_volume; }
 
     [[nodiscard]] bool IsPlaying() const
     {
-        return Sound && static_cast<bool>(sound_is_playing(Sound));
+        return m_sound && static_cast<bool>(sound_is_playing(m_sound));
     }
 
+private:
     void Close()
     {
-        if (Sound)
+        if (m_sound)
         {
-            sound_close_file(Sound);
-            Sound = nullptr;
+            sound_close_file(m_sound);
+            m_sound = nullptr;
         }
     }
+
+    ma_sound_file m_sound{nullptr};
+    int m_volume{0};
 };
 
 using QSPSounds = std::map<wxString, QSPSound>;

@@ -33,14 +33,14 @@ QSPInputDlg::QSPInputDlg(wxWindow* parent,
 {
     if (!Create(parent, id, caption, wxDefaultPosition, wxDefaultSize, wxCAPTION | wxRESIZE_BORDER | wxSYSTEM_MENU)) return;
 
-    Bind(wxEVT_HTML_LINK_CLICKED, &QSPInputDlg::OnLinkClicked, this, ID_INPUT_DESC);
     Bind(wxEVT_INIT_DIALOG, &QSPInputDlg::OnInitDialog, this);
 
     wxWindowBase::SetBackgroundColour(backColor);
 
     auto* sizerUp = new wxBoxSizer{wxVERTICAL};
 
-    m_desc = new QSPTextBox{this, ID_INPUT_DESC};
+    m_desc = new QSPTextBox{this, wxID_ANY};
+    m_desc->Bind(wxEVT_HTML_LINK_CLICKED, &QSPInputDlg::OnLinkClicked, this);
     m_desc->SetPathProvider(pathProvider);
     m_desc->SetIsHtml(isHtml);
     m_desc->SetBackgroundColour(backColor);

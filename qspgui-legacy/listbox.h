@@ -55,12 +55,14 @@ protected:
     wxHtmlOpeningStatus OnHTMLOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const override;
 
     void CreateHTMLParser() const;
+    [[nodiscard]] double GetPixelScale() const;
 
     void OnMouseMove(wxMouseEvent& event);
     void OnMouseClick(wxMouseEvent& event);
     void OnChar(wxKeyEvent& event);
     void OnKeyUp(wxKeyEvent& event);
     void OnMouseWheel(wxMouseEvent& event);
+    void OnDPIChanged(wxDPIChangedEvent& event);
 
 private:
     PathProvider *m_pathProvider{nullptr};
