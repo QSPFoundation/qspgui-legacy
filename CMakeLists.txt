@@ -59,6 +59,7 @@ if (USE_INSTALLED_WX)
 	find_package(wxWidgets REQUIRED base core adv aui html net)
 	include(${wxWidgets_USE_FILE})
 else()
+	set(WX_LIBPNG_COMMIT 08e02464a8af6eaee70d2c74d4cdc733b79c8835)
 	FetchContent_Declare(wxWidgets-custom
 		GIT_REPOSITORY https://github.com/wxWidgets/wxWidgets.git
 		GIT_TAG 670835aec7e54b9e9d5a50d6a1aea1e8ba0bcdb2
@@ -67,7 +68,10 @@ else()
 		SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/wxWidgets-download"
 		SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/wxWidgets-src"
 		BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/wxWidgets-build"
-		PATCH_COMMAND git checkout --recurse-submodules -- . && git apply --check --apply --ignore-whitespace "${CMAKE_CURRENT_SOURCE_DIR}/build_wx/wxPatch.diff"
+		PATCH_COMMAND git checkout --recurse-submodules -- .
+			&& git -C src/png fetch --depth 1 https://github.com/wxWidgets/libpng.git ${WX_LIBPNG_COMMIT}
+			&& git -C src/png checkout --detach ${WX_LIBPNG_COMMIT}
+			&& git apply --check --apply --ignore-whitespace "${CMAKE_CURRENT_SOURCE_DIR}/build_wx/wxPatch.diff"
 	)
 	# Disable wxWidgets features we don't need
 	set(wxUSE_ACTIVEX OFF)

@@ -17,7 +17,8 @@ REL_BUILD_DIR="./build_packages/linux64_AppImage"
 cmake -S . -B "$REL_BUILD_DIR" -GNinja \
   -DAPP_VERSION="$APP_VERSION" \
   -DCMAKE_INSTALL_PREFIX=/usr \
-  -DCMAKE_BUILD_TYPE=Release
+  -DCMAKE_BUILD_TYPE=Release \
+  -DwxUSE_LIBPNG=builtin
 
 cmake --build "$REL_BUILD_DIR" --parallel
 DESTDIR="$REL_BUILD_DIR/AppDir" cmake --install "$REL_BUILD_DIR" --component Main --strip
