@@ -159,6 +159,7 @@ set(QSPGUI_LEGACY_SOURCES
 	qspgui-legacy/callbacks_gui.cpp
 	qspgui-legacy/comtools.cpp
 	qspgui-legacy/frame.cpp
+	qspgui-legacy/htmltags.cpp
 	qspgui-legacy/imgcanvas.cpp
 	qspgui-legacy/inputbox.cpp
 	qspgui-legacy/inputdlg.cpp

@@ -49,7 +49,7 @@ QSPTextBox::QSPTextBox(wxWindow *parent, const wxWindowID id) : wxHtmlWindow(par
 
     m_outFormat = wxString::Format(
         "<HTML><META HTTP-EQUIV = \"Content-Type\" CONTENT = \"text/html; charset=%s\">"
-        "<BODY><FONT COLOR = #%%s>%%s</FONT></BODY></HTML>",
+        "<BODY BGCOLOR = #%%s LINK = #%%s><FONT COLOR = #%%s>%%s</FONT></BODY></HTML>",
         wxFontMapper::GetEncodingName(wxLocale::GetSystemEncoding())
     );
 
@@ -70,10 +70,12 @@ void QSPTextBox::RefreshUI()
 {
     const wxString color = QSPTools::GetHexColor(GetForegroundColour());
     const wxString text = QSPTools::HtmlizeWhitespaces(m_toUseHtml ? m_text : QSPTools::ProceedAsPlain(m_text));
+    const wxString backColor = QSPTools::GetHexColor(GetBackgroundColour());
+    const wxString linkColor = QSPTools::GetHexColor(m_linkColor);
 
     wxWindowUpdateLocker noUpdates{this};
 
-    SetPage(wxString::Format(m_outFormat, color, text));
+    SetPage(wxString::Format(m_outFormat, backColor, linkColor, color, text));
 }
 
 void QSPTextBox::LoadBackImage(const wxString &imagePath)
@@ -130,8 +132,13 @@ void QSPTextBox::SetTextFont(const wxFont &font)
 
 void QSPTextBox::SetLinkColor(const wxColour &clr)
 {
-    m_Parser->SetLinkColor(clr);
+    m_linkColor = clr;
     RefreshUI();
+}
+
+void QSPTextBox::ScrollWindow(int, int, const wxRect *)
+{
+    Refresh();
 }
 
 void QSPTextBox::OnKeyUp(wxKeyEvent &event)

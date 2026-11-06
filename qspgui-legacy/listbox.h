@@ -48,7 +48,7 @@ public:
 
     [[nodiscard]] wxFont GetTextFont() const { return m_font; }
     void SetLinkColor(const wxColour& clr);
-    [[nodiscard]] const wxColour& GetLinkColor() const;
+    [[nodiscard]] const wxColour& GetLinkColor() const { return m_linkColor; }
 
 protected:
     [[nodiscard]] wxString OnGetItem(size_t n) const override;
@@ -76,6 +76,7 @@ private:
     bool m_toUseHtml{false};
     bool m_toShowNums{false};
     wxFont m_font{*wxNORMAL_FONT};
+    wxColour m_linkColor{0, 0, 0xFF};
 
     wxArrayString m_images{};
     wxArrayString m_descs{};

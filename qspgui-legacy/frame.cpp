@@ -297,6 +297,7 @@ void QSPFrame::SaveSettings()
     cfg.Write("Font/UseFontSize", m_toUseFontSize);
     cfg.Write("General/Volume", m_volume);
     cfg.Write("General/ShowHotkeys", m_toShowHotkeys);
+    RememberPaneSizes();
     cfg.Write("General/Panels", m_manager->SavePerspective());
     cfg.Write("General/CheckUpdates", m_toCheckUpdates);
     m_transHelper->Save(cfg, "General/Language");
@@ -382,7 +383,7 @@ void QSPFrame::LoadSettings()
     if (toMaximize) Maximize();
     Show();
 
-    m_manager->Update();
+    UpdateLayout();
 }
 
 void QSPFrame::EnableControls(bool status, bool isExtended)
@@ -431,7 +432,7 @@ void QSPFrame::ShowPane(const wxWindowID id, const bool toShow)
                 {
                     m_manager->RestorePane(*pane);
                     pane->Hide();
-                    m_manager->Update();
+                    UpdateLayout();
                 }
             }
             else if (pane->HasFlag(wxAuiPaneInfo::savedHiddenState) == toShow)
@@ -442,7 +443,7 @@ void QSPFrame::ShowPane(const wxWindowID id, const bool toShow)
         else if (pane->IsShown() != toShow)
         {
             pane->Show(toShow);
-            m_manager->Update();
+            UpdateLayout();
         }
     }
 }
@@ -686,7 +687,7 @@ void QSPFrame::ReCreateGUI()
     m_manager->GetPane(wxT("vars")).Caption(_("Additional desc"));
     m_manager->GetPane(wxT("input")).Caption(_("Input area"));
 
-    m_manager->Update();
+    UpdateLayout();
 }
 
 void QSPFrame::RefreshUI()
@@ -756,6 +757,21 @@ bool QSPFrame::ApplyLinkColor(const wxColour& color)
     m_actions->SetLinkColor(color);
     m_vars->SetLinkColor(color);
     return true;
+}
+
+void QSPFrame::RememberPaneSizes()
+{
+    for (wxAuiPaneInfo &pane : m_manager->GetAllPanes())
+    {
+        if (pane.window && pane.window->IsShown() && pane.IsDocked() && !pane.rect.IsEmpty())
+            pane.BestSize(pane.rect.GetSize());
+    }
+}
+
+void QSPFrame::UpdateLayout()
+{
+    RememberPaneSizes();
+    m_manager->Update();
 }
 
 void QSPFrame::CallPaneFunc(wxWindowID id, QSP_BOOL toShow) const
@@ -1246,7 +1262,7 @@ void QSPFrame::OnToggleCaptions([[maybe_unused]] wxCommandEvent& event)
     for (int i = static_cast<int>(allPanes.GetCount()) - 1; i >= 0; --i)
         allPanes.Item(i).CaptionVisible(toShow);
     m_manager->GetPane(m_desc).CaptionVisible(false);
-    m_manager->Update();
+    UpdateLayout();
 }
 
 void QSPFrame::OnToggleHotkeys([[maybe_unused]] wxCommandEvent& event)

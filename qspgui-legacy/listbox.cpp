@@ -52,7 +52,7 @@ QSPListBox::QSPListBox(
 
     const wxString commonPart = wxString::Format(
         "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=%s\">"
-        "<FONT COLOR=#%%%%s><TABLE CELLSPACING=4 CELLPADDING=0><TR>%%s</TR></TABLE></FONT>",
+        "<BODY LINK=#%%%%s><FONT COLOR=#%%%%s><TABLE CELLSPACING=4 CELLPADDING=0><TR>%%s</TR></TABLE></FONT></BODY>",
         wxFontMapper::GetEncodingName(wxLocale::GetSystemEncoding())
     );
 
@@ -143,15 +143,8 @@ void QSPListBox::SetTextFont(const wxFont &font)
 
 void QSPListBox::SetLinkColor(const wxColour &clr)
 {
-    CreateHTMLParser();
-    m_htmlParser->SetLinkColor(clr);
+    m_linkColor = clr;
     RefreshUI();
-}
-
-const wxColour &QSPListBox::GetLinkColor() const
-{
-    CreateHTMLParser();
-    return m_htmlParser->GetLinkColor();
 }
 
 void QSPListBox::CreateHTMLParser() const
@@ -189,21 +182,22 @@ void QSPListBox::OnDPIChanged(wxDPIChangedEvent &event)
 wxString QSPListBox::OnGetItem(const size_t n) const
 {
     const wxString color = QSPTools::GetHexColor(GetForegroundColour());
+    const wxString linkColor = QSPTools::GetHexColor(m_linkColor);
     const wxString text = QSPTools::HtmlizeWhitespaces(m_toUseHtml ? m_descs[n] : QSPTools::ProceedAsPlain(m_descs[n]));
 
     if (m_toShowNums && n < 9)
     {
         if (m_images[n].IsEmpty())
-            return wxString::Format(m_outFormatNums, color, static_cast<int>(n + 1), text);
+            return wxString::Format(m_outFormatNums, linkColor, color, static_cast<int>(n + 1), text);
         else
-            return wxString::Format(m_outFormatImageNums, color, static_cast<int>(n + 1), m_images[n], text);
+            return wxString::Format(m_outFormatImageNums, linkColor, color, static_cast<int>(n + 1), m_images[n], text);
     }
     else
     {
         if (m_images[n].IsEmpty())
-            return wxString::Format(m_outFormat, color, text);
+            return wxString::Format(m_outFormat, linkColor, color, text);
         else
-            return wxString::Format(m_outFormatImage, color, m_images[n], text);
+            return wxString::Format(m_outFormatImage, linkColor, color, m_images[n], text);
     }
 }
 

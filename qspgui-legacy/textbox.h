@@ -39,8 +39,10 @@ public:
     [[nodiscard]] wxString GetText() const { return m_text; }
 
     void SetLinkColor(const wxColour& clr);
-    [[nodiscard]] const wxColour& GetLinkColor() const { return m_Parser->GetLinkColor(); }
+    [[nodiscard]] const wxColour& GetLinkColor() const { return m_linkColor; }
     void SetBackgroundImage(const wxBitmap& bmpBg);
+
+    void ScrollWindow(int dx, int dy, const wxRect *rect = nullptr) override;
 
 protected:
     void CalcImageSize();
@@ -58,6 +60,7 @@ private:
     wxString m_outFormat{};
     wxString m_imagePath{};
     wxFont m_font{*wxNORMAL_FONT};
+    wxColour m_linkColor{0, 0, 0xFF};
     wxString m_text{};
     wxBitmap m_bmpBg{};
     wxBitmap m_bmpRealBg{};

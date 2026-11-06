@@ -48,32 +48,6 @@ index 969f32c304..c81987e328 100644
      // rendering style for the parser which allows us to customize our colours
      wxHtmlListBoxStyle *m_htmlRendStyle;
  
-diff --git a/src/aui/framemanager.cpp b/src/aui/framemanager.cpp
-index c88e3070da..466c8ba01e 100644
---- a/src/aui/framemanager.cpp
-+++ b/src/aui/framemanager.cpp
-@@ -2394,6 +2394,7 @@ void wxAuiManager::Update()
-                 p.window->Refresh();
-                 p.window->Update();
-             }
-+            p.BestSize(p.rect.GetSize());
-         }
-     }
- 
-@@ -3773,6 +3774,13 @@ void wxAuiManager::OnLeftDown(wxMouseEvent& event)
- {
-     m_currentDragItem = -1;
- 
-+    // We get incorrect coordinates of the mouse position when
-+    // there's a pane attached to the left side,
-+    // use screen coordinates to get correct local position
-+    wxPoint pt = ::wxGetMousePosition();
-+    wxPoint client_pt = m_frame->ScreenToClient(pt);
-+    event.SetPosition(client_pt);
-+
-     wxAuiDockUIPart* part = HitTest(event.GetX(), event.GetY());
-     if (part)
-     {
 diff --git a/src/generic/animateg.cpp b/src/generic/animateg.cpp
 index 365ffd0579..52672ef8b4 100644
 --- a/src/generic/animateg.cpp
@@ -165,45 +139,6 @@ index 365ffd0579..52672ef8b4 100644
      }
  }
  
-diff --git a/src/generic/scrlwing.cpp b/src/generic/scrlwing.cpp
-index 148722a598..e1b31fe583 100644
---- a/src/generic/scrlwing.cpp
-+++ b/src/generic/scrlwing.cpp
-@@ -536,20 +536,11 @@ void wxScrollHelperBase::HandleOnScroll(wxScrollWinEvent& event)
-         m_win->SetScrollPos(wxVERTICAL, m_yScrollPosition);
-     }
- 
--    if ( needsRefresh )
--    {
--        m_targetWindow->Refresh(true, GetScrollRect());
--    }
--    else
-+    m_targetWindow->Refresh(true, GetScrollRect());
-+    if (!needsRefresh)
-     {
-         m_targetWindow->ScrollWindow(dx, dy, GetScrollRect());
-     }
--#ifdef __WXUNIVERSAL__
--    if (m_win != m_targetWindow)
--    {
--        m_win->Refresh(true, GetScrollRect());
--    }
--#endif // __WXUNIVERSAL__
- }
- 
- int wxScrollHelperBase::CalcScrollInc(wxScrollWinEvent& event)
-diff --git a/src/html/htmlwin.cpp b/src/html/htmlwin.cpp
-index 1f5f138fe9..eaa6db1809 100644
---- a/src/html/htmlwin.cpp
-+++ b/src/html/htmlwin.cpp
-@@ -493,7 +493,6 @@ bool wxHtmlWindow::DoSetPage(const wxString& source)
-     // ...and run the parser on it:
-     wxClientDC dc(this);
-     dc.SetMapMode(wxMM_TEXT);
--    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
-     SetBackgroundImage(wxNullBitmap);
- 
-     double pixelScale = 1.0;
 diff --git a/src/html/m_image.cpp b/src/html/m_image.cpp
 index cee2fdfc9d..67980a98ca 100644
 --- a/src/html/m_image.cpp
@@ -411,40 +346,10 @@ index cee2fdfc9d..67980a98ca 100644
  }
  
  wxHtmlLinkInfo *wxHtmlImageCell::GetLink( int x, int y ) const
-diff --git a/src/html/m_links.cpp b/src/html/m_links.cpp
-index f9e197f31e..963c2439a0 100644
---- a/src/html/m_links.cpp
-+++ b/src/html/m_links.cpp
-@@ -81,7 +81,8 @@ TAG_HANDLER_BEGIN(A, "A")
-             // set default styles, might get overridden by ApplyStyle
-             m_WParser->SetActualColor(m_WParser->GetLinkColor());
-             m_WParser->GetContainer()->InsertCell(new wxHtmlColourCell(m_WParser->GetLinkColor()));
--            m_WParser->SetFontUnderlined(true);
-+            if (!(tag.HasParam(wxT("CLASS")) && tag.GetParam(wxT("CLASS")).IsSameAs(wxT("PLAIN"), false)))
-+                m_WParser->SetFontUnderlined(true);
-             m_WParser->GetContainer()->InsertCell(new wxHtmlFontCell(m_WParser->CreateCurrentFont()));
-             m_WParser->SetLink(wxHtmlLinkInfo(href, target));
- 
 diff --git a/src/html/winpars.cpp b/src/html/winpars.cpp
 index 07bc8ef592..dc0ec1310c 100644
 --- a/src/html/winpars.cpp
 +++ b/src/html/winpars.cpp
-@@ -47,6 +47,7 @@ wxHtmlWinParser::wxHtmlWinParser(wxHtmlWindowInterface *wndIface)
-     m_whitespaceMode = Whitespace_Normal;
-     m_lastWordCell = nullptr;
-     m_posColumn = 0;
-+    m_LinkColor.Set(0, 0, 0xFF);
- 
-     {
-         int i, j, k, l, m;
-@@ -193,7 +194,6 @@ void wxHtmlWinParser::InitParser(const wxString& source)
- 
-     m_UseLink = false;
-     m_Link = wxHtmlLinkInfo( wxEmptyString );
--    m_LinkColor = wxPrivate::GetLinkColour();
- 
-     // if an HTML window interface is connected to this parser,
-     // then use its control background color and the system
 @@ -257,36 +257,6 @@ wxFSFile *wxHtmlWinParser::OpenURL(wxHtmlURLType type,
      for (;;)
      {

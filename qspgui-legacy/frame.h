@@ -141,6 +141,8 @@ protected:
     bool ApplyFontColor(const wxColour& color);
     bool ApplyBackColor(const wxColour& color);
     bool ApplyLinkColor(const wxColour& color);
+    void RememberPaneSizes();
+    void UpdateLayout();
     void CallPaneFunc(wxWindowID id, QSP_BOOL toShow) const;
     void TogglePane(wxWindowID id);
     void SetOverallVolume(int percents);
