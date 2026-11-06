@@ -18,18 +18,37 @@
 #pragma once
 
 #include <wx/wx.h>
-#include <wx/animate.h>
-#include <wx/generic/animate.h>
+#include <wx/animdecod.h>
+#include <memory>
 
-class QSPAnimWin : public wxGenericAnimationCtrl
+class QSPAnimWin : public wxWindow
 {
 public:
-    QSPAnimWin(wxWindow *parent);
+    explicit QSPAnimWin(wxWindow *parent);
 
+    [[nodiscard]] bool LoadFile(const wxString &filename);
+    void Play();
+    void Stop();
     void RefreshUI();
 
-    [[nodiscard]] bool LoadFile(const wxString &filename, wxAnimationType type = wxANIMATION_TYPE_ANY) override;
-
 private:
+    void ResetToFrame(unsigned int frame);
+    void AdvanceFrame();
+    void DrawFrame(wxDC &dc, unsigned int frame) const;
+    void ClearArea(wxDC &dc, const wxPoint &pos, const wxSize &size) const;
+    void UpdateScaledFrame();
+
+    void OnPaint(wxPaintEvent &event);
+    void OnSize(wxSizeEvent &event);
+    void OnTimer(wxTimerEvent &event);
+
+    std::unique_ptr<wxAnimationDecoder> m_decoder;
+    wxBitmap m_canvas;      // the current frame at the size of the animation
+    wxBitmap m_scaledFrame; // the current frame fitted into the window
+    wxPoint m_scaledPos;
+    wxTimer m_timer;
+    unsigned int m_currentFrame{0};
+    bool m_isPlaying{false};
+
     DECLARE_CLASS(QSPAnimWin)
 };
