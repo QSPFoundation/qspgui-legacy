@@ -154,6 +154,7 @@ if (NOT AUDIO_PATCH_STAMP STREQUAL AUDIO_OLD_PATCH_STAMP)
 endif()
 
 set(QSPGUI_LEGACY_SOURCES
+	qspgui-legacy/animation.cpp
 	qspgui-legacy/animwin.cpp
 	qspgui-legacy/app.cpp
 	qspgui-legacy/callbacks_gui.cpp

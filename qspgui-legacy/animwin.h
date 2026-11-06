@@ -18,8 +18,7 @@
 #pragma once
 
 #include <wx/wx.h>
-#include <wx/animdecod.h>
-#include <memory>
+#include "animation.h"
 
 class QSPAnimWin : public wxWindow
 {
@@ -32,22 +31,16 @@ public:
     void RefreshUI();
 
 private:
-    void ResetToFrame(unsigned int frame);
-    void AdvanceFrame();
-    void DrawFrame(wxDC &dc, unsigned int frame) const;
-    void ClearArea(wxDC &dc, const wxPoint &pos, const wxSize &size) const;
     void UpdateScaledFrame();
 
     void OnPaint(wxPaintEvent &event);
     void OnSize(wxSizeEvent &event);
     void OnTimer(wxTimerEvent &event);
 
-    std::unique_ptr<wxAnimationDecoder> m_decoder;
-    wxBitmap m_canvas;      // the current frame at the size of the animation
+    QSPAnimation m_animation;
     wxBitmap m_scaledFrame; // the current frame fitted into the window
     wxPoint m_scaledPos;
     wxTimer m_timer;
-    unsigned int m_currentFrame{0};
     bool m_isPlaying{false};
 
     DECLARE_CLASS(QSPAnimWin)
