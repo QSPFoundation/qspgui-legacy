@@ -28,6 +28,9 @@ namespace
     constexpr size_t QUEUED_FRAMES = 4;           // frames decoded ahead
     constexpr size_t MAX_QUEUED_BYTES = 256 << 20; // when the audio is far ahead of the video in the file
     constexpr double AUDIO_BUFFER_SECONDS = 2.0;
+    constexpr int MIN_AUDIO_RATE = 8000;
+    constexpr int MAX_AUDIO_RATE = 384000;
+    constexpr int MAX_AUDIO_CHANNELS = 8;
     constexpr double AUDIO_AHEAD_SECONDS = 0.5;   // audio decoded ahead
     constexpr double AUDIO_START_SECONDS = 0.2;   // audio buffered before the playback starts
     constexpr auto POLL_INTERVAL = 10ms;
@@ -160,6 +163,11 @@ void VideoPlayer::Run(wxString path, std::promise<wxString> opened)
         m_videoSize = m_decoder->GetSize();
         m_audioRate = m_decoder->GetAudioRate();
         m_audioChannels = m_decoder->GetAudioChannels();
+        if (m_audioRate < MIN_AUDIO_RATE || m_audioRate > MAX_AUDIO_RATE ||
+            m_audioChannels < 1 || m_audioChannels > MAX_AUDIO_CHANNELS)
+        {
+            m_audioRate = 0;
+        }
         opened.set_value(wxString());
     }
     else
