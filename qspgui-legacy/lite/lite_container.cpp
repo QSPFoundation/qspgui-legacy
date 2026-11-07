@@ -112,10 +112,18 @@ QSPLiteContainer::~QSPLiteContainer() = default;
 wxGraphicsRenderer *QSPLiteContainer::GetRenderer()
 {
 #if wxUSE_GRAPHICS_DIRECT2D
-    // DirectWrite substitutes fonts for the characters a font doesn't have, GDI+ doesn't
-    if (wxGraphicsRenderer *renderer = wxGraphicsRenderer::GetDirect2DRenderer()) return renderer;
-#endif
+    static wxGraphicsRenderer *const renderer = [] {
+        wxString value;
+        if (wxGetEnv("QSP_LITEHTML_GRAPHICS", &value) && value.IsSameAs("direct2d", false))
+        {
+            if (wxGraphicsRenderer *direct2D = wxGraphicsRenderer::GetDirect2DRenderer()) return direct2D;
+        }
+        return wxGraphicsRenderer::GetDefaultRenderer();
+    }();
+    return renderer;
+#else
     return wxGraphicsRenderer::GetDefaultRenderer();
+#endif
 }
 
 void QSPLiteContainer::SetDefaultFont(const wxString &faceName, const double sizeInPixels)
@@ -250,7 +258,9 @@ litehtml::uint_ptr QSPLiteContainer::create_font(const litehtml::font_descriptio
     font->size = std::max(Px(descr.size), 1.0);
     if (descr.weight >= 600) font->flags |= wxFONTFLAG_BOLD;
     if (descr.style != litehtml::font_style_normal) font->flags |= wxFONTFLAG_ITALIC;
-    font->decoration = descr.decoration_line;
+    font->decoration = descr.decoration_line & (litehtml::text_decoration_line_underline |
+                                                litehtml::text_decoration_line_overline |
+                                                litehtml::text_decoration_line_line_through);
     font->decorationColor = descr.decoration_color;
     font->measuringFont = GetRenderer()->CreateFont(font->size, font->faceName, font->flags, *wxBLACK);
 
