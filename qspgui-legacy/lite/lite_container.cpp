@@ -114,7 +114,7 @@ wxGraphicsRenderer *QSPLiteContainer::GetRenderer()
 #if wxUSE_GRAPHICS_DIRECT2D
     static wxGraphicsRenderer *const renderer = [] {
         wxString value;
-        if (wxGetEnv("QSP_LITEHTML_GRAPHICS", &value) && value.IsSameAs("direct2d", false))
+        if (!wxGetEnv("QSP_LITEHTML_GRAPHICS", &value) || !value.IsSameAs("gdiplus", false))
         {
             if (wxGraphicsRenderer *direct2D = wxGraphicsRenderer::GetDirect2DRenderer()) return direct2D;
         }

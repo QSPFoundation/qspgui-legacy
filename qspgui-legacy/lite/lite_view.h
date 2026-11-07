@@ -46,6 +46,8 @@ public:
     void ScrollToAnchor(const wxString &anchor) override;
     void RefreshUI() override;
 
+    void ScrollWindow(int dx, int dy, const wxRect *rect = nullptr) override;
+
 private:
     // QSPLiteHost
     void OnLinkClicked(const wxString &href) override;

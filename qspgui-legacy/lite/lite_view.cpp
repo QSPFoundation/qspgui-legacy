@@ -244,6 +244,11 @@ void QSPLiteView::OnLinkClicked(const wxString &href)
     });
 }
 
+void QSPLiteView::ScrollWindow([[maybe_unused]] int dx, [[maybe_unused]] int dy, [[maybe_unused]] const wxRect *rect)
+{
+    Refresh();
+}
+
 void QSPLiteView::OnCursorChanged(const bool isLink)
 {
     SetCursor(isLink ? wxCursor(wxCURSOR_HAND) : wxNullCursor);
