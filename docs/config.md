@@ -60,17 +60,18 @@ Missing or unreadable entries fall back to the defaults below.
 
 ### [Render]
 
-Not implemented yet: planned for the litehtml renderer.
-
-Selects the HTML renderer of each pane. Games can’t choose the renderer from their code, but like the other settings these entries are read from the active qspgui.cfg: a game author can ship a qspgui.cfg with [Render] in the game folder. The renderer the user picks while such a game is open is saved into that file too.
+Selects the HTML renderer of each pane, also from **Settings → HTML renderer…**. Games can't choose the renderer from their code, but like
+the other settings these entries are read from the active `qspgui.cfg`: a game author can ship a
+`qspgui.cfg` with `[Render]` in the game folder. The renderer the user picks while such a game is
+open is saved into that file too.
 
 | Key | Values | Default | Pane |
 |---|---|---|---|
 | `MainDesc` | `wxhtml`, `litehtml` | `wxhtml` | Main description |
-| `Actions` | `wxhtml`, `litehtml` | `wxhtml` | Actions list |
 
-Unknown values mean `wxhtml`, so an older player reads a file written by a newer one.
-More panes (`VarsDesc`, `Objects`, dialogs) can be added as new keys later.
+Unknown values mean `wxhtml`, so an older player reads a file written by a newer one, and so does a
+player built without litehtml (`-DQSP_LITEHTML=OFF`).
+More panes (`Actions`, `VarsDesc`, `Objects`, dialogs) will be added as new keys.
 
 ## Example
 
@@ -97,7 +98,6 @@ Height=650
 Maximize=0
 [Render]
 MainDesc=litehtml
-Actions=wxhtml
 ```
 
 ## Compatibility with upstream qspgui
