@@ -180,6 +180,12 @@ set(QSPGUI_LEGACY_SOURCES
 	qspgui-legacy/updateappdialog.cpp
 	qspgui-legacy/sound/sound_engine.c
 )
+if (QSP_LITEHTML)
+	list(APPEND QSPGUI_LEGACY_SOURCES
+			qspgui-legacy/lite/lite_container.cpp
+			qspgui-legacy/lite/lite_view.cpp
+	)
+endif()
 if (QSP_VIDEO)
 	list(APPEND QSPGUI_LEGACY_SOURCES
 		qspgui-legacy/video/html_video.cpp

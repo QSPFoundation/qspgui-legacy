@@ -20,6 +20,9 @@
 #include <wx/wx.h>
 #include "pathprovider.h"
 
+inline constexpr const char *RENDERER_WXHTML = "wxhtml";
+inline constexpr const char *RENDERER_LITEHTML = "litehtml";
+
 class QSPHtmlView
 {
 public:
@@ -30,6 +33,7 @@ public:
 
     virtual void SetPathProvider(PathProvider *provider) = 0;
     virtual void SetIsHtml(bool isHtml) = 0;
+    [[nodiscard]] virtual bool IsHtml() const = 0;
     virtual void SetText(const wxString &text, bool toScroll = false) = 0;
     [[nodiscard]] virtual wxString GetText() const = 0;
     virtual void SetTextFont(const wxFont &font) = 0;
@@ -37,6 +41,7 @@ public:
     virtual void SetLinkColor(const wxColour &color) = 0;
     [[nodiscard]] virtual const wxColour &GetLinkColor() const = 0;
     virtual void LoadBackImage(const wxString &imagePath) = 0;
+    [[nodiscard]] virtual wxString GetBackImagePath() const = 0;
     virtual void ScrollToAnchor(const wxString &anchor) = 0;
     virtual void RefreshUI() = 0;
 

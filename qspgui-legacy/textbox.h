@@ -32,9 +32,11 @@ public:
 
     void RefreshUI() override;
     void LoadBackImage(const wxString& imagePath) override;
+    [[nodiscard]] wxString GetBackImagePath() const override { return m_imagePath; }
     void SetPathProvider(PathProvider *provider) override { m_pathProvider = provider; }
 
     void SetIsHtml(bool isHtml) override;
+    [[nodiscard]] bool IsHtml() const override { return m_toUseHtml; }
     void SetText(const wxString& text, bool toScroll = false) override;
     void SetTextFont(const wxFont& font) override;
 
