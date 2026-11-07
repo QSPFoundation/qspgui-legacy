@@ -335,7 +335,8 @@ namespace
                 if (lock == Lock::Plain2D) return true; // Lock2D() guarantees the rows of the frame
                 const ptrdiff_t first = firstLine(height) - start;
                 const ptrdiff_t last = first + static_cast<ptrdiff_t>(pitch) * (height - 1);
-                return min(first, last) >= 0 && max(first, last) + width * 4 <= static_cast<ptrdiff_t>(length);
+                const ptrdiff_t top = pitch >= 0 ? first : last, bottom = pitch >= 0 ? last : first;
+                return top >= 0 && bottom + width * 4 <= static_cast<ptrdiff_t>(length);
             };
 
             // The video processor may have turned a rotated video upright without telling
