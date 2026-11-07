@@ -20,26 +20,30 @@
 #include <wx/wx.h>
 #include <wx/fontmap.h>
 #include <wx/html/htmlwin.h>
-#include "pathprovider.h"
+#include "htmlview.h"
 
-class QSPTextBox : public wxHtmlWindow
+class QSPTextBox : public wxHtmlWindow, public QSPHtmlView
 {
 public:
     QSPTextBox(wxWindow *parent, wxWindowID id);
 
-    void RefreshUI();
-    void LoadBackImage(const wxString& imagePath);
-    void SetPathProvider(PathProvider *provider) { m_pathProvider = provider; }
+    [[nodiscard]] wxWindow *GetWindow() override { return this; }
+    [[nodiscard]] const wxWindow *GetWindow() const override { return this; }
 
-    void SetIsHtml(bool isHtml);
-    void SetText(const wxString& text, bool toScroll = false);
-    void SetTextFont(const wxFont& font);
+    void RefreshUI() override;
+    void LoadBackImage(const wxString& imagePath) override;
+    void SetPathProvider(PathProvider *provider) override { m_pathProvider = provider; }
 
-    [[nodiscard]] wxFont GetTextFont() const { return m_font; }
-    [[nodiscard]] wxString GetText() const { return m_text; }
+    void SetIsHtml(bool isHtml) override;
+    void SetText(const wxString& text, bool toScroll = false) override;
+    void SetTextFont(const wxFont& font) override;
 
-    void SetLinkColor(const wxColour& clr);
-    [[nodiscard]] const wxColour& GetLinkColor() const { return m_linkColor; }
+    [[nodiscard]] wxFont GetTextFont() const override { return m_font; }
+    [[nodiscard]] wxString GetText() const override { return m_text; }
+
+    void SetLinkColor(const wxColour& clr) override;
+    [[nodiscard]] const wxColour& GetLinkColor() const override { return m_linkColor; }
+    void ScrollToAnchor(const wxString& anchor) override { LoadPage(anchor); }
     void SetBackgroundImage(const wxBitmap& bmpBg);
 
     void ScrollWindow(int dx, int dy, const wxRect *rect = nullptr) override;

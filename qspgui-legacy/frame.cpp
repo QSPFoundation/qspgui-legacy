@@ -222,7 +222,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
         .Top().MaximizeButton().Hide()
     );
     m_desc = new QSPTextBox(this, ID_MAINDESC);
-    m_manager->AddPane(m_desc, wxAuiPaneInfo().Name("desc").CenterPane());
+    m_manager->AddPane(m_desc->GetWindow(), wxAuiPaneInfo().Name("desc").CenterPane());
     m_objects = new QSPListBox(this, ID_OBJECTS);
     m_manager->AddPane(
         m_objects,
@@ -261,7 +261,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     m_actions->SetPathProvider(this);
     m_vars->SetPathProvider(this);
 
-    for (wxWindow *pane : std::initializer_list<wxWindow *>{m_desc, m_vars, m_objects, m_actions, m_imgView})
+    for (wxWindow *pane : std::initializer_list<wxWindow *>{m_desc->GetWindow(), m_vars, m_objects, m_actions, m_imgView})
         BindMouseClick(pane);
 
     m_savedGamePath.Clear();
@@ -458,7 +458,7 @@ void QSPFrame::ApplyParams()
 
     if (
         const wxColour setBackColor = qspGetVar(QSP_FMT("BCOLOR"), &numVal) && numVal ? wxColour(numVal) : m_backColor;
-        setBackColor != m_desc->GetBackgroundColour()
+        setBackColor != m_desc->GetBackColor()
     )
     {
         if (ApplyBackColor(setBackColor)) toRefreshUI = true;
@@ -466,7 +466,7 @@ void QSPFrame::ApplyParams()
 
     if (
         const wxColour setFontColor = qspGetVar(QSP_FMT("FCOLOR"), &numVal) && numVal ? wxColour(numVal): m_fontColor;
-        setFontColor != m_desc->GetForegroundColour())
+        setFontColor != m_desc->GetFontColor())
     {
         if (ApplyFontColor(setFontColor)) toRefreshUI = true;
     }
@@ -613,8 +613,8 @@ void QSPFrame::ShowError()
     }
     QSPMsgDlg dialog(this,
                      wxID_ANY,
-                     m_desc->GetBackgroundColour(),
-                     m_desc->GetForegroundColour(),
+                     m_desc->GetBackColor(),
+                     m_desc->GetFontColor(),
                      m_desc->GetTextFont(),
                      _("Error"),
                      wxMessage,
@@ -732,7 +732,7 @@ bool QSPFrame::ApplyFontName(const wxString& name)
 
 bool QSPFrame::ApplyFontColor(const wxColour& color)
 {
-    m_desc->SetForegroundColour(color);
+    m_desc->GetWindow()->SetForegroundColour(color);
     m_objects->SetForegroundColour(color);
     m_actions->SetForegroundColour(color);
     m_vars->SetForegroundColour(color);
@@ -742,7 +742,7 @@ bool QSPFrame::ApplyFontColor(const wxColour& color)
 
 bool QSPFrame::ApplyBackColor(const wxColour& color)
 {
-    m_desc->SetBackgroundColour(color);
+    m_desc->GetWindow()->SetBackgroundColour(color);
     m_objects->SetBackgroundColour(color);
     m_actions->SetBackgroundColour(color);
     m_vars->SetBackgroundColour(color);
@@ -1262,7 +1262,7 @@ void QSPFrame::OnToggleCaptions([[maybe_unused]] wxCommandEvent& event)
     const wxAuiPaneInfoArray& allPanes = m_manager->GetAllPanes();
     for (int i = static_cast<int>(allPanes.GetCount()) - 1; i >= 0; --i)
         allPanes.Item(i).CaptionVisible(toShow);
-    m_manager->GetPane(m_desc).CaptionVisible(false);
+    m_manager->GetPane(m_desc->GetWindow()).CaptionVisible(false);
     UpdateLayout();
 }
 
@@ -1311,8 +1311,8 @@ void QSPFrame::OnLinkClicked(wxHtmlLinkEvent& event)
             href.StartsWith("#")
         )
         {
-            if (event.GetId() == m_desc->GetId())
-                m_desc->LoadPage(href);
+            if (event.GetId() == m_desc->GetWindow()->GetId())
+                m_desc->ScrollToAnchor(href);
             else
                 m_vars->LoadPage(href);
         }

@@ -320,8 +320,8 @@ void QSPCallbacks::Msg(const QSP_CHAR *str)
 
     QSPMsgDlg dialog(m_frame,
                      wxID_ANY,
-                     m_frame->GetDesc()->GetBackgroundColour(),
-                     m_frame->GetDesc()->GetForegroundColour(),
+                     m_frame->GetDesc()->GetBackColor(),
+                     m_frame->GetDesc()->GetFontColor(),
                      m_frame->GetDesc()->GetTextFont(),
                      _("Info"),
                      qspToWxString(str),
@@ -355,8 +355,8 @@ void QSPCallbacks::Input(const QSP_CHAR *text, QSP_CHAR *buffer, const int maxLe
 
     QSPInputDlg dialog(m_frame,
                        wxID_ANY,
-                       m_frame->GetDesc()->GetBackgroundColour(),
-                       m_frame->GetDesc()->GetForegroundColour(),
+                       m_frame->GetDesc()->GetBackColor(),
+                       m_frame->GetDesc()->GetFontColor(),
                        m_frame->GetDesc()->GetTextFont(),
                        _("Input data"),
                        qspToWxString(text),

@@ -113,7 +113,7 @@ public:
     [[nodiscard]] bool IsValidFullPath(const wxString &path) const override;
 
     [[nodiscard]] wxTimer* GetTimer() const { return m_timer; }
-    [[nodiscard]] QSPTextBox* GetDesc() const { return m_desc; }
+    [[nodiscard]] QSPHtmlView* GetDesc() const { return m_desc; }
     [[nodiscard]] QSPTextBox* GetVars() const { return m_vars; }
     [[nodiscard]] QSPInputBox* GetInput() const { return m_input; }
     [[nodiscard]] QSPListBox* GetActions() const { return m_actions; }
@@ -201,7 +201,7 @@ private:
     wxString m_configDefPath{};
     QSPTranslationHelper* m_transHelper{nullptr};
     wxTimer* m_timer{nullptr};
-    QSPTextBox* m_desc{nullptr};
+    QSPHtmlView* m_desc{nullptr};
     QSPTextBox* m_vars{nullptr};
     QSPInputBox* m_input{nullptr};
     QSPListBox* m_objects{nullptr};
