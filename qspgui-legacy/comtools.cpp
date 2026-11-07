@@ -50,7 +50,24 @@ wxString QSPTools::GetHexColor(const wxColour &color)
                             static_cast<int>(color.Blue()));
 }
 
-wxString QSPTools::HtmlizeWhitespaces(const wxString &str)
+namespace
+{
+    wxString GetRawTextTagName(const wxString &tag)
+    {
+        for (const char *name : {"style", "script"})
+        {
+            const size_t length = strlen(name);
+            if (tag.length() > length + 1 && tag.Mid(1, length).IsSameAs(name, false))
+            {
+                const wxChar next = tag[length + 1];
+                if (next == '>' || next == '/' || wxIsspace(next)) return name;
+            }
+        }
+        return wxEmptyString;
+    }
+}
+
+wxString QSPTools::HtmlizeWhitespaces(const wxString &str, const bool toKeepRawText)
 {
     wxString out;
     out.reserve(str.length() * 1.2);
@@ -68,6 +85,7 @@ wxString QSPTools::HtmlizeWhitespaces(const wxString &str)
     {
         if (const wxChar ch = *i; ch == '<')
         {
+            const size_t tagStart = out.length();
             out << ch;
             wxChar quote = 0;
             ++i;
@@ -110,6 +128,18 @@ wxString QSPTools::HtmlizeWhitespaces(const wxString &str)
 
             if (i == str.end()) return out;
             isLastSpace = true;
+            if (toKeepRawText)
+            {
+                if (const wxString name = GetRawTextTagName(out.Mid(tagStart)); !name.IsEmpty())
+                {
+                    const size_t contentStart = static_cast<size_t>(i - str.begin()) + 1;
+                    const size_t closing = str.Lower().find("</" + name, contentStart);
+                    const size_t contentEnd = closing == wxString::npos ? str.length() : closing;
+                    out << str.Mid(contentStart, contentEnd - contentStart);
+                    if (closing == wxString::npos) return out;
+                    i = str.begin() + (contentEnd - 1);
+                }
+            }
         } else if (ch == ' ')
         {
             appendSpace();

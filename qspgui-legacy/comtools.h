@@ -41,7 +41,7 @@ public:
     static wxString GetBrowserURL(const wxString &url);
     static void LaunchDefaultBrowser(const wxString &url);
     static wxString GetHexColor(const wxColour &color);
-    static wxString HtmlizeWhitespaces(const wxString &str);
+    static wxString HtmlizeWhitespaces(const wxString &str, bool toKeepRawText = false);
     static wxString ProceedAsPlain(const wxString &str);
 
     static wxString GetAppPath(const wxString &path = wxEmptyString, const wxString &file = wxEmptyString);
