@@ -368,3 +368,36 @@ msgid ""
 msgstr ""
 "代码：%d\n"
 "描述：%s"
+
+msgid "HTML &renderer..."
+msgstr "&HTML 渲染器…"
+
+msgid "HTML renderer"
+msgstr "HTML 渲染器"
+
+msgid "wxHTML (classic)"
+msgstr "wxHTML（经典）"
+
+msgid "litehtml (HTML5 and CSS)"
+msgstr "litehtml（HTML5 和 CSS）"
+
+msgid "Main description:"
+msgstr "主描述："
+
+msgid "Additional description:"
+msgstr "附加描述："
+
+msgid "Actions:"
+msgstr "动作："
+
+msgid "Objects:"
+msgstr "对象："
+
+msgid "Dialogs:"
+msgstr "对话框："
+
+msgid "Smooth the enlarged background image (as in browsers)"
+msgstr "平滑放大的背景图片（与浏览器相同）"
+
+msgid "Games are made for wxHTML: some may look different with litehtml."
+msgstr "游戏是为 wxHTML 制作的：部分游戏在 litehtml 中可能显示不同。"

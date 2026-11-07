@@ -368,3 +368,36 @@ msgid ""
 msgstr ""
 "Код памылкі: %d\n"
 "Апісанне: %s"
+
+msgid "HTML &renderer..."
+msgstr "&HTML-рэндэр..."
+
+msgid "HTML renderer"
+msgstr "HTML-рэндэр"
+
+msgid "wxHTML (classic)"
+msgstr "wxHTML (класічны)"
+
+msgid "litehtml (HTML5 and CSS)"
+msgstr "litehtml (HTML5 і CSS)"
+
+msgid "Main description:"
+msgstr "Асноўнае апісанне:"
+
+msgid "Additional description:"
+msgstr "Дадатковае апісанне:"
+
+msgid "Actions:"
+msgstr "Дзеянні:"
+
+msgid "Objects:"
+msgstr "Прадметы:"
+
+msgid "Dialogs:"
+msgstr "Дыялогі:"
+
+msgid "Smooth the enlarged background image (as in browsers)"
+msgstr "Згладжваць павялічаную фонавую выяву (як у браўзерах)"
+
+msgid "Games are made for wxHTML: some may look different with litehtml."
+msgstr "Гульні ствараюцца для wxHTML: некаторыя могуць выглядаць інакш у litehtml."

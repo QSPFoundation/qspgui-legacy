@@ -368,3 +368,36 @@ msgid ""
 msgstr ""
 "Kodo de eraro: %d\n"
 "Priskribo: %s"
+
+msgid "HTML &renderer..."
+msgstr "&HTML-bildigilo..."
+
+msgid "HTML renderer"
+msgstr "HTML-bildigilo"
+
+msgid "wxHTML (classic)"
+msgstr "wxHTML (klasika)"
+
+msgid "litehtml (HTML5 and CSS)"
+msgstr "litehtml (HTML5 kaj CSS)"
+
+msgid "Main description:"
+msgstr "Ĉefa priskribo:"
+
+msgid "Additional description:"
+msgstr "Kroma priskribo:"
+
+msgid "Actions:"
+msgstr "Agoj:"
+
+msgid "Objects:"
+msgstr "Objektoj:"
+
+msgid "Dialogs:"
+msgstr "Dialogoj:"
+
+msgid "Smooth the enlarged background image (as in browsers)"
+msgstr "Glatigi la pligrandigitan fonan bildon (kiel en retumiloj)"
+
+msgid "Games are made for wxHTML: some may look different with litehtml."
+msgstr "Ludoj estas faritaj por wxHTML: kelkaj povas aspekti alie per litehtml."

@@ -368,3 +368,36 @@ msgid ""
 msgstr ""
 "Code: %d\n"
 "Desc: %s"
+
+msgid "HTML &renderer..."
+msgstr "HTML &renderer..."
+
+msgid "HTML renderer"
+msgstr "HTML renderer"
+
+msgid "wxHTML (classic)"
+msgstr "wxHTML (classic)"
+
+msgid "litehtml (HTML5 and CSS)"
+msgstr "litehtml (HTML5 and CSS)"
+
+msgid "Main description:"
+msgstr "Main description:"
+
+msgid "Additional description:"
+msgstr "Additional description:"
+
+msgid "Actions:"
+msgstr "Actions:"
+
+msgid "Objects:"
+msgstr "Objects:"
+
+msgid "Dialogs:"
+msgstr "Dialogs:"
+
+msgid "Smooth the enlarged background image (as in browsers)"
+msgstr "Smooth the enlarged background image (as in browsers)"
+
+msgid "Games are made for wxHTML: some may look different with litehtml."
+msgstr "Games are made for wxHTML: some may look different with litehtml."

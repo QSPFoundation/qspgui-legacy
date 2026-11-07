@@ -368,3 +368,36 @@ msgid ""
 msgstr ""
 "Код ошибки: %d\n"
 "Описание: %s"
+
+msgid "HTML &renderer..."
+msgstr "&HTML-рендер..."
+
+msgid "HTML renderer"
+msgstr "HTML-рендер"
+
+msgid "wxHTML (classic)"
+msgstr "wxHTML (классический)"
+
+msgid "litehtml (HTML5 and CSS)"
+msgstr "litehtml (HTML5 и CSS)"
+
+msgid "Main description:"
+msgstr "Основное описание:"
+
+msgid "Additional description:"
+msgstr "Дополнительное описание:"
+
+msgid "Actions:"
+msgstr "Действия:"
+
+msgid "Objects:"
+msgstr "Предметы:"
+
+msgid "Dialogs:"
+msgstr "Диалоги:"
+
+msgid "Smooth the enlarged background image (as in browsers)"
+msgstr "Сглаживать увеличенную фоновую картинку (как в браузерах)"
+
+msgid "Games are made for wxHTML: some may look different with litehtml."
+msgstr "Игры создаются для wxHTML: некоторые могут выглядеть иначе в litehtml."

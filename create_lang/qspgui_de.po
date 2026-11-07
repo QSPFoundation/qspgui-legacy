@@ -368,3 +368,36 @@ msgid ""
 msgstr ""
 "Fehlerkode: %d\n"
 "Beschreibung: %s"
+
+msgid "HTML &renderer..."
+msgstr "&HTML-Renderer..."
+
+msgid "HTML renderer"
+msgstr "HTML-Renderer"
+
+msgid "wxHTML (classic)"
+msgstr "wxHTML (klassisch)"
+
+msgid "litehtml (HTML5 and CSS)"
+msgstr "litehtml (HTML5 und CSS)"
+
+msgid "Main description:"
+msgstr "Hauptbeschreibung:"
+
+msgid "Additional description:"
+msgstr "Zusätzliche Beschreibung:"
+
+msgid "Actions:"
+msgstr "Aktionen:"
+
+msgid "Objects:"
+msgstr "Objekte:"
+
+msgid "Dialogs:"
+msgstr "Dialoge:"
+
+msgid "Smooth the enlarged background image (as in browsers)"
+msgstr "Vergrößertes Hintergrundbild glätten (wie in Browsern)"
+
+msgid "Games are made for wxHTML: some may look different with litehtml."
+msgstr "Spiele werden für wxHTML erstellt: manche können mit litehtml anders aussehen."
