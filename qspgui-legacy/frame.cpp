@@ -120,6 +120,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     Bind(wxEVT_LISTBOX_DCLICK, &QSPFrame::OnActionDblClick, this, ID_ACTIONS);
     Bind(wxEVT_TEXT, &QSPFrame::OnInputTextChange, this, ID_INPUT);
     Bind(wxEVT_ENTER, &QSPFrame::OnInputTextEnter, this, ID_INPUT);
+    Bind(wxEVT_CHAR_HOOK, &QSPFrame::OnKeyDown, this);
     Bind(wxEVT_KEY_UP, &QSPFrame::OnKey, this);
     Bind(wxEVT_MOUSEWHEEL, &QSPFrame::OnWheel, this);
     Bind(wxEVT_LEFT_DOWN, &QSPFrame::OnMouseClick, this);
@@ -1380,9 +1381,17 @@ void QSPFrame::OnInputTextEnter([[maybe_unused]] wxCommandEvent& event)
         ShowError();
 }
 
+void QSPFrame::OnKeyDown(wxKeyEvent& event)
+{
+    event.Skip();
+    m_hotkeyPressed = event.HasModifiers() ? 0 : event.GetKeyCode();
+}
+
 void QSPFrame::OnKey(wxKeyEvent& event)
 {
     event.Skip();
+    const bool isHotkeyPressed = event.GetKeyCode() == m_hotkeyPressed;
+    m_hotkeyPressed = 0;
 
     if (IsFullScreen() && event.GetKeyCode() == WXK_ESCAPE)
     {
@@ -1393,7 +1402,7 @@ void QSPFrame::OnKey(wxKeyEvent& event)
     if (event.GetKeyCode() == WXK_SPACE)
         m_keyPressedWhileDisabled = true;
 
-    if (m_toProcessEvents && !event.HasModifiers() && FindFocus() != m_input)
+    if (m_toProcessEvents && isHotkeyPressed && !event.HasModifiers() && FindFocus() != m_input)
     {
         int ind = -1;
         const int actsCount = QSPGetActions(nullptr, 0);

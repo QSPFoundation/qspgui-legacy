@@ -184,6 +184,7 @@ protected:
     void OnActionDblClick(wxCommandEvent &event);
     void OnInputTextChange(const wxCommandEvent &event);
     void OnInputTextEnter(wxCommandEvent &event);
+    void OnKeyDown(wxKeyEvent &event);
     void OnKey(wxKeyEvent &event);
     void BindMouseClick(wxWindow *window);
     void OnMouseClick(wxMouseEvent &event);
@@ -225,6 +226,7 @@ private:
     bool m_closePending{false};
     bool m_toQuit{false};
     bool m_keyPressedWhileDisabled{false};
+    int m_hotkeyPressed{0};
     bool m_toShowHotkeys{false};
     bool m_toCheckUpdates{true};
     int m_volume{100};
