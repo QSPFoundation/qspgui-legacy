@@ -117,6 +117,15 @@ void QSPLiteView::SetLinkColor(const wxColour &color)
 
 double QSPLiteView::GetFontSizeInPixels() const
 {
+#ifdef __WXMSW__
+    {
+        wxClientDC dc(const_cast<QSPLiteView *>(this));
+        dc.SetFont(m_font);
+        const wxFontMetrics metrics = dc.GetFontMetrics();
+        if (const int em = metrics.height - metrics.internalLeading; em > 0) return em / GetScale();
+    }
+#endif
+
     const wxString sample = "Mg";
     wxClientDC dc(const_cast<QSPLiteView *>(this));
     dc.SetFont(m_font);
@@ -160,6 +169,7 @@ void QSPLiteView::LayoutDocument()
     m_layoutWidth = client.x;
 
     const double scale = GetScale();
+    m_document->media_changed();
     m_document->render(static_cast<float>(client.x / scale));
     const int width = static_cast<int>(std::ceil(static_cast<float>(m_document->width()) * scale));
     const int height = static_cast<int>(std::ceil(static_cast<float>(m_document->height()) * scale));

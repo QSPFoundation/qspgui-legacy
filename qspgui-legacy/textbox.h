@@ -48,6 +48,9 @@ public:
     void ScrollToAnchor(const wxString& anchor) override { LoadPage(anchor); }
     void SetBackgroundImage(const wxBitmap& bmpBg);
 
+    bool SetBackgroundColour(const wxColour& colour) override;
+    [[nodiscard]] wxColour GetBackColor() const override;
+
     void ScrollWindow(int dx, int dy, const wxRect *rect = nullptr) override;
 
 protected:
@@ -67,6 +70,8 @@ private:
     wxString m_imagePath{};
     wxFont m_font{*wxNORMAL_FONT};
     wxColour m_linkColor{0, 0, 0xFF};
+    wxColour m_backColor;
+    bool m_isSettingPage{false};
     wxString m_text{};
     wxBitmap m_bmpBg{};
     wxBitmap m_bmpRealBg{};

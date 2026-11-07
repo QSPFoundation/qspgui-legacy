@@ -45,6 +45,6 @@ public:
     virtual void ScrollToAnchor(const wxString &anchor) = 0;
     virtual void RefreshUI() = 0;
 
-    [[nodiscard]] wxColour GetBackColor() const { return GetWindow()->GetBackgroundColour(); }
+    [[nodiscard]] virtual wxColour GetBackColor() const { return GetWindow()->GetBackgroundColour(); }
     [[nodiscard]] wxColour GetFontColor() const { return GetWindow()->GetForegroundColour(); }
 };

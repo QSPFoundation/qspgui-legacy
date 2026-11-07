@@ -54,7 +54,9 @@ QSPTextBox::QSPTextBox(wxWindow *parent, const wxWindowID id) : wxHtmlWindow(par
     );
 
     const wxString fontName = m_font.GetFaceName();
+    m_isSettingPage = true;
     SetStandardFonts(m_font.GetPointSize(), fontName, fontName);
+    m_isSettingPage = false;
 }
 
 void QSPTextBox::SetIsHtml(const bool isHtml)
@@ -70,12 +72,25 @@ void QSPTextBox::RefreshUI()
 {
     const wxString color = QSPTools::GetHexColor(GetForegroundColour());
     const wxString text = QSPTools::HtmlizeWhitespaces(m_toUseHtml ? m_text : QSPTools::ProceedAsPlain(m_text));
-    const wxString backColor = QSPTools::GetHexColor(GetBackgroundColour());
+    const wxString backColor = QSPTools::GetHexColor(GetBackColor());
     const wxString linkColor = QSPTools::GetHexColor(m_linkColor);
 
     wxWindowUpdateLocker noUpdates{this};
 
+    m_isSettingPage = true;
     SetPage(wxString::Format(m_outFormat, backColor, linkColor, color, text));
+    m_isSettingPage = false;
+}
+
+bool QSPTextBox::SetBackgroundColour(const wxColour &colour)
+{
+    if (!m_isSettingPage) m_backColor = colour;
+    return wxHtmlWindow::SetBackgroundColour(colour);
+}
+
+wxColour QSPTextBox::GetBackColor() const
+{
+    return m_backColor.IsOk() ? m_backColor : GetBackgroundColour();
 }
 
 void QSPTextBox::LoadBackImage(const wxString &imagePath)
@@ -126,7 +141,9 @@ void QSPTextBox::SetTextFont(const wxFont &font)
     {
         m_font = font;
         wxWindowUpdateLocker noUpdates{this};
+        m_isSettingPage = true;
         SetStandardFonts(fontSize, fontName, fontName);
+        m_isSettingPage = false;
     }
 }
 
