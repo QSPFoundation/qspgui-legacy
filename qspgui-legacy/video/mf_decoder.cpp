@@ -159,6 +159,7 @@ namespace
 
     private:
         static constexpr DWORD NO_STREAM = (DWORD)-1;
+        static constexpr GUID VIDEO_ROTATION = {0xc380465d, 0x2271, 0x428c, {0x9b, 0x83, 0xec, 0xea, 0x3b, 0x4a, 0x85, 0xc1}};
 
         bool CreateReader(const wxString &path, const bool isAdvanced)
         {
@@ -190,6 +191,16 @@ namespace
                     m_audioStream = index;
             }
             if (m_videoStream == NO_STREAM) return false;
+
+            ComPtr<IMFMediaType> native;
+            UINT32 rotation = 0;
+            m_nativeFrameSize = 0;
+            if (SUCCEEDED(m_reader->GetNativeMediaType(m_videoStream, 0, &native)))
+            {
+                native->GetUINT32(VIDEO_ROTATION, &rotation);
+                native->GetUINT64(MF_MT_FRAME_SIZE, &m_nativeFrameSize);
+            }
+            m_rotation = (rotation == 90 || rotation == 180 || rotation == 270) ? (int)rotation : 0;
             m_reader->SetStreamSelection(m_videoStream, TRUE);
             if (m_audioStream != NO_STREAM) m_reader->SetStreamSelection(m_audioStream, TRUE);
             return true;
@@ -201,6 +212,7 @@ namespace
             return SUCCEEDED(MFCreateMediaType(&type)) &&
                 SUCCEEDED(type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video)) &&
                 SUCCEEDED(type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32)) &&
+                SUCCEEDED(type->SetUINT32(VIDEO_ROTATION, 0)) &&
                 SUCCEEDED(m_reader->SetCurrentMediaType(m_videoStream, nullptr, type.Get())) &&
                 ReadVideoFormat();
         }
@@ -224,6 +236,13 @@ namespace
                 return false;
             }
 
+            if (m_rotation % 180 == 90 && m_frameWidth != m_frameHeight)
+            {
+                const int nativeWidth = (int)(m_nativeFrameSize >> 32), nativeHeight = (int)(m_nativeFrameSize & 0xFFFFFFFF);
+                if (std::abs(nativeWidth - m_frameHeight) < 16 && std::abs(nativeHeight - m_frameWidth) < 16)
+                    m_rotation = 0;
+            }
+
             UINT32 stride = 0;
             m_stride = SUCCEEDED(type->GetUINT32(MF_MT_DEFAULT_STRIDE, &stride)) ? (LONG)stride : m_frameWidth * 4;
 
@@ -237,6 +256,7 @@ namespace
                     m_area = area;
             }
             m_size = m_area.GetSize();
+            if (m_rotation % 180 == 90) m_size = wxSize(m_size.y, m_size.x);
             return true;
         }
 
@@ -279,34 +299,52 @@ namespace
             if (!is2D)
             {
                 if (FAILED(buffer->Lock(&data, nullptr, &length))) return false;
-                // Bottom-up images have a negative stride
                 pitch = m_stride;
-                scanline0 = pitch >= 0 ? data : data + (ptrdiff_t)(-pitch) * (m_frameHeight - 1);
             }
-            // Never trust the buffer to match the format
-            if ((size_t)length < (size_t)std::abs(pitch) * m_frameHeight || std::abs(pitch) < m_frameWidth * 4)
-            {
+            const auto unlock = [&] {
                 if (is2D)
                     buffer2D->Unlock2D();
                 else
                     buffer->Unlock();
-                return false;
+            };
+
+            const auto fits = [&](const int width, const int height) {
+                return std::abs(pitch) >= width * 4 && (size_t)length >= (size_t)std::abs(pitch) * height;
+            };
+            wxRect area = m_area;
+            int height = m_frameHeight;
+            int rotation = m_rotation;
+            if (!fits(m_frameWidth, m_frameHeight))
+            {
+                if (m_rotation % 180 != 90 || !fits(m_frameHeight, m_frameWidth))
+                {
+                    unlock();
+                    return false;
+                }
+                area = wxRect(0, 0, m_frameHeight, m_frameWidth);
+                height = m_frameWidth;
+                rotation = 0;
             }
+
+            if (!is2D) scanline0 = pitch >= 0 ? data : data + static_cast<ptrdiff_t>(-pitch) * (height - 1);
 
             VideoFrame frame;
             frame.time = time;
-            frame.image.Create(m_area.width, m_area.height, false);
+            frame.image.Create(area.width, area.height, false);
             if (frame.image.IsOk())
             {
-                const BYTE *origin = scanline0 + (ptrdiff_t)m_area.y * pitch + (ptrdiff_t)m_area.x * 4;
-                ConvertPackedToRGB(origin, (int)pitch, m_area.width, m_area.height, true, frame.image.GetData());
+                const BYTE *origin = scanline0 + (ptrdiff_t)area.y * pitch + (ptrdiff_t)area.x * 4;
+                ConvertPackedToRGB(origin, (int)pitch, area.width, area.height, true, frame.image.GetData());
+                if (rotation == 90)
+                    frame.image = frame.image.Rotate90(false);
+                else if (rotation == 180)
+                    frame.image = frame.image.Rotate180();
+                else if (rotation == 270)
+                    frame.image = frame.image.Rotate90(true);
                 frames.push_back(std::move(frame));
             }
 
-            if (is2D)
-                buffer2D->Unlock2D();
-            else
-                buffer->Unlock();
+            unlock();
             return true;
         }
 
@@ -318,7 +356,7 @@ namespace
             if (FAILED(sample->ConvertToContiguousBuffer(&buffer)) || FAILED(buffer->Lock(&data, nullptr, &length)))
                 return;
             const size_t count = length / sizeof(float) / m_audioChannels * m_audioChannels;
-            const float *samples = reinterpret_cast<const float *>(data);
+            const auto *samples = reinterpret_cast<const float *>(data);
             audio.insert(audio.end(), samples, samples + count);
             buffer->Unlock();
         }
@@ -330,6 +368,8 @@ namespace
         int m_frameWidth{0};
         int m_frameHeight{0};
         LONG m_stride{0};
+        int m_rotation{0};
+        UINT64 m_nativeFrameSize{0};
         wxRect m_area;
         wxSize m_size;
         int m_audioRate{0};

@@ -95,6 +95,7 @@ namespace
     constexpr int GST_PAD_LINK_OK = 0;
     constexpr int GST_AUTOPLUG_SELECT_TRY = 0;
     constexpr int GST_AUTOPLUG_SELECT_SKIP = 2;
+    constexpr int GST_VIDEO_ORIENTATION_AUTO = 8;
     constexpr uint64_t GST_CLOCK_TIME_NONE = UINT64_MAX;
     constexpr uint64_t GST_MSECOND = 1000000;
     constexpr uint64_t OPEN_TIMEOUT = 10000 * GST_MSECOND;
@@ -365,11 +366,26 @@ namespace
             {
                 return;
             }
+            GstElement *first = convert;
+            if (isVideo)
+            {
+                if (GstElement *flip = api.gst_element_factory_make("videoflip", nullptr))
+                {
+                    api.g_object_set(flip, "video-direction", GST_VIDEO_ORIENTATION_AUTO, nullptr);
+                    api.gst_bin_add(m_pipeline, flip);
+                    if (api.gst_element_link(flip, convert))
+                    {
+                        api.gst_element_sync_state_with_parent(flip);
+                        first = flip;
+                    }
+                }
+            }
             api.gst_element_sync_state_with_parent(sink);
             if (resample) api.gst_element_sync_state_with_parent(resample);
             api.gst_element_sync_state_with_parent(convert);
+            if (first != convert) api.gst_element_sync_state_with_parent(first);
 
-            GstPad *sinkPad = api.gst_element_get_static_pad(convert, "sink");
+            GstPad *sinkPad = api.gst_element_get_static_pad(first, "sink");
             const bool isLinked = sinkPad && api.gst_pad_link(pad, sinkPad) == GST_PAD_LINK_OK;
             if (sinkPad) api.gst_object_unref(sinkPad);
             if (isLinked) (isVideo ? m_videoSink : m_audioSink) = sink;

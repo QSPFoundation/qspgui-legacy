@@ -19,6 +19,7 @@
 
 #include "video_decoder.h"
 #include "yuv.h"
+#include <cmath>
 #import <AVFoundation/AVFoundation.h>
 #import <CoreMedia/CoreMedia.h>
 #import <CoreVideo/CoreVideo.h>
@@ -64,6 +65,19 @@ namespace
                     return false;
                 }
                 m_size = wxSize((int)size.width, (int)size.height);
+                const CGAffineTransform transform = m_videoTrack.preferredTransform;
+                const auto is = [&](const CGFloat a, const CGFloat b, const CGFloat c, const CGFloat d) {
+                    return std::abs(transform.a - a) < 0.01 && std::abs(transform.b - b) < 0.01 &&
+                        std::abs(transform.c - c) < 0.01 && std::abs(transform.d - d) < 0.01;
+                };
+                if (is(0, 1, -1, 0))
+                    m_rotation = Rotation::Clockwise;
+                else if (is(0, -1, 1, 0))
+                    m_rotation = Rotation::CounterClockwise;
+                else if (is(-1, 0, 0, -1))
+                    m_rotation = Rotation::UpsideDown;
+                if (m_rotation == Rotation::Clockwise || m_rotation == Rotation::CounterClockwise)
+                    m_size = wxSize(m_size.y, m_size.x);
                 if (!StartReading())
                 {
                     error = "AVFoundation can't decode the file";
@@ -192,6 +206,12 @@ namespace
                 if (frame.image.IsOk())
                 {
                     ConvertPackedToRGB(data, stride, width, height, true, frame.image.GetData());
+                    if (m_rotation == Rotation::Clockwise)
+                        frame.image = frame.image.Rotate90(true);
+                    else if (m_rotation == Rotation::CounterClockwise)
+                        frame.image = frame.image.Rotate90(false);
+                    else if (m_rotation == Rotation::UpsideDown)
+                        frame.image = frame.image.Rotate180();
                     frames.push_back(std::move(frame));
                     isRead = true;
                 }
@@ -222,6 +242,7 @@ namespace
         AVAssetReaderTrackOutput *m_videoOutput{nil};
         AVAssetReaderTrackOutput *m_audioOutput{nil};
         wxSize m_size;
+        enum class Rotation { None, Clockwise, CounterClockwise, UpsideDown } m_rotation{Rotation::None};
         bool m_isVideoDone{false};
         bool m_isAudioDone{false};
         double m_videoTime{0.0};
