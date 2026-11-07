@@ -2,15 +2,14 @@
 
 set -eu
 
-# Validation
 [ ! -d "./build_packages" ] && echo "Run this script from the project root directory" && exit
 [ -z "$RELEASE_VER" ] && echo "RELEASE_VER isn't specified" && exit
 
-# Build
 REL_BUILD_DIR="./build_packages/win32"
 mkdir -p "$REL_BUILD_DIR"
 
-DOCKCROSS_IMG="dockcross/windows-static-x86:20240812-60fa1b0"
+DOCKCROSS_IMG="dockcross/windows-static-x86:20240812-60fa1b0@sha256:e8bc52ffcbdd453d7869594dfab08b09c51cfdaa235bc5335fd9b961e05039ac"
+export DOCKCROSS_IMAGE="$DOCKCROSS_IMG"
 DOCKCROSS_SCRIPT="./build_packages/dockcross-windows-static-x86"
 
 if [ ! -x "$DOCKCROSS_SCRIPT" ]; then
@@ -29,6 +28,5 @@ fi
 "$DOCKCROSS_SCRIPT" cmake --build "$REL_BUILD_DIR" --parallel
 "$DOCKCROSS_SCRIPT" cpack -B "$REL_BUILD_DIR" --config "$REL_BUILD_DIR/CPackConfig.cmake"
 
-# Move to dist
 mv "$REL_BUILD_DIR"/packages/*.zip "./dist/qspgui-legacy-$RELEASE_VER-win32.zip"
 mv "$REL_BUILD_DIR"/packages/*.exe "./dist/qspgui-legacy-$RELEASE_VER-win32.exe"
