@@ -60,6 +60,7 @@ protected:
     void OnMouseMove(wxMouseEvent& event);
     void OnMouseClick(wxMouseEvent& event);
     void OnChar(wxKeyEvent& event);
+    void SendExecuteEvent(int item);
     void OnKeyUp(wxKeyEvent& event);
     void OnMouseWheel(wxMouseEvent& event);
     void OnDPIChanged(wxDPIChangedEvent& event);

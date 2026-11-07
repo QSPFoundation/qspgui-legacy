@@ -80,6 +80,7 @@ void QSPListBox::SetStandardFonts(
 void QSPListBox::RefreshUI()
 {
     wxWindowUpdateLocker noUpdates{this};
+    SetItemCount(GetItemCount());
     RefreshAll();
 }
 
@@ -217,7 +218,13 @@ void QSPListBox::OnMouseMove(wxMouseEvent &event)
 void QSPListBox::OnMouseClick(wxMouseEvent &event)
 {
     event.Skip();
-    if (m_type == ListBoxType::Extended) OnLeftDClick(event);
+    if (m_type != ListBoxType::Extended) return;
+
+    const int item = VirtualHitTest(event.GetY());
+
+    if (item == wxNOT_FOUND) return;
+    if (GetSelection() != item) DoHandleItemClick(item, 0);
+    if (GetSelection() == item) SendExecuteEvent(item);
 }
 
 void QSPListBox::OnChar(wxKeyEvent &event)
@@ -225,12 +232,17 @@ void QSPListBox::OnChar(wxKeyEvent &event)
     event.Skip();
     if (m_type == ListBoxType::Extended && event.GetKeyCode() == WXK_RETURN && GetSelection() != wxNOT_FOUND)
     {
-        wxCommandEvent clickEvent(wxEVT_LISTBOX_DCLICK, GetId());
-        clickEvent.SetEventObject(this);
-        clickEvent.SetInt(GetSelection());
-        ProcessEvent(clickEvent);
+        SendExecuteEvent(GetSelection());
         SetFocus();
     }
+}
+
+void QSPListBox::SendExecuteEvent(const int item)
+{
+    wxCommandEvent clickEvent(wxEVT_LISTBOX_DCLICK, GetId());
+    clickEvent.SetEventObject(this);
+    clickEvent.SetInt(item);
+    ProcessEvent(clickEvent);
 }
 
 void QSPListBox::OnKeyUp(wxKeyEvent &event)
