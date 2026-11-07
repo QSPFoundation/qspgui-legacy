@@ -8,7 +8,7 @@ set -eu
 REL_BUILD_DIR="./build_packages/win32"
 mkdir -p "$REL_BUILD_DIR"
 
-DOCKCROSS_IMG="dockcross/windows-static-x86:20240812-60fa1b0@sha256:e8bc52ffcbdd453d7869594dfab08b09c51cfdaa235bc5335fd9b961e05039ac"
+DOCKCROSS_IMG="dockcross/windows-static-x86:20261028-1173e18@sha256:f3114193241abb4c5e0f14bcde28ceca9925409dd8b584f869fc6ed4b4ad497b"
 export DOCKCROSS_IMAGE="$DOCKCROSS_IMG"
 DOCKCROSS_SCRIPT="./build_packages/dockcross-windows-static-x86"
 
