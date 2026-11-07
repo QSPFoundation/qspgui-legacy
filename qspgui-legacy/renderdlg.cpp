@@ -18,7 +18,7 @@
 #include "renderdlg.h"
 #include "htmlview.h"
 
-QSPRenderDlg::QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer)
+QSPRenderDlg::QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer, const bool toSmoothBackImage)
     : wxDialog(parent, wxID_ANY, _("HTML renderer"))
 {
     wxArrayString names;
@@ -36,6 +36,10 @@ QSPRenderDlg::QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer)
     const int selected = m_renderers.Index(mainDescRenderer);
     m_mainDesc->SetSelection(selected == wxNOT_FOUND ? 0 : selected);
     grid->Add(m_mainDesc, 1, wxEXPAND);
+    m_mainDesc->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) { UpdateControls(); });
+
+    m_smoothBackImage = new wxCheckBox(this, wxID_ANY, _("Smooth the enlarged background image (as in browsers)"));
+    m_smoothBackImage->SetValue(toSmoothBackImage);
 
     auto *note = new wxStaticText(this, wxID_ANY,
         _("The other panes use wxHTML. Games are made for wxHTML: some may look different with litehtml."));
@@ -43,9 +47,11 @@ QSPRenderDlg::QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer)
 
     auto *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(grid, 0, wxEXPAND | wxALL, FromDIP(10));
+    sizer->Add(m_smoothBackImage, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(10));
     sizer->Add(note, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(10));
     sizer->Add(CreateSeparatedButtonSizer(wxOK | wxCANCEL), 0, wxEXPAND | wxALL, FromDIP(10));
     SetSizerAndFit(sizer);
+    UpdateControls();
     CentreOnParent();
 }
 
@@ -53,4 +59,14 @@ wxString QSPRenderDlg::GetMainDescRenderer() const
 {
     const int selected = m_mainDesc->GetSelection();
     return selected == wxNOT_FOUND ? wxString(RENDERER_WXHTML) : m_renderers[selected];
+}
+
+bool QSPRenderDlg::ToSmoothBackImage() const
+{
+    return m_smoothBackImage->GetValue();
+}
+
+void QSPRenderDlg::UpdateControls()
+{
+    m_smoothBackImage->Enable(GetMainDescRenderer() != RENDERER_WXHTML);
 }

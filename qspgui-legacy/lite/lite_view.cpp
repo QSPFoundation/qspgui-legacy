@@ -192,6 +192,14 @@ void QSPLiteView::LoadBackImage(const wxString &imagePath)
     Refresh();
 }
 
+void QSPLiteView::SetBackImageSmoothing(const bool toSmooth)
+{
+    if (m_toSmoothBackImage == toSmooth) return;
+    m_toSmoothBackImage = toSmooth;
+    UpdateBackImage();
+    Refresh();
+}
+
 void QSPLiteView::UpdateBackImage()
 {
     m_scaledBackImage = wxNullBitmap;
@@ -210,7 +218,8 @@ void QSPLiteView::UpdateBackImage()
         destH = h;
     m_backImagePos = wxPoint((w - destW) / 2, (h - destH) / 2);
     if (destW > 0 && destH > 0)
-        m_scaledBackImage = wxBitmap(m_backImage.ConvertToImage().Scale(destW, destH, wxIMAGE_QUALITY_HIGH));
+        m_scaledBackImage = wxBitmap(m_backImage.ConvertToImage().Scale(
+            destW, destH, m_toSmoothBackImage ? wxIMAGE_QUALITY_HIGH : wxIMAGE_QUALITY_NORMAL));
 }
 
 void QSPLiteView::ScrollToAnchor(const wxString &anchor)

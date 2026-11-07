@@ -42,6 +42,7 @@ public:
     void SetLinkColor(const wxColour &color) override;
     [[nodiscard]] const wxColour &GetLinkColor() const override { return m_linkColor; }
     void LoadBackImage(const wxString &imagePath) override;
+    void SetBackImageSmoothing(bool toSmooth) override;
     [[nodiscard]] wxString GetBackImagePath() const override { return m_imagePath; }
     void ScrollToAnchor(const wxString &anchor) override;
     void RefreshUI() override;
@@ -83,6 +84,7 @@ private:
     wxString m_imagePath;
     wxBitmap m_backImage;
     wxBitmap m_scaledBackImage;
+    bool m_toSmoothBackImage{true};
     wxPoint m_backImagePos;
     wxTimer m_animationTimer;
 };

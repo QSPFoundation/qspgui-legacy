@@ -42,6 +42,7 @@ public:
     [[nodiscard]] virtual const wxColour &GetLinkColor() const = 0;
     virtual void LoadBackImage(const wxString &imagePath) = 0;
     [[nodiscard]] virtual wxString GetBackImagePath() const = 0;
+    virtual void SetBackImageSmoothing([[maybe_unused]] bool toSmooth) {}
     virtual void ScrollToAnchor(const wxString &anchor) = 0;
     virtual void RefreshUI() = 0;
 

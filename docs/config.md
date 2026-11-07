@@ -65,11 +65,12 @@ the other settings these entries are read from the active `qspgui.cfg`: a game a
 `qspgui.cfg` with `[Render]` in the game folder. The renderer the user picks while such a game is
 open is saved into that file too.
 
-| Key | Values | Default | Pane |
+| Key | Values | Default | Description |
 |---|---|---|---|
 | `MainDesc` | `wxhtml`, `litehtml` | `wxhtml` | Main description |
+| `SmoothBackImage` | `0`, `1` | `1` | `1` smooths an enlarged `BACKIMAGE` as browsers do, `0` keeps its pixels sharp as in wxHTML. Only for litehtml: wxHTML always keeps them sharp |
 
-Unknown values mean `wxhtml`, so an older player reads a file written by a newer one, and so does a
+Unknown values of `MainDesc` mean `wxhtml`, so an older player reads a file written by a newer one, and so does a
 player built without litehtml (`-DQSP_LITEHTML=OFF`).
 More panes (`Actions`, `VarsDesc`, `Objects`, dialogs) will be added as new keys.
 
@@ -98,6 +99,7 @@ Height=650
 Maximize=0
 [Render]
 MainDesc=litehtml
+SmoothBackImage=1
 ```
 
 ## Compatibility with upstream qspgui

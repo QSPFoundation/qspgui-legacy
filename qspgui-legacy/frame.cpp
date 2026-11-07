@@ -309,6 +309,7 @@ void QSPFrame::SaveSettings()
     cfg.Write("General/CheckUpdates", m_toCheckUpdates);
     m_transHelper->Save(cfg, "General/Language");
     cfg.Write("Render/MainDesc", m_mainDescRenderer);
+    cfg.Write("Render/SmoothBackImage", m_toSmoothBackImage);
     GetPosition(&x, &y);
     GetClientSize(&w, &h);
     cfg.Write("Pos/Left", x);
@@ -355,7 +356,9 @@ void QSPFrame::LoadSettings()
     m_transHelper->Load(cfg, wxT("General/Language"));
     wxString mainDescRenderer;
     cfg.Read("Render/MainDesc", &mainDescRenderer, RENDERER_WXHTML);
+    cfg.Read("Render/SmoothBackImage", &m_toSmoothBackImage, true);
     SetMainDescRenderer(mainDescRenderer);
+    m_desc->SetBackImageSmoothing(m_toSmoothBackImage);
 
     SetOverallVolume(m_volume);
     ApplyBackColor(m_backColor);
@@ -1230,8 +1233,11 @@ void QSPFrame::OnSelectLang([[maybe_unused]] wxCommandEvent& event)
 
 void QSPFrame::OnSelectRenderer([[maybe_unused]] wxCommandEvent& event)
 {
-    QSPRenderDlg dialog(this, m_mainDescRenderer);
-    if (dialog.ShowModal() == wxID_OK) SetMainDescRenderer(dialog.GetMainDescRenderer());
+    QSPRenderDlg dialog(this, m_mainDescRenderer, m_toSmoothBackImage);
+    if (dialog.ShowModal() != wxID_OK) return;
+    SetMainDescRenderer(dialog.GetMainDescRenderer());
+    m_toSmoothBackImage = dialog.ToSmoothBackImage();
+    m_desc->SetBackImageSmoothing(m_toSmoothBackImage);
 }
 
 void QSPFrame::SetMainDescRenderer(const wxString &renderer)
@@ -1259,6 +1265,7 @@ void QSPFrame::SetMainDescRenderer(const wxString &renderer)
     view->SetTextFont(old->GetTextFont());
     view->SetLinkColor(old->GetLinkColor());
     view->SetIsHtml(old->IsHtml());
+    view->SetBackImageSmoothing(m_toSmoothBackImage);
     view->LoadBackImage(old->GetBackImagePath());
     view->SetText(old->GetText());
     BindMouseClick(window);

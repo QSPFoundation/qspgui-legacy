@@ -22,11 +22,15 @@
 class QSPRenderDlg : public wxDialog
 {
 public:
-    QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer);
+    QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer, bool toSmoothBackImage);
 
     [[nodiscard]] wxString GetMainDescRenderer() const;
+    [[nodiscard]] bool ToSmoothBackImage() const;
 
 private:
+    void UpdateControls();
+
     wxChoice *m_mainDesc{nullptr};
+    wxCheckBox *m_smoothBackImage{nullptr};
     wxArrayString m_renderers;
 };

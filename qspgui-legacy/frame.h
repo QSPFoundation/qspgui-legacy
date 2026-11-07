@@ -202,6 +202,7 @@ private:
     wxString m_savedGamePath{};
     wxString m_configPath{};
     wxString m_mainDescRenderer{RENDERER_WXHTML};
+    bool m_toSmoothBackImage{true};
     wxString m_configDefPath{};
     QSPTranslationHelper* m_transHelper{nullptr};
     wxTimer* m_timer{nullptr};
