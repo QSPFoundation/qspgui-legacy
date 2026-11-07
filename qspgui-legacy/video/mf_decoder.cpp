@@ -24,6 +24,7 @@
 #include <mfidl.h>
 #include <mfreadwrite.h>
 #include <mferror.h>
+#include <algorithm>
 #include <cstdlib>
 #include <mutex>
 
@@ -212,7 +213,6 @@ namespace
             return SUCCEEDED(MFCreateMediaType(&type)) &&
                 SUCCEEDED(type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video)) &&
                 SUCCEEDED(type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32)) &&
-                SUCCEEDED(type->SetUINT32(VIDEO_ROTATION, 0)) &&
                 SUCCEEDED(m_reader->SetCurrentMediaType(m_videoStream, nullptr, type.Get())) &&
                 ReadVideoFormat();
         }
@@ -288,29 +288,57 @@ namespace
             ComPtr<IMFMediaBuffer> buffer;
             if (FAILED(sample->ConvertToContiguousBuffer(&buffer))) return false;
 
-            BYTE *scanline0 = nullptr;
+            BYTE *scanline0 = nullptr, *start = nullptr;
             LONG pitch = 0;
-            ComPtr<IMF2DBuffer> buffer2D;
-            BYTE *data = nullptr;
             DWORD length = 0;
-            const bool is2D = SUCCEEDED(buffer->QueryInterface(IID_PPV_ARGS(&buffer2D))) &&
-                SUCCEEDED(buffer2D->GetContiguousLength(&length)) &&
-                SUCCEEDED(buffer2D->Lock2D(&scanline0, &pitch));
-            if (!is2D)
+            ComPtr<IMF2DBuffer2> buffer2D2;
+            ComPtr<IMF2DBuffer> buffer2D;
+
+            enum class Lock { None, Size2D, Plain2D, Linear } lock = Lock::None;
+            
+            if (SUCCEEDED(buffer->QueryInterface(IID_PPV_ARGS(&buffer2D2))) &&
+                SUCCEEDED(buffer2D2->Lock2DSize(MF2DBuffer_LockFlags_Read, &scanline0, &pitch, &start, &length)))
             {
-                if (FAILED(buffer->Lock(&data, nullptr, &length))) return false;
+                lock = Lock::Size2D;
+            }
+            else if (SUCCEEDED(buffer->QueryInterface(IID_PPV_ARGS(&buffer2D))) &&
+                SUCCEEDED(buffer2D->Lock2D(&scanline0, &pitch)))
+            {
+                lock = Lock::Plain2D;
+            }
+            else if (SUCCEEDED(buffer->Lock(&start, nullptr, &length)))
+            {
+                lock = Lock::Linear;
                 pitch = m_stride;
             }
+            else
+            {
+                return false;
+            }
+
             const auto unlock = [&] {
-                if (is2D)
+                if (lock == Lock::Size2D)
+                    buffer2D2->Unlock2D();
+                else if (lock == Lock::Plain2D)
                     buffer2D->Unlock2D();
                 else
                     buffer->Unlock();
             };
 
-            const auto fits = [&](const int width, const int height) {
-                return std::abs(pitch) >= width * 4 && (size_t)length >= (size_t)std::abs(pitch) * height;
+            const auto firstLine = [&](const int height) {
+                if (lock != Lock::Linear) return scanline0;
+                return pitch >= 0 ? start : start + static_cast<ptrdiff_t>(-pitch) * (height - 1);
             };
+
+            const auto fits = [&](const int width, const int height) {
+                if (std::abs(pitch) < width * 4) return false;
+                if (lock == Lock::Plain2D) return true; // Lock2D() guarantees the rows of the frame
+                const ptrdiff_t first = firstLine(height) - start;
+                const ptrdiff_t last = first + static_cast<ptrdiff_t>(pitch) * (height - 1);
+                return min(first, last) >= 0 && max(first, last) + width * 4 <= static_cast<ptrdiff_t>(length);
+            };
+
+            // The video processor may have turned a rotated video upright without telling
             wxRect area = m_area;
             int height = m_frameHeight;
             int rotation = m_rotation;
@@ -325,8 +353,7 @@ namespace
                 height = m_frameWidth;
                 rotation = 0;
             }
-
-            if (!is2D) scanline0 = pitch >= 0 ? data : data + static_cast<ptrdiff_t>(-pitch) * (height - 1);
+            scanline0 = firstLine(height);
 
             VideoFrame frame;
             frame.time = time;
@@ -336,11 +363,11 @@ namespace
                 const BYTE *origin = scanline0 + (ptrdiff_t)area.y * pitch + (ptrdiff_t)area.x * 4;
                 ConvertPackedToRGB(origin, (int)pitch, area.width, area.height, true, frame.image.GetData());
                 if (rotation == 90)
-                    frame.image = frame.image.Rotate90(false);
+                    frame.image = frame.image.Rotate90(true);
                 else if (rotation == 180)
                     frame.image = frame.image.Rotate180();
                 else if (rotation == 270)
-                    frame.image = frame.image.Rotate90(true);
+                    frame.image = frame.image.Rotate90(false);
                 frames.push_back(std::move(frame));
             }
 
