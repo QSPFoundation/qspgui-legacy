@@ -18,6 +18,10 @@
 #include "frame.h"
 #include "comtools.h"
 #include "callbacks_gui.h"
+#include "renderdlg.h"
+#if QSP_LITEHTML
+#include "lite/lite_view.h"
+#endif
 #include <wx/wupdlock.h>
 #include <wx/weakref.h>
 #include <algorithm>
@@ -96,6 +100,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     Bind(wxEVT_MENU, &QSPFrame::OnSelectLinkColor, this, ID_SELECTLINKCOLOR);
     Bind(wxEVT_MENU, &QSPFrame::OnCheckUpdatesOnStartup, this, ID_CHECKUPDATESONSTARTUP);
     Bind(wxEVT_MENU, &QSPFrame::OnSelectLang, this, ID_SELECTLANG);
+    Bind(wxEVT_MENU, &QSPFrame::OnSelectRenderer, this, ID_SELECTRENDERER);
     Bind(wxEVT_MENU, &QSPFrame::OnToggleWinMode, this, ID_TOGGLEWINMODE);
     Bind(wxEVT_MENU, &QSPFrame::OnToggleObjs, this, ID_TOGGLEOBJS);
     Bind(wxEVT_MENU, &QSPFrame::OnToggleActs, this, ID_TOGGLEACTS);
@@ -196,6 +201,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     settingsWinModeItem->SetBitmap(wxBitmap(windowmode_xpm));
     m_settingsMenu->Append(settingsWinModeItem);
     m_settingsMenu->AppendSeparator();
+    m_settingsMenu->Append(ID_SELECTRENDERER, "-");
     m_settingsMenu->Append(ID_SELECTLANG, "-");
 
     auto *helpMenu = new wxMenu;
@@ -302,6 +308,7 @@ void QSPFrame::SaveSettings()
     cfg.Write("General/Panels", m_manager->SavePerspective());
     cfg.Write("General/CheckUpdates", m_toCheckUpdates);
     m_transHelper->Save(cfg, "General/Language");
+    cfg.Write("Render/MainDesc", m_mainDescRenderer);
     GetPosition(&x, &y);
     GetClientSize(&w, &h);
     cfg.Write("Pos/Left", x);
@@ -346,6 +353,9 @@ void QSPFrame::LoadSettings()
     cfg.Read(wxT("General/Panels"), &panels);
     cfg.Read(wxT("General/CheckUpdates"), &m_toCheckUpdates, true);
     m_transHelper->Load(cfg, wxT("General/Language"));
+    wxString mainDescRenderer;
+    cfg.Read("Render/MainDesc", &mainDescRenderer, RENDERER_WXHTML);
+    SetMainDescRenderer(mainDescRenderer);
 
     SetOverallVolume(m_volume);
     ApplyBackColor(m_backColor);
@@ -678,6 +688,7 @@ void QSPFrame::ReCreateGUI()
     menuBar->SetLabel(ID_VOLUME100, _("Initial volume\tAlt-6"));
     menuBar->SetLabel(ID_CHECKUPDATESONSTARTUP, _("Check for updates on startup"));
     menuBar->SetLabel(ID_TOGGLEWINMODE, _("Window / Fullscreen &mode\tAlt-Enter"));
+    menuBar->SetLabel(ID_SELECTRENDERER, _("HTML &renderer..."));
     menuBar->SetLabel(ID_SELECTLANG, _("Select &language...\tAlt-L"));
     menuBar->SetLabel(ID_CHECKUPDATES, _("Check for latest version"));
     menuBar->SetLabel(wxID_ABOUT, _("&About...\tCtrl-H"));
@@ -1215,6 +1226,48 @@ void QSPFrame::OnCheckUpdatesOnStartup([[maybe_unused]] wxCommandEvent& event)
 void QSPFrame::OnSelectLang([[maybe_unused]] wxCommandEvent& event)
 {
     if (m_transHelper->AskUserForLanguage()) ReCreateGUI();
+}
+
+void QSPFrame::OnSelectRenderer([[maybe_unused]] wxCommandEvent& event)
+{
+    QSPRenderDlg dialog(this, m_mainDescRenderer);
+    if (dialog.ShowModal() == wxID_OK) SetMainDescRenderer(dialog.GetMainDescRenderer());
+}
+
+void QSPFrame::SetMainDescRenderer(const wxString &renderer)
+{
+    wxString name = RENDERER_WXHTML;
+#if QSP_LITEHTML
+    if (renderer == RENDERER_LITEHTML) name = RENDERER_LITEHTML;
+#endif
+    if (name == m_mainDescRenderer) return;
+    m_mainDescRenderer = name;
+
+    QSPHtmlView *view;
+#if QSP_LITEHTML
+    if (name == RENDERER_LITEHTML)
+        view = new QSPLiteView(this, ID_MAINDESC);
+    else
+#endif
+        view = new QSPTextBox(this, ID_MAINDESC);
+
+    QSPHtmlView *old = m_desc;
+    wxWindow *window = view->GetWindow();
+    window->SetBackgroundColour(old->GetBackColor());
+    window->SetForegroundColour(old->GetFontColor());
+    view->SetPathProvider(this);
+    view->SetTextFont(old->GetTextFont());
+    view->SetLinkColor(old->GetLinkColor());
+    view->SetIsHtml(old->IsHtml());
+    view->LoadBackImage(old->GetBackImagePath());
+    view->SetText(old->GetText());
+    BindMouseClick(window);
+
+    wxWindowUpdateLocker noUpdates{this};
+    m_manager->GetPane(old->GetWindow()).Window(window);
+    m_desc = view;
+    old->GetWindow()->Destroy();
+    m_manager->Update();
 }
 
 void QSPFrame::OnVolume(const wxCommandEvent& event)

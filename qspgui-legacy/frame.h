@@ -68,6 +68,7 @@ enum CustomIDs : int
     ID_CHECKUPDATESONSTARTUP,
     ID_CHECKUPDATES,
     ID_SELECTLANG,
+    ID_SELECTRENDERER,
     ID_TOGGLEWINMODE,
     ID_TOGGLEOBJS,
     ID_TOGGLEACTS,
@@ -100,6 +101,7 @@ public:
 
     void SaveSettings();
     void LoadSettings();
+    void SetMainDescRenderer(const wxString &renderer);
     void EnableControls(bool status, bool isExtended = false);
     void ShowPane(wxWindowID id, bool toShow);
     void ApplyParams();
@@ -168,6 +170,7 @@ protected:
     void OnSelectLinkColor(wxCommandEvent &event);
     void OnCheckUpdatesOnStartup(wxCommandEvent &event);
     void OnSelectLang(wxCommandEvent &event);
+    void OnSelectRenderer(wxCommandEvent &event);
     void OnToggleWinMode(wxCommandEvent &event);
     void OnToggleObjs(wxCommandEvent &event);
     void OnToggleActs(wxCommandEvent &event);
@@ -198,6 +201,7 @@ private:
     wxString m_worldPath{};
     wxString m_savedGamePath{};
     wxString m_configPath{};
+    wxString m_mainDescRenderer{RENDERER_WXHTML};
     wxString m_configDefPath{};
     QSPTranslationHelper* m_transHelper{nullptr};
     wxTimer* m_timer{nullptr};

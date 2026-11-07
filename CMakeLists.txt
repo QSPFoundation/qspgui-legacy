@@ -175,6 +175,7 @@ set(QSPGUI_LEGACY_SOURCES
 	qspgui-legacy/inputdlg.cpp
 	qspgui-legacy/listbox.cpp
 	qspgui-legacy/msgdlg.cpp
+	qspgui-legacy/renderdlg.cpp
 	qspgui-legacy/textbox.cpp
 	qspgui-legacy/transhelper.cpp
 	qspgui-legacy/updateappdialog.cpp
