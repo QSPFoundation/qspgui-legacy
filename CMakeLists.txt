@@ -173,6 +173,7 @@ set(QSPGUI_LEGACY_SOURCES
 	qspgui-legacy/imgcanvas.cpp
 	qspgui-legacy/inputbox.cpp
 	qspgui-legacy/inputdlg.cpp
+	qspgui-legacy/htmlview.cpp
 	qspgui-legacy/listbox.cpp
 	qspgui-legacy/msgdlg.cpp
 	qspgui-legacy/renderdlg.cpp
@@ -184,6 +185,7 @@ set(QSPGUI_LEGACY_SOURCES
 if (QSP_LITEHTML)
 	list(APPEND QSPGUI_LEGACY_SOURCES
 			qspgui-legacy/lite/lite_container.cpp
+			qspgui-legacy/lite/lite_listbox.cpp
 			qspgui-legacy/lite/lite_view.cpp
 	)
 endif()

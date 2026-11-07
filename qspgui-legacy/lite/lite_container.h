@@ -45,6 +45,8 @@ public:
     ~QSPLiteContainer() override;
 
     [[nodiscard]] static wxGraphicsRenderer *GetRenderer();
+    [[nodiscard]] static double GetScale(const wxWindow &window);
+    [[nodiscard]] static double GetFontSizeInPixels(wxWindow &window, const wxFont &font, double scale);
 
     void SetPathProvider(PathProvider *provider) { m_pathProvider = provider; }
     void SetDefaultFont(const wxString &faceName, double sizeInPixels);

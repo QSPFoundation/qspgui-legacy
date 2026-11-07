@@ -56,6 +56,8 @@ public:
     virtual void RefreshUI() = 0;
 };
 
+[[nodiscard]] QSPListView *CreateListView(wxWindow *parent, wxWindowID id, ListBoxType type, const wxString &renderer);
+
 template <class Base>
 class QSPListBoxBase : public Base, public QSPListView
 {

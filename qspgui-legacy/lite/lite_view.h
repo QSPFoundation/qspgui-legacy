@@ -45,6 +45,7 @@ public:
     void SetBackImageSmoothing(bool toSmooth) override;
     [[nodiscard]] wxString GetBackImagePath() const override { return m_imagePath; }
     void ScrollToAnchor(const wxString &anchor) override;
+    [[nodiscard]] wxSize GetContentSize() const override;
     void RefreshUI() override;
 
     void ScrollWindow(int dx, int dy, const wxRect *rect = nullptr) override;
@@ -56,7 +57,6 @@ private:
     [[nodiscard]] litehtml::position GetViewport() const override;
 
     [[nodiscard]] double GetScale() const;
-    [[nodiscard]] double GetFontSizeInPixels() const;
     [[nodiscard]] wxPoint ToDocument(const wxPoint &pos) const;
     void LayoutDocument();
     void UpdateBackImage();

@@ -18,7 +18,7 @@
 #include "renderdlg.h"
 #include "htmlview.h"
 
-QSPRenderDlg::QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer, const bool toSmoothBackImage)
+QSPRenderDlg::QSPRenderDlg(wxWindow *parent, const std::vector<wxString> &renderers, const bool toSmoothBackImage)
     : wxDialog(parent, wxID_ANY, _("HTML renderer"))
 {
     wxArrayString names;
@@ -29,20 +29,33 @@ QSPRenderDlg::QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer, c
     names.Add(_("litehtml (HTML5 and CSS)"));
 #endif
 
+    const wxString labels[RENDER_PANES] =
+    {
+        _("Main description:"),
+        _("Additional description:"),
+        _("Actions:"),
+        _("Objects:"),
+        _("Dialogs:")
+    };
+
     auto *grid = new wxFlexGridSizer(2, FromDIP(wxSize(8, 8)));
     grid->AddGrowableCol(1);
-    grid->Add(new wxStaticText(this, wxID_ANY, _("Main description:")), 0, wxALIGN_CENTER_VERTICAL);
-    m_mainDesc = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, names);
-    const int selected = m_renderers.Index(mainDescRenderer);
-    m_mainDesc->SetSelection(selected == wxNOT_FOUND ? 0 : selected);
-    grid->Add(m_mainDesc, 1, wxEXPAND);
-    m_mainDesc->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) { UpdateControls(); });
+    for (size_t pane = 0; pane < RENDER_PANES; ++pane)
+    {
+        grid->Add(new wxStaticText(this, wxID_ANY, labels[pane]), 0, wxALIGN_CENTER_VERTICAL);
+        auto *choice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, names);
+        const int selected = pane < renderers.size() ? m_renderers.Index(renderers[pane]) : wxNOT_FOUND;
+        choice->SetSelection(selected == wxNOT_FOUND ? 0 : selected);
+        choice->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) { UpdateControls(); });
+        grid->Add(choice, 1, wxEXPAND);
+        m_choices[pane] = choice;
+    }
 
     m_smoothBackImage = new wxCheckBox(this, wxID_ANY, _("Smooth the enlarged background image (as in browsers)"));
     m_smoothBackImage->SetValue(toSmoothBackImage);
 
     auto *note = new wxStaticText(this, wxID_ANY,
-        _("The other panes use wxHTML. Games are made for wxHTML: some may look different with litehtml."));
+        _("Games are made for wxHTML: some may look different with litehtml."));
     note->Wrap(FromDIP(360));
 
     auto *sizer = new wxBoxSizer(wxVERTICAL);
@@ -55,10 +68,18 @@ QSPRenderDlg::QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer, c
     CentreOnParent();
 }
 
-wxString QSPRenderDlg::GetMainDescRenderer() const
+wxString QSPRenderDlg::GetRenderer(const RenderPane pane) const
 {
-    const int selected = m_mainDesc->GetSelection();
+    const int selected = m_choices[static_cast<size_t>(pane)]->GetSelection();
     return selected == wxNOT_FOUND ? wxString(RENDERER_WXHTML) : m_renderers[selected];
+}
+
+std::vector<wxString> QSPRenderDlg::GetRenderers() const
+{
+    std::vector<wxString> renderers;
+    for (size_t pane = 0; pane < RENDER_PANES; ++pane)
+        renderers.push_back(GetRenderer(static_cast<RenderPane>(pane)));
+    return renderers;
 }
 
 bool QSPRenderDlg::ToSmoothBackImage() const
@@ -68,5 +89,5 @@ bool QSPRenderDlg::ToSmoothBackImage() const
 
 void QSPRenderDlg::UpdateControls()
 {
-    m_smoothBackImage->Enable(GetMainDescRenderer() != RENDERER_WXHTML);
+    m_smoothBackImage->Enable(GetRenderer(RenderPane::MainDesc) != RENDERER_WXHTML);
 }

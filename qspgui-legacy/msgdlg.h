@@ -19,7 +19,8 @@
 
 #include <wx/wx.h>
 #include <wx/statline.h>
-#include "textbox.h"
+#include <wx/html/htmlwin.h>
+#include "htmlview.h"
 #include "pathprovider.h"
 
 class QSPMsgDlg : public wxDialog
@@ -33,7 +34,8 @@ public:
               const wxString &caption,
               const wxString &text,
               bool isHtml,
-              PathProvider *pathProvider);
+              PathProvider *pathProvider,
+              const wxString &renderer = RENDERER_WXHTML);
 
 protected:
     void OnInitDialog(wxInitDialogEvent &event);
@@ -45,7 +47,7 @@ private:
     static constexpr int MinHeight = 100;
     static constexpr int MaxHeight = 350;
 
-    QSPTextBox *m_desc{nullptr};
+    QSPHtmlView *m_desc{nullptr};
 
     DECLARE_CLASS(QSPMsgDlg)
 };

@@ -44,8 +44,23 @@ public:
     [[nodiscard]] virtual wxString GetBackImagePath() const = 0;
     virtual void SetBackImageSmoothing([[maybe_unused]] bool toSmooth) {}
     virtual void ScrollToAnchor(const wxString &anchor) = 0;
+    [[nodiscard]] virtual wxSize GetContentSize() const = 0;
     virtual void RefreshUI() = 0;
 
     [[nodiscard]] virtual wxColour GetBackColor() const { return GetWindow()->GetBackgroundColour(); }
     [[nodiscard]] wxColour GetFontColor() const { return GetWindow()->GetForegroundColour(); }
 };
+
+enum class RenderPane
+{
+    MainDesc,
+    VarsDesc,
+    Actions,
+    Objects,
+    Dialogs
+};
+inline constexpr size_t RENDER_PANES = 5;
+inline constexpr const char *RENDER_PANE_KEYS[RENDER_PANES] = {"MainDesc", "VarsDesc", "Actions", "Objects", "Dialogs"};
+
+[[nodiscard]] wxString GetAvailableRenderer(const wxString &name);
+[[nodiscard]] QSPHtmlView *CreateHtmlView(wxWindow *parent, wxWindowID id, const wxString &renderer);

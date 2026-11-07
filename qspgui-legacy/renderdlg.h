@@ -18,19 +18,22 @@
 #pragma once
 
 #include <wx/wx.h>
+#include <vector>
+#include "htmlview.h"
 
 class QSPRenderDlg : public wxDialog
 {
 public:
-    QSPRenderDlg(wxWindow *parent, const wxString &mainDescRenderer, bool toSmoothBackImage);
+    QSPRenderDlg(wxWindow *parent, const std::vector<wxString> &renderers, bool toSmoothBackImage);
 
-    [[nodiscard]] wxString GetMainDescRenderer() const;
+    [[nodiscard]] std::vector<wxString> GetRenderers() const;
     [[nodiscard]] bool ToSmoothBackImage() const;
 
 private:
+    [[nodiscard]] wxString GetRenderer(RenderPane pane) const;
     void UpdateControls();
 
-    wxChoice *m_mainDesc{nullptr};
+    wxChoice *m_choices[RENDER_PANES]{};
     wxCheckBox *m_smoothBackImage{nullptr};
     wxArrayString m_renderers;
 };

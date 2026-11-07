@@ -18,6 +18,7 @@
 #pragma once
 
 #include <wx/wx.h>
+#include <wx/weakref.h>
 #include <wx/fileconf.h>
 #include <wx/cmdline.h>
 #include <wx/regex.h>
@@ -33,6 +34,8 @@
 #include "inputbox.h"
 #include "textbox.h"
 #include "listbox.h"
+#include "htmlview.h"
+#include "listview.h"
 #include "imgcanvas.h"
 #include "pathprovider.h"
 #include "updateappdialog.h"
@@ -101,7 +104,8 @@ public:
 
     void SaveSettings();
     void LoadSettings();
-    void SetMainDescRenderer(const wxString &renderer);
+    void SetRenderer(RenderPane pane, const wxString &renderer);
+    [[nodiscard]] wxString GetRenderer(RenderPane pane) const { return m_renderers[static_cast<size_t>(pane)]; }
     void EnableControls(bool status, bool isExtended = false);
     void ShowPane(wxWindowID id, bool toShow);
     void ApplyParams();
@@ -116,10 +120,10 @@ public:
 
     [[nodiscard]] wxTimer* GetTimer() const { return m_timer; }
     [[nodiscard]] QSPHtmlView* GetDesc() const { return m_desc; }
-    [[nodiscard]] QSPTextBox* GetVars() const { return m_vars; }
+    [[nodiscard]] QSPHtmlView* GetVars() const { return m_vars; }
     [[nodiscard]] QSPInputBox* GetInput() const { return m_input; }
-    [[nodiscard]] QSPListBox* GetActions() const { return m_actions; }
-    [[nodiscard]] QSPListBox* GetObjects() const { return m_objects; }
+    [[nodiscard]] QSPListView* GetActions() const { return m_actions; }
+    [[nodiscard]] QSPListView* GetObjects() const { return m_objects; }
     [[nodiscard]] QSPImgCanvas* GetImgView() const { return m_imgView; }
     [[nodiscard]] wxMenu* GetGameMenu() const { return m_gameMenu; }
 
@@ -171,6 +175,9 @@ protected:
     void OnCheckUpdatesOnStartup(wxCommandEvent &event);
     void OnSelectLang(wxCommandEvent &event);
     void OnSelectRenderer(wxCommandEvent &event);
+    void ReplaceHtmlView(QSPHtmlView *&view, const wxString &renderer);
+    void ReplaceListView(QSPListView *&view, ListBoxType type, const wxString &renderer);
+    void ReplacePaneWindow(wxWindow *old, wxWindow *window);
     void OnToggleWinMode(wxCommandEvent &event);
     void OnToggleObjs(wxCommandEvent &event);
     void OnToggleActs(wxCommandEvent &event);
@@ -189,6 +196,7 @@ protected:
     void OnInputTextEnter(wxCommandEvent &event);
     void OnKeyDown(wxKeyEvent &event);
     void OnKey(wxKeyEvent &event);
+    void OnChildFocus(wxChildFocusEvent &event);
     void BindMouseClick(wxWindow *window);
     void OnMouseClick(wxMouseEvent &event);
     void OnWheel(const wxMouseEvent &event);
@@ -201,16 +209,16 @@ private:
     wxString m_worldPath{};
     wxString m_savedGamePath{};
     wxString m_configPath{};
-    wxString m_mainDescRenderer{RENDERER_WXHTML};
+    wxString m_renderers[RENDER_PANES]{RENDERER_WXHTML, RENDERER_WXHTML, RENDERER_WXHTML, RENDERER_WXHTML, RENDERER_WXHTML};
     bool m_toSmoothBackImage{true};
     wxString m_configDefPath{};
     QSPTranslationHelper* m_transHelper{nullptr};
     wxTimer* m_timer{nullptr};
     QSPHtmlView* m_desc{nullptr};
-    QSPTextBox* m_vars{nullptr};
+    QSPHtmlView* m_vars{nullptr};
     QSPInputBox* m_input{nullptr};
-    QSPListBox* m_objects{nullptr};
-    QSPListBox* m_actions{nullptr};
+    QSPListView* m_objects{nullptr};
+    QSPListView* m_actions{nullptr};
     QSPImgCanvas* m_imgView{nullptr};
     wxMenu* m_gameMenu{nullptr};
     int m_menuItemId{ID_BEGOFDYNMENU};
@@ -232,6 +240,7 @@ private:
     bool m_toQuit{false};
     bool m_keyPressedWhileDisabled{false};
     int m_hotkeyPressed{0};
+    wxWeakRef<wxWindow> m_lastFocus;
     bool m_toShowHotkeys{false};
     bool m_toCheckUpdates{true};
     int m_volume{100};

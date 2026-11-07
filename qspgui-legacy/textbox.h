@@ -46,6 +46,11 @@ public:
     void SetLinkColor(const wxColour& clr) override;
     [[nodiscard]] const wxColour& GetLinkColor() const override { return m_linkColor; }
     void ScrollToAnchor(const wxString& anchor) override { LoadPage(anchor); }
+    [[nodiscard]] wxSize GetContentSize() const override
+    {
+        const wxHtmlContainerCell *cell = GetInternalRepresentation();
+        return cell ? wxSize(cell->GetWidth(), cell->GetHeight()) : wxSize();
+    }
     void SetBackgroundImage(const wxBitmap& bmpBg);
 
     bool SetBackgroundColour(const wxColour& colour) override;

@@ -115,34 +115,9 @@ void QSPLiteView::SetLinkColor(const wxColour &color)
     RefreshUI();
 }
 
-double QSPLiteView::GetFontSizeInPixels() const
-{
-#ifdef __WXMSW__
-    {
-        wxClientDC dc(const_cast<QSPLiteView *>(this));
-        dc.SetFont(m_font);
-        const wxFontMetrics metrics = dc.GetFontMetrics();
-        if (const int em = metrics.height - metrics.internalLeading; em > 0) return em / GetScale();
-    }
-#endif
-
-    const wxString sample = "Mg";
-    wxClientDC dc(const_cast<QSPLiteView *>(this));
-    dc.SetFont(m_font);
-    const double height = dc.GetTextExtent(sample).y / GetScale();
-
-    constexpr double probeSize = 100.0;
-    const std::unique_ptr<wxGraphicsContext> gc(QSPLiteContainer::GetRenderer()->CreateMeasuringContext());
-    if (!gc || height <= 0) return 16.0;
-    gc->SetFont(QSPLiteContainer::GetRenderer()->CreateFont(probeSize, m_font.GetFaceName(), wxFONTFLAG_DEFAULT, *wxBLACK));
-    wxDouble probeWidth, probeHeight;
-    gc->GetTextExtent(sample, &probeWidth, &probeHeight);
-    return probeHeight > 0 ? probeSize * height / probeHeight : 16.0;
-}
-
 void QSPLiteView::RefreshUI()
 {
-    m_container.SetDefaultFont(m_font.GetFaceName(), GetFontSizeInPixels());
+    m_container.SetDefaultFont(m_font.GetFaceName(), QSPLiteContainer::GetFontSizeInPixels(*this, m_font, GetScale()));
 
     const wxString style = wxString::Format(
         "body{margin:%dpx;color:#%s}"
@@ -220,6 +195,14 @@ void QSPLiteView::UpdateBackImage()
     if (destW > 0 && destH > 0)
         m_scaledBackImage = wxBitmap(m_backImage.ConvertToImage().Scale(
             destW, destH, m_toSmoothBackImage ? wxIMAGE_QUALITY_HIGH : wxIMAGE_QUALITY_NORMAL));
+}
+
+wxSize QSPLiteView::GetContentSize() const
+{
+    if (!m_document) return {};
+    const double scale = GetScale();
+    return {static_cast<int>(std::ceil(static_cast<float>(m_document->width()) * scale)),
+            static_cast<int>(std::ceil(static_cast<float>(m_document->height()) * scale))};
 }
 
 void QSPLiteView::ScrollToAnchor(const wxString &anchor)

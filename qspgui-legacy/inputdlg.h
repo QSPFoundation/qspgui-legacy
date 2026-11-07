@@ -20,7 +20,8 @@
 #include <wx/wx.h>
 #include <wx/statline.h>
 #include <wx/valgen.h>
-#include "textbox.h"
+#include <wx/html/htmlwin.h>
+#include "htmlview.h"
 #include "pathprovider.h"
 
 class QSPInputDlg : public wxDialog
@@ -34,7 +35,8 @@ public:
                 const wxString& caption,
                 const wxString& text,
                 bool isHtml,
-                PathProvider *pathProvider);
+                PathProvider *pathProvider,
+                const wxString &renderer = RENDERER_WXHTML);
 
     [[nodiscard]] wxString GetText() const { return m_text; }
 
@@ -48,7 +50,7 @@ private:
     static constexpr int MinHeight = 150;
     static constexpr int MaxHeight = 350;
 
-    QSPTextBox* m_desc{nullptr};
+    QSPHtmlView* m_desc{nullptr};
     wxString m_text{};
 
     DECLARE_CLASS(QSPInputDlg)

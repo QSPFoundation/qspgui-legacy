@@ -171,7 +171,7 @@ void QSPCallbacks::RefreshInt(const QSP_BOOL isRedraw)
         }
         m_frame->GetActions()->EndItems();
     }
-    m_frame->GetActions()->SetSelection(QSPGetSelActionIndex());
+    m_frame->GetActions()->SelectItem(QSPGetSelActionIndex());
 
     m_frame->GetObjects()->SetIsHtml(m_isHtml);
     if (QSPIsObjectsChanged())
@@ -186,7 +186,7 @@ void QSPCallbacks::RefreshInt(const QSP_BOOL isRedraw)
         }
         m_frame->GetObjects()->EndItems();
     }
-    m_frame->GetObjects()->SetSelection(QSPGetSelObjectIndex());
+    m_frame->GetObjects()->SelectItem(QSPGetSelObjectIndex());
 
     if (qspGetStr(QSP_FMT("BACKIMAGE"), &strVal) && !qspIsEmpty(strVal))
         m_frame->GetDesc()->LoadBackImage(qspToWxString(strVal));
@@ -326,7 +326,8 @@ void QSPCallbacks::Msg(const QSP_CHAR *str)
                      _("Info"),
                      qspToWxString(str),
                      m_isHtml,
-                     m_frame
+                     m_frame,
+                     m_frame->GetRenderer(RenderPane::Dialogs)
     );
     m_frame->EnableControls(false);
     dialog.ShowModal();
@@ -361,7 +362,8 @@ void QSPCallbacks::Input(const QSP_CHAR *text, QSP_CHAR *buffer, const int maxLe
                        _("Input data"),
                        qspToWxString(text),
                        m_isHtml,
-                       m_frame
+                       m_frame,
+                       m_frame->GetRenderer(RenderPane::Dialogs)
     );
     m_frame->EnableControls(false);
     dialog.ShowModal();

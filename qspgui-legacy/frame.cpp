@@ -19,9 +19,6 @@
 #include "comtools.h"
 #include "callbacks_gui.h"
 #include "renderdlg.h"
-#if QSP_LITEHTML
-#include "lite/lite_view.h"
-#endif
 #include <wx/wupdlock.h>
 #include <wx/weakref.h>
 #include <algorithm>
@@ -127,6 +124,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     Bind(wxEVT_ENTER, &QSPFrame::OnInputTextEnter, this, ID_INPUT);
     Bind(wxEVT_CHAR_HOOK, &QSPFrame::OnKeyDown, this);
     Bind(wxEVT_KEY_UP, &QSPFrame::OnKey, this);
+    Bind(wxEVT_CHILD_FOCUS, &QSPFrame::OnChildFocus, this);
     Bind(wxEVT_MOUSEWHEEL, &QSPFrame::OnWheel, this);
     Bind(wxEVT_LEFT_DOWN, &QSPFrame::OnMouseClick, this);
     Bind(wxEVT_AUI_PANE_CLOSE, &QSPFrame::OnPaneClose, this);
@@ -227,27 +225,27 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
         .BestSize(FromDIP(wxSize{150, 150}))
         .Top().MaximizeButton().Hide()
     );
-    m_desc = new QSPTextBox(this, ID_MAINDESC);
+    m_desc = CreateHtmlView(this, ID_MAINDESC, RENDERER_WXHTML);
     m_manager->AddPane(m_desc->GetWindow(), wxAuiPaneInfo().Name("desc").CenterPane());
-    m_objects = new QSPListBox(this, ID_OBJECTS);
+    m_objects = CreateListView(this, ID_OBJECTS, ListBoxType::Normal, RENDERER_WXHTML);
     m_manager->AddPane(
-        m_objects,
+        m_objects->GetWindow(),
         wxAuiPaneInfo().Name("objs")
         .MinSize(FromDIP(wxSize{50, 50}))
         .BestSize(FromDIP(wxSize{100, 100}))
         .Right().MaximizeButton()
     );
-    m_actions = new QSPListBox(this, ID_ACTIONS, ListBoxType::Extended);
+    m_actions = CreateListView(this, ID_ACTIONS, ListBoxType::Extended, RENDERER_WXHTML);
     m_manager->AddPane(
-        m_actions,
+        m_actions->GetWindow(),
         wxAuiPaneInfo().Name("acts")
         .MinSize(FromDIP(wxSize{50, 50}))
         .BestSize(FromDIP(wxSize{100, 100}))
         .Bottom().MaximizeButton()
     );
-    m_vars = new QSPTextBox(this, ID_VARSDESC);
+    m_vars = CreateHtmlView(this, ID_VARSDESC, RENDERER_WXHTML);
     m_manager->AddPane(
-        m_vars,
+        m_vars->GetWindow(),
         wxAuiPaneInfo().Name("vars")
         .MinSize(FromDIP(wxSize{50, 50}))
         .BestSize(FromDIP(wxSize{100, 100}))
@@ -267,7 +265,7 @@ QSPFrame::QSPFrame(const wxString &configPath, QSPTranslationHelper *transHelper
     m_actions->SetPathProvider(this);
     m_vars->SetPathProvider(this);
 
-    for (wxWindow *pane : std::initializer_list<wxWindow *>{m_desc->GetWindow(), m_vars, m_objects, m_actions, m_imgView})
+    for (wxWindow *pane : std::initializer_list<wxWindow *>{m_desc->GetWindow(), m_vars->GetWindow(), m_objects->GetWindow(), m_actions->GetWindow(), m_imgView})
         BindMouseClick(pane);
 
     m_savedGamePath.Clear();
@@ -308,7 +306,8 @@ void QSPFrame::SaveSettings()
     cfg.Write("General/Panels", m_manager->SavePerspective());
     cfg.Write("General/CheckUpdates", m_toCheckUpdates);
     m_transHelper->Save(cfg, "General/Language");
-    cfg.Write("Render/MainDesc", m_mainDescRenderer);
+    for (size_t pane = 0; pane < RENDER_PANES; ++pane)
+        cfg.Write(wxString("Render/") + RENDER_PANE_KEYS[pane], m_renderers[pane]);
     cfg.Write("Render/SmoothBackImage", m_toSmoothBackImage);
     GetPosition(&x, &y);
     GetClientSize(&w, &h);
@@ -354,10 +353,13 @@ void QSPFrame::LoadSettings()
     cfg.Read(wxT("General/Panels"), &panels);
     cfg.Read(wxT("General/CheckUpdates"), &m_toCheckUpdates, true);
     m_transHelper->Load(cfg, wxT("General/Language"));
-    wxString mainDescRenderer;
-    cfg.Read("Render/MainDesc", &mainDescRenderer, RENDERER_WXHTML);
     cfg.Read("Render/SmoothBackImage", &m_toSmoothBackImage, true);
-    SetMainDescRenderer(mainDescRenderer);
+    for (size_t pane = 0; pane < RENDER_PANES; ++pane)
+    {
+        wxString renderer;
+        cfg.Read(wxString("Render/") + RENDER_PANE_KEYS[pane], &renderer, RENDERER_WXHTML);
+        SetRenderer(static_cast<RenderPane>(pane), renderer);
+    }
     m_desc->SetBackImageSmoothing(m_toSmoothBackImage);
 
     SetOverallVolume(m_volume);
@@ -411,8 +413,8 @@ void QSPFrame::EnableControls(bool status, bool isExtended)
     m_settingsMenu->Enable(ID_TOGGLEACTS, status);
     m_settingsMenu->Enable(ID_TOGGLEDESC, status);
     m_settingsMenu->Enable(ID_TOGGLEINPUT, status);
-    m_objects->Enable(status);
-    m_actions->Enable(status);
+    m_objects->GetWindow()->Enable(status);
+    m_actions->GetWindow()->Enable(status);
     m_input->SetEditable(status);
     m_toProcessEvents = status;
     m_keyPressedWhileDisabled = false;
@@ -747,9 +749,9 @@ bool QSPFrame::ApplyFontName(const wxString& name)
 bool QSPFrame::ApplyFontColor(const wxColour& color)
 {
     m_desc->GetWindow()->SetForegroundColour(color);
-    m_objects->SetForegroundColour(color);
-    m_actions->SetForegroundColour(color);
-    m_vars->SetForegroundColour(color);
+    m_objects->GetWindow()->SetForegroundColour(color);
+    m_actions->GetWindow()->SetForegroundColour(color);
+    m_vars->GetWindow()->SetForegroundColour(color);
     m_input->SetForegroundColour(color);
     return true;
 }
@@ -757,9 +759,9 @@ bool QSPFrame::ApplyFontColor(const wxColour& color)
 bool QSPFrame::ApplyBackColor(const wxColour& color)
 {
     m_desc->GetWindow()->SetBackgroundColour(color);
-    m_objects->SetBackgroundColour(color);
-    m_actions->SetBackgroundColour(color);
-    m_vars->SetBackgroundColour(color);
+    m_objects->GetWindow()->SetBackgroundColour(color);
+    m_actions->GetWindow()->SetBackgroundColour(color);
+    m_vars->GetWindow()->SetBackgroundColour(color);
     m_input->SetBackgroundColour(color);
     m_imgView->SetBackgroundColour(color);
     return true;
@@ -1233,48 +1235,92 @@ void QSPFrame::OnSelectLang([[maybe_unused]] wxCommandEvent& event)
 
 void QSPFrame::OnSelectRenderer([[maybe_unused]] wxCommandEvent& event)
 {
-    QSPRenderDlg dialog(this, m_mainDescRenderer, m_toSmoothBackImage);
+    std::vector<wxString> renderers(std::begin(m_renderers), std::end(m_renderers));
+    QSPRenderDlg dialog(this, renderers, m_toSmoothBackImage);
     if (dialog.ShowModal() != wxID_OK) return;
-    SetMainDescRenderer(dialog.GetMainDescRenderer());
+    renderers = dialog.GetRenderers();
+    for (size_t pane = 0; pane < RENDER_PANES; ++pane) SetRenderer(static_cast<RenderPane>(pane), renderers[pane]);
     m_toSmoothBackImage = dialog.ToSmoothBackImage();
     m_desc->SetBackImageSmoothing(m_toSmoothBackImage);
 }
 
-void QSPFrame::SetMainDescRenderer(const wxString &renderer)
+void QSPFrame::SetRenderer(const RenderPane pane, const wxString &renderer)
 {
-    wxString name = RENDERER_WXHTML;
-#if QSP_LITEHTML
-    if (renderer == RENDERER_LITEHTML) name = RENDERER_LITEHTML;
-#endif
-    if (name == m_mainDescRenderer) return;
-    m_mainDescRenderer = name;
+    const wxString name = GetAvailableRenderer(renderer);
+    wxString &current = m_renderers[static_cast<size_t>(pane)];
+    if (name == current) return;
+    current = name;
 
-    QSPHtmlView *view;
-#if QSP_LITEHTML
-    if (name == RENDERER_LITEHTML)
-        view = new QSPLiteView(this, ID_MAINDESC);
-    else
-#endif
-        view = new QSPTextBox(this, ID_MAINDESC);
+    switch (pane)
+    {
+    case RenderPane::MainDesc:
+        ReplaceHtmlView(m_desc, name);
+        break;
+    case RenderPane::VarsDesc:
+        ReplaceHtmlView(m_vars, name);
+        break;
+    case RenderPane::Actions:
+        ReplaceListView(m_actions, ListBoxType::Extended, name);
+        break;
+    case RenderPane::Objects:
+        ReplaceListView(m_objects, ListBoxType::Normal, name);
+        break;
+    case RenderPane::Dialogs:
+        break; // the dialogs are created with it
+    }
+}
 
-    QSPHtmlView *old = m_desc;
-    wxWindow *window = view->GetWindow();
+void QSPFrame::ReplaceHtmlView(QSPHtmlView *&view, const wxString &renderer)
+{
+    QSPHtmlView *old = view;
+    QSPHtmlView *created = CreateHtmlView(this, old->GetWindow()->GetId(), renderer);
+    wxWindow *window = created->GetWindow();
     window->SetBackgroundColour(old->GetBackColor());
     window->SetForegroundColour(old->GetFontColor());
-    view->SetPathProvider(this);
-    view->SetTextFont(old->GetTextFont());
-    view->SetLinkColor(old->GetLinkColor());
-    view->SetIsHtml(old->IsHtml());
-    view->SetBackImageSmoothing(m_toSmoothBackImage);
-    view->LoadBackImage(old->GetBackImagePath());
-    view->SetText(old->GetText());
-    BindMouseClick(window);
+    created->SetPathProvider(this);
+    created->SetTextFont(old->GetTextFont());
+    created->SetLinkColor(old->GetLinkColor());
+    created->SetIsHtml(old->IsHtml());
+    created->SetBackImageSmoothing(m_toSmoothBackImage);
+    created->LoadBackImage(old->GetBackImagePath());
+    created->SetText(old->GetText());
 
+    view = created;
+    ReplacePaneWindow(old->GetWindow(), window);
+}
+
+void QSPFrame::ReplaceListView(QSPListView *&view, const ListBoxType type, const wxString &renderer)
+{
+    QSPListView *old = view;
+    QSPListView *created = CreateListView(this, old->GetWindow()->GetId(), type, renderer);
+    wxWindow *window = created->GetWindow();
+    window->SetBackgroundColour(old->GetWindow()->GetBackgroundColour());
+    window->SetForegroundColour(old->GetWindow()->GetForegroundColour());
+    created->SetPathProvider(this);
+    created->SetTextFont(old->GetTextFont());
+    created->SetLinkColor(old->GetLinkColor());
+    created->SetIsHtml(old->IsHtml());
+    created->SetToShowNums(old->ToShowNums());
+    created->BeginItems();
+    for (size_t i = 0; i < old->GetDescs().GetCount(); ++i) created->AddItem(old->GetImages()[i], old->GetDescs()[i]);
+    created->EndItems();
+    created->RefreshUI();
+    created->SelectItem(old->GetSelectedItem());
+
+    view = created;
+    ReplacePaneWindow(old->GetWindow(), window);
+}
+
+void QSPFrame::ReplacePaneWindow(wxWindow *old, wxWindow *window)
+{
+    window->Enable(old->IsEnabled());
+    BindMouseClick(window);
+    const bool hadFocus = m_lastFocus && (m_lastFocus == old || old->IsDescendant(m_lastFocus));
     wxWindowUpdateLocker noUpdates{this};
-    m_manager->GetPane(old->GetWindow()).Window(window);
-    m_desc = view;
-    old->GetWindow()->Destroy();
+    m_manager->GetPane(old).Window(window);
+    old->Destroy();
     m_manager->Update();
+    if (hadFocus) window->SetFocus();
 }
 
 void QSPFrame::OnVolume(const wxCommandEvent& event)
@@ -1318,7 +1364,7 @@ void QSPFrame::OnToggleInput([[maybe_unused]] wxCommandEvent& event)
 
 void QSPFrame::OnToggleCaptions([[maybe_unused]] wxCommandEvent& event)
 {
-    const bool toShow = !m_manager->GetPane(m_objects).HasCaption();
+    const bool toShow = !m_manager->GetPane(m_objects->GetWindow()).HasCaption();
     const wxAuiPaneInfoArray& allPanes = m_manager->GetAllPanes();
     for (int i = static_cast<int>(allPanes.GetCount()) - 1; i >= 0; --i)
         allPanes.Item(i).CaptionVisible(toShow);
@@ -1374,7 +1420,7 @@ void QSPFrame::OnLinkClicked(wxHtmlLinkEvent& event)
             if (event.GetId() == m_desc->GetWindow()->GetId())
                 m_desc->ScrollToAnchor(href);
             else
-                m_vars->LoadPage(href);
+                m_vars->ScrollToAnchor(href);
         }
         else if (href.Upper().StartsWith("EXEC:"))
         {
@@ -1400,7 +1446,7 @@ void QSPFrame::OnLinkClicked(wxHtmlLinkEvent& event)
 
 void QSPFrame::OnObjectChange(const wxCommandEvent& event)
 {
-    m_objects->Update();
+    m_objects->GetWindow()->Update();
     wxThread::Sleep(10);
 
     if (!QSPSetSelObjectIndex(event.GetInt(), QSP_TRUE))
@@ -1409,7 +1455,7 @@ void QSPFrame::OnObjectChange(const wxCommandEvent& event)
 
 void QSPFrame::OnActionChange(const wxCommandEvent& event)
 {
-    m_actions->Update();
+    m_actions->GetWindow()->Update();
     wxThread::Sleep(10);
 
     if (!QSPSetSelActionIndex(event.GetInt(), QSP_TRUE))
@@ -1439,6 +1485,12 @@ void QSPFrame::OnInputTextEnter([[maybe_unused]] wxCommandEvent& event)
 {
     if (!QSPExecUserInput(QSP_TRUE))
         ShowError();
+}
+
+void QSPFrame::OnChildFocus(wxChildFocusEvent& event)
+{
+    event.Skip();
+    m_lastFocus = event.GetWindow();
 }
 
 void QSPFrame::OnKeyDown(wxKeyEvent& event)

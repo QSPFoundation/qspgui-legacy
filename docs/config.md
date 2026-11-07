@@ -68,11 +68,14 @@ open is saved into that file too.
 | Key | Values | Default | Description |
 |---|---|---|---|
 | `MainDesc` | `wxhtml`, `litehtml` | `wxhtml` | Main description |
+| `VarsDesc` | `wxhtml`, `litehtml` | `wxhtml` | Additional description |
+| `Actions` | `wxhtml`, `litehtml` | `wxhtml` | List of actions |
+| `Objects` | `wxhtml`, `litehtml` | `wxhtml` | List of objects |
+| `Dialogs` | `wxhtml`, `litehtml` | `wxhtml` | Text of the `MSG` and `INPUT` dialogs |
 | `SmoothBackImage` | `0`, `1` | `1` | `1` smooths an enlarged `BACKIMAGE` as browsers do, `0` keeps its pixels sharp as in wxHTML. Only for litehtml: wxHTML always keeps them sharp |
 
-Unknown values of `MainDesc` mean `wxhtml`, so an older player reads a file written by a newer one, and so does a
+Missing keys and unknown values mean `wxhtml`, so an older player reads a file written by a newer one, and so does a
 player built without litehtml (`-DQSP_LITEHTML=OFF`).
-More panes (`Actions`, `VarsDesc`, `Objects`, dialogs) will be added as new keys.
 
 ## Example
 
@@ -99,6 +102,10 @@ Height=650
 Maximize=0
 [Render]
 MainDesc=litehtml
+VarsDesc=litehtml
+Actions=litehtml
+Objects=litehtml
+Dialogs=wxhtml
 SmoothBackImage=1
 ```
 

@@ -126,6 +126,36 @@ wxGraphicsRenderer *QSPLiteContainer::GetRenderer()
 #endif
 }
 
+double QSPLiteContainer::GetScale(const wxWindow &window)
+{
+    return window.FromDIP(1000) / 1000.0;
+}
+
+double QSPLiteContainer::GetFontSizeInPixels(wxWindow &window, const wxFont &font, const double scale)
+{
+#ifdef __WXMSW__
+    {
+        wxClientDC dc(&window);
+        dc.SetFont(font);
+        const wxFontMetrics metrics = dc.GetFontMetrics();
+        if (const int em = metrics.height - metrics.internalLeading; em > 0) return em / scale;
+    }
+#endif
+
+    const wxString sample = "Mg";
+    wxClientDC dc(&window);
+    dc.SetFont(font);
+    const double height = dc.GetTextExtent(sample).y / scale;
+
+    constexpr double probeSize = 100.0;
+    const std::unique_ptr<wxGraphicsContext> gc(QSPLiteContainer::GetRenderer()->CreateMeasuringContext());
+    if (!gc || height <= 0) return 16.0;
+    gc->SetFont(QSPLiteContainer::GetRenderer()->CreateFont(probeSize, font.GetFaceName(), wxFONTFLAG_DEFAULT, *wxBLACK));
+    wxDouble probeWidth, probeHeight;
+    gc->GetTextExtent(sample, &probeWidth, &probeHeight);
+    return probeHeight > 0 ? probeSize * height / probeHeight : 16.0;
+}
+
 void QSPLiteContainer::SetDefaultFont(const wxString &faceName, const double sizeInPixels)
 {
     m_defaultFaceName = faceName;

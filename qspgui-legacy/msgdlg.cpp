@@ -29,7 +29,8 @@ QSPMsgDlg::QSPMsgDlg(wxWindow *parent,
                      const wxString &caption,
                      const wxString &text,
                      bool isHtml,
-                     PathProvider *pathProvider)
+                     PathProvider *pathProvider,
+                     const wxString &renderer)
 {
     if (!Create(parent, id, caption, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER))
     {
@@ -42,17 +43,17 @@ QSPMsgDlg::QSPMsgDlg(wxWindow *parent,
 
     auto *sizerUp = new wxBoxSizer{wxVERTICAL};
 
-    m_desc = new QSPTextBox(this, wxID_ANY);
-    m_desc->Bind(wxEVT_HTML_LINK_CLICKED, &QSPMsgDlg::OnLinkClicked, this);
+    m_desc = CreateHtmlView(this, wxID_ANY, renderer);
+    m_desc->GetWindow()->Bind(wxEVT_HTML_LINK_CLICKED, &QSPMsgDlg::OnLinkClicked, this);
     m_desc->SetPathProvider(pathProvider);
     m_desc->SetIsHtml(isHtml);
-    m_desc->SetBackgroundColour(backColor);
-    m_desc->SetForegroundColour(fontColor);
+    m_desc->GetWindow()->SetBackgroundColour(backColor);
+    m_desc->GetWindow()->SetForegroundColour(fontColor);
     m_desc->SetTextFont(font);
     m_desc->SetText(text);
 
     auto *line = new wxStaticLine{this, wxID_STATIC, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL};
-    sizerUp->Add(m_desc, 1, wxALL | wxGROW, FromDIP(2));
+    sizerUp->Add(m_desc->GetWindow(), 1, wxALL | wxGROW, FromDIP(2));
     sizerUp->Add(line, 0, wxALL | wxGROW, FromDIP(2));
 
     auto *sizerBottom = new wxBoxSizer{wxHORIZONTAL};
@@ -74,11 +75,13 @@ QSPMsgDlg::QSPMsgDlg(wxWindow *parent,
 
 void QSPMsgDlg::OnInitDialog([[maybe_unused]] wxInitDialogEvent &event)
 {
-    const int deltaH = GetClientSize().GetHeight() - m_desc->GetSize().GetHeight();
-    const int deltaW = GetClientSize().GetWidth() - m_desc->GetSize().GetWidth();
+    const wxWindow *desc = m_desc->GetWindow();
+    const int deltaH = GetClientSize().GetHeight() - desc->GetSize().GetHeight();
+    const int deltaW = GetClientSize().GetWidth() - desc->GetSize().GetWidth();
 
-    int height = m_desc->GetInternalRepresentation()->GetHeight() + m_desc->GetCharHeight() + deltaH;
-    int width = m_desc->GetInternalRepresentation()->GetWidth() + deltaW;
+    const wxSize content = m_desc->GetContentSize();
+    int height = content.GetHeight() + desc->GetCharHeight() + deltaH;
+    int width = content.GetWidth() + deltaW;
 
     height = std::clamp(height, FromDIP(MinHeight), FromDIP(MaxHeight));
     width = std::clamp(width, FromDIP(MinWidth), FromDIP(MaxWidth));
@@ -93,7 +96,7 @@ void QSPMsgDlg::OnLinkClicked(wxHtmlLinkEvent &event)
     {
         if (wxString href = info.GetHref(); !href.empty() && href[0] == '#')
         {
-            m_desc->LoadPage(href);
+            m_desc->ScrollToAnchor(href);
         } else
         {
             QSPTools::LaunchDefaultBrowser(href);
