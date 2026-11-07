@@ -18,17 +18,10 @@
 #pragma once
 
 #include <wx/wx.h>
-#include <wx/fontmap.h>
 #include <wx/htmllbox.h>
-#include "pathprovider.h"
+#include "listview.h"
 
-enum class ListBoxType
-{
-    Normal,
-    Extended
-};
-
-class QSPListBox : public wxHtmlListBox
+class QSPListBox : public QSPListBoxBase<wxHtmlListBox>
 {
 public:
     QSPListBox(wxWindow *parent, wxWindowID id, ListBoxType type = ListBoxType::Normal);
@@ -36,53 +29,19 @@ public:
     void SetStandardFonts(int size = -1,
                           const wxString& normal_face = wxEmptyString,
                           const wxString& fixed_face = wxEmptyString);
-    void RefreshUI();
-    void BeginItems();
-    void AddItem(const wxString& image, const wxString& desc);
-    void EndItems();
-    void SetPathProvider(PathProvider *provider) { m_pathProvider = provider; }
-
-    void SetIsHtml(bool isHtml);
-    void SetToShowNums(bool toShow);
-    void SetTextFont(const wxFont& font);
-
-    [[nodiscard]] wxFont GetTextFont() const { return m_font; }
-    void SetLinkColor(const wxColour& clr);
-    [[nodiscard]] const wxColour& GetLinkColor() const { return m_linkColor; }
 
 protected:
     [[nodiscard]] wxString OnGetItem(size_t n) const override;
     wxHtmlOpeningStatus OnHTMLOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const override;
+    void OnFontChanged() override;
 
     void CreateHTMLParser() const;
     [[nodiscard]] double GetPixelScale() const;
 
-    void OnMouseMove(wxMouseEvent& event);
-    void OnMouseClick(wxMouseEvent& event);
-    void OnChar(wxKeyEvent& event);
-    void SendExecuteEvent(int item);
-    void OnKeyUp(wxKeyEvent& event);
-    void OnMouseWheel(wxMouseEvent& event);
     void OnDPIChanged(wxDPIChangedEvent& event);
 
 private:
-    PathProvider *m_pathProvider{nullptr};
-
     wxString m_outFormat{};
-    wxString m_outFormatNums{};
-    wxString m_outFormatImage{};
-    wxString m_outFormatImageNums{};
-
-    ListBoxType m_type{ListBoxType::Normal};
-    bool m_toUseHtml{false};
-    bool m_toShowNums{false};
-    wxFont m_font{*wxNORMAL_FONT};
-    wxColour m_linkColor{0, 0, 0xFF};
-
-    wxArrayString m_images{};
-    wxArrayString m_descs{};
-    wxArrayString m_newImages{};
-    wxArrayString m_newDescs{};
 
     DECLARE_CLASS(QSPListBox)
 };
