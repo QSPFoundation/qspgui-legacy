@@ -26,6 +26,25 @@ namespace
 {
     constexpr int ANIMATION_TICK_MS = 20;
     constexpr int PAGE_MARGIN = 5;
+
+    [[nodiscard]] bool HasBox(const litehtml::position &pos)
+    {
+        return static_cast<float>(pos.width) > 0.0f || static_cast<float>(pos.height) > 0.0f;
+    }
+
+    bool FindBoxAfter(const litehtml::element::ptr &node, const litehtml::element *target, bool &isPassed,
+                      litehtml::position &pos)
+    {
+        if (isPassed)
+        {
+            pos = node->get_placement();
+            if (HasBox(pos)) return true;
+        }
+        if (node.get() == target) isPassed = true;
+        for (const litehtml::element::ptr &child : node->children())
+            if (FindBoxAfter(child, target, isPassed, pos)) return true;
+        return false;
+    }
 }
 
 QSPLiteView::QSPLiteView(wxWindow *parent, const wxWindowID id)
@@ -209,19 +228,33 @@ void QSPLiteView::ScrollToAnchor(const wxString &anchor)
 {
     if (!m_document) return;
     const wxString name = anchor.StartsWith("#") ? anchor.Mid(1) : anchor;
-    if (name.IsEmpty() || name.find_first_of("\"\\") != wxString::npos) return;
+    if (name.find_first_of("\"\\") != wxString::npos) return;
 
+    litehtml::element::ptr element;
     const litehtml::element::ptr root = m_document->root();
-    if (!root) return;
-    const std::string quoted = "\"" + name.utf8_string() + "\"";
-    litehtml::element::ptr element = root->select_one("[id=" + quoted + "]");
-    if (!element) element = root->select_one("a[name=" + quoted + "]");
-    if (!element) return;
+    if (root && !name.IsEmpty())
+    {
+        const std::string quoted = "\"" + name.utf8_string() + "\"";
+        element = root->select_one("[id=" + quoted + "]");
+        if (!element) element = root->select_one("a[name=" + quoted + "]");
+    }
 
-    const litehtml::position pos = element->get_placement();
     int unitX, unitY;
     GetScrollPixelsPerUnit(&unitX, &unitY);
-    if (unitY > 0) Scroll(-1, static_cast<int>(static_cast<float>(pos.y) * GetScale()) / unitY);
+    if (unitY <= 0) return;
+    if (!element)
+    {
+        if (name.IsEmpty() || name.IsSameAs("top", false)) Scroll(-1, 0);
+        return;
+    }
+
+    litehtml::position pos = element->get_placement();
+    if (!HasBox(pos))
+    {
+        bool isPassed = false;
+        if (!FindBoxAfter(root, element.get(), isPassed, pos)) pos.y = m_document->height();
+    }
+    Scroll(-1, static_cast<int>(static_cast<float>(pos.y) * GetScale()) / unitY);
 }
 
 void QSPLiteView::OnLinkClicked(const wxString &href)
