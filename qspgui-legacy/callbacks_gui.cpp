@@ -33,6 +33,12 @@ QSPVersionInfoValues QSPCallbacks::m_versionInfo;
 
 namespace
 {
+    [[nodiscard]] bool IsHtmlNow()
+    {
+        int numVal;
+        return qspGetVar(QSP_FMT("USEHTML"), &numVal) && numVal;
+    }
+
     template <typename CallBack, auto Func, auto Fallback>
     struct CallBackThunk;
 
@@ -325,7 +331,7 @@ void QSPCallbacks::Msg(const QSP_CHAR *str)
                      m_frame->GetDesc()->GetTextFont(),
                      _("Info"),
                      qspToWxString(str),
-                     m_isHtml,
+                     IsHtmlNow(),
                      m_frame,
                      m_frame->GetRenderer(RenderPane::Dialogs)
     );
@@ -361,7 +367,7 @@ void QSPCallbacks::Input(const QSP_CHAR *text, QSP_CHAR *buffer, const int maxLe
                        m_frame->GetDesc()->GetTextFont(),
                        _("Input data"),
                        qspToWxString(text),
-                       m_isHtml,
+                       IsHtmlNow(),
                        m_frame,
                        m_frame->GetRenderer(RenderPane::Dialogs)
     );
